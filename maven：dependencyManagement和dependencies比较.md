@@ -39,4 +39,7 @@
 就像标题中说明的，既有依赖标签，又有依赖管理标签，这两种的所用是什么的呢？
 
 # 2 dependencies标签
-**只有**在dependencies和dependency中声明声明的依赖才会被自动引入！！！包括从父pom中继承而来的dependencies和dependency中声明的依赖。同样的，就像所有的继承一
+**只有**在dependencies和dependency中声明声明的依赖才会被自动引入！！！包括从父pom中继承而来的dependencies和dependency中声明的依赖。同样的，就像所有的继承一样，子pom和父pom有一样依赖的，版本号和scope肯定是按照子类自己定义来的来的。
+
+# 3 dependencyManagement标签
+
