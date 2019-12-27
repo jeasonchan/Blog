@@ -63,7 +63,8 @@ var myModule = (function(){
 模块**只有一个出口**，module.exports对象，我们需要把模块希望输出的内容放入该对象
 
 3、加载模块： 
-加载模块使用require方法，该方法读取一个文件并执行，返回文件内部的module.exports对象该对象中，有变量、有函数对象等等
+加载模块使用require方法，该方法读取一个文件并执行，返回文件内部的module.exports对象该对象中，有变量、有函数对象等等;
+**使用require加载模块commonjs的上一代方法，ES6中推荐使用import关键字**，仍然使用import加载原先的module.exports对象。
 
 看个例子：
 ```js
