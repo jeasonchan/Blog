@@ -174,15 +174,15 @@ ES Module规范，经过编译，最终的归宿还是commonjs规范。
 参考了<https://blog.csdn.net/weixin_33696106/article/details/91428247>。
 
 ES6规范中，没有default export就不能使用：
-'''js
+```js
 import express from “express”
-'''
+```
 显然，是因为，express没有default export，这种情况下，想使用ES6标准只能：
-'''js
+```js
 import ｛express｝ from "express"；//名字要和模块中导出名对应，此处显然不对
 //或者
 import * as expressModule from “express”
-'''
+```
 
 
 ## 4 commonjs的require函数导入机制探究
