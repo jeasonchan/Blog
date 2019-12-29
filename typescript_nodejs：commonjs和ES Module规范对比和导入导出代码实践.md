@@ -162,8 +162,8 @@ AMD与CMD区别，最明显的区别就是在模块定义时对依赖的处理�
 CMD加载完某个依赖模块后并不执行，只是下载而已，在所有依赖模块加载完成后进入主逻辑，遇到require语句的时候才执行对应的模块，这样模块的执行顺序和书写顺序是完全一致的
 
 这也是很多人说AMD用户体验好，因为没有延迟，依赖模块提前执行了，CMD性能好，因为只有用户需要的时候才执行的原因。
-## 2.3 ES Module规范
-commonjs是在js中概念，ES Module个人认为是存在于ts中的概念，CommonJS的模块是对象，ES Module的模块不是对象，是使用export显示指定输出的多个变量、对象等等，需要通过import输入。ES Module是存在于ts中的，此法为编译时加载，编译完生成的js就被转换成commonjs规范了。
+## 2.3 ES Module（ES6）规范
+commonjs是在nodejs中概念，ES Module个人认为是存在于ts中的概念（其实不是！ES6是js的一个标准，包含导入导出的标准，这个标准js和ts都可以使用。），CommonJS的模块是对象，ES Module的模块不是对象，是使用export显示指定输出的多个变量、对象等等，需要通过import输入。ES Module是存在于ts中的，此法为编译时加载，编译完生成的js就被转换成commonjs规范了。
 
 CommonJS 模块输出的是一个值的拷贝，ES6 模块输出的是值的引用。CommonJS 模块是运行时加载，ES6 模块是编译时输出接口。
 
@@ -174,9 +174,19 @@ ES Module规范，经过编译，最终的归宿还是commonjs规范。
 
 参考了<https://blog.csdn.net/weixin_33696106/article/details/91428247>。
 
+ES6规范中，没有default export就不能使用：
+'''js
+import express from “express”
+'''
+显然，是因为，express没有default export，这种情况下，想使用ES6标准只能：
+'''js
+import ｛express｝ from "express"；//名字要和模块中导出名对应，此处显然不对
+//或者
+import * as expressModule from “express”
+'''
 
 
 ## 4 commonjs的require函数导入机制探究
 参考了<https://blog.csdn.net/weixin_33901843/article/details/91425717>。
 
-
+本质上就是，require调用了模块中的方法，生成并返回一个实力对象，实力对象中包含一系列函数对象等等。因此，使用require函数，会导致模块中的方法发生执行。
