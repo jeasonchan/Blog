@@ -90,7 +90,6 @@ module.exports = {
 ```js
 //加载模块
 var nameModule = require('./myModel.js');
-
 nameModule.printName();
 ```
 所以，express库中，export=e，表明了，导出的对象是e这个函数对象，而不是e这个命名空间，所以使用js时，使用const generateExpressServer=rqurie("express")，var server=generateExpressServer()，创建服务器实例对象。
