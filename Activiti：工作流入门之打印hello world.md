@@ -6,7 +6,7 @@
 
 # 2代码实践
 ## 2.1工作流创建、启动基本流程
-此处代码实践主要参考，参考文档1，比较浅显。
+此处代码实践主要参考，参考文档1<https://blog.csdn.net/qq_39295740/article/details/84930254>，比较浅显。
 ```java
 package com.zte.工作流练习;
 
@@ -83,5 +83,5 @@ public class Workflow {
 
 
 ## 2.2工作流创建、启动的更多个性化设置
-
+此处代码实践主要参考，参考文档2<https://blog.csdn.net/chenweifu365/article/details/79032758>，比较浅显。
 
