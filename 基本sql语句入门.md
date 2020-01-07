@@ -42,5 +42,87 @@ sp_rename \'表名\', \'新表名\', \'OBJECT\'
 主键，唯一且非空
 
 外键，表示引用了别的表里的主键，可以为空，代表当前实体没有引用
+```sql
+create table major
+(
+    mno   int,
+    mname varchar(20),
+--     设置主键的方式
+    primary key (mno)
+);
 
+-- windows下，对大小写不敏感，或者数据库配置为对字段大小写不敏感
+select *
+from MAJOR;
+
+create table stu
+(
+    sno   int,
+    sname varchar(30),
+    age   smallint,
+    sex   bit,
+    mno   int,
+    primary key (sno),
+--    讲该键指向别的表的主键，本质上表达了ER模型中的R
+    foreign key (mno) references MAJOR (mno)
+);
+
+
+select *
+from STU;
+
+create table cou
+(
+    cno     int,
+    cname   varchar(30),
+    ctime   smallint,
+--     浮点数
+    ccredit decimal(4, 2),
+    primary key (cno)
+
+);
+
+select *
+from COU;
+
+
+create table sc
+(
+    sno   int,
+    cno   int,
+    grade decimal(5, 2),
+--     将数值对作为主键，也算非空且唯一
+    primary key (sno, cno)
+);
+
+select *
+from sc;
+
+-- 删除一下，补充外键
+drop table sc;
+
+
+create table sc
+(
+--     学生编号
+    sno   int,
+--     课程编号
+    cno   int,
+--  课程成绩
+    grade decimal(5, 2),
+
+--     将数值对作为主键，也算非空且唯一
+    primary key (sno, cno),
+    foreign key (sno) references STU (SNO)
+);
+
+
+-- 对sc表新增一列并设为外键，因为，课程编号也是其他表中的主键
+-- 增加一个约束，使其值只能从COU表中的主键取值
+alter table SC
+    add constraint sc_cno_from_cou foreign key (cno) references COU (CNO);
+
+
+select * from SC;
+```
 
