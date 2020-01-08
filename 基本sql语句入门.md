@@ -176,6 +176,20 @@ DELETE FROM PUBLIC.STU WHERE SNO = 2;
 -- 再试图插入一条不不符合约束体条件的数据库，外键无对应的主键
 -- 发现报错，不满足约束条件
 -- insert into PUBLIC.STU values ( 2,'jeason2',12,1,6,null );
+select * from STU;
+-- 试图删除一门课程，且该课程的主键被作为外键正在被使用
+-- 结果语句，执行失败，正是因为被作为了外键被使用
+-- delete from MAJOR where MNO=1;
+-- 所以，为了达到删除课程的目的，要先把将要被删除的外键设置为null
+select * from STU;
+update STU set MNO=null where MNO=1;
+-- 查询一下更新结果
+select * from STU;
+-- 再次尝试删除
+delete from MAJOR where MNO=1;
+-- 查询一下执行结果
+select * from MAJOR ;
+
 
 ```
 
