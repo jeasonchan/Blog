@@ -124,5 +124,58 @@ alter table SC
 
 
 select * from SC;
+--
+--
+--
+-- 哔哩哔哩第二节
+-- 给某表增加一列（设定类型是必要的）
+alter table STU
+    add column qq varchar(20);
+
+-- 查询表中所有的字段
+select *
+from STU;
+
+-- 删除某表格中的某一个字段
+alter table STU
+    drop column qq;
+
+
+select *
+from STU;
+
+create table to_be_deleted(
+    t int,
+    primary key (t)
+);
+
+select * from TO_BE_DELETED;
+
+-- 删除表操作
+drop table TO_BE_DELETED;
+
+-- 向表中插入一条数据，比如，先增加课程信息
+-- 先查看一下表的字段有哪些
+select * from MAJOR;
+-- 插入数据
+insert into MAJOR(MNO,mname) values ( 1,'计算机科学和技术' );
+select * from MAJOR;
+insert into MAJOR(MNO,mname) values ( 2,'软件工程' );
+select * from MAJOR;
+-- 这条语句会执行失败，以为MAJOR的主键是数据库操作这自己维护的，每次需要自己插入唯一且非空的值
+-- insert into MAJOR(mname) values ( '软件工程' );
+-- 查看一下学生表的字段
+select * from STU;
+-- 插入的时候不明确字段，则表示每条字段都插入
+insert into PUBLIC.STU values ( 1,'jeason',12,1,1,'12345678' );
+select * from STU;
+-- 试图插入一条不不符合约束体条件的数据库，外键无对应的主键
+insert into PUBLIC.STU values ( 2,'jeason2',12,1,1,null );
+-- 外键写错了，因该构造一条错误的外键，删除该条数据
+DELETE FROM PUBLIC.STU WHERE SNO = 2;
+-- 再试图插入一条不不符合约束体条件的数据库，外键无对应的主键
+-- 发现报错，不满足约束条件
+-- insert into PUBLIC.STU values ( 2,'jeason2',12,1,6,null );
+
 ```
 
