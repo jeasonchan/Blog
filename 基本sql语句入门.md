@@ -196,6 +196,13 @@ select * from MAJOR ;
 -- 所以，先删除旧表
 -- drop table STU;  失败了，由于存在约束
 -- 经过查看，是SC表，即学生和课程对应表中，引用了STU的主键
-
+-- 所以，先删除的SC，再删除STU
+drop table SC;
+drop table STU;
+drop table COU;
+-- 根据新的要求的重新建表
+create table student(
+    
+)
 ```
 
