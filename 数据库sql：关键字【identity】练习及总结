@@ -31,3 +31,19 @@ insert into RUNOOB values ( null,'Facebook','www.facebook.com',3,'USA' );
 
 ## 2.1 identity
 标识列， identity(a,b)，ab均为正整数，a表示开始数，b表示增幅。在创建表或者增加列的时候，可进行该约束定义，代码实践如下：
+```sql
+create table runoob(
+    id int identity (1,1),
+     primary key(id),
+    name  varchar(20),
+    homepage varchar(100),
+    alexa smallint,
+    country varchar(10)
+);
+-- 或者
+alter table RUNOOB add column test int identity (1,1);
+
+```
+## 2.2 select
+
+## 2.3 select distinct
