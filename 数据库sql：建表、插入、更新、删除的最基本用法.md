@@ -1,44 +1,9 @@
-﻿参考文档<https://www.cnblogs.com/wuchaofan1993/p/5833526.html>
+# 1概要
+跟着B站视频学习了建表、插入、更新、删除的最基本的用法，也暂不涉及高级的关键字，算是对sql语句有了一点应对能力，入门了一点，接下来的学习需要对对其余的关键字及关键字的组合应用进行学习。
 
-新建表：
-create table [表名]
-(
-[自动编号字段] int IDENTITY (1,1) PRIMARY KEY ,
-[字段1] nVarChar(50) default \'默认值\' null ,
-[字段2] ntext null ,
-[字段3] datetime,
-[字段4] money null ,
-[字段5] int default 0,
-[字段6] Decimal (12,4) default 0,
-[字段7] image null ,
-)
-
-删除表：
-Drop table [表名]
-
-插入数据：
-INSERT INTO [表名] (字段1,字段2) VALUES (100,\'51WINDOWS.NET\')
-
-删除数据：
-DELETE FROM [表名] WHERE [字段名]>100
-
-更新数据：
-UPDATE [表名] SET [字段1] = 200,[字段2] = \'51WINDOWS.NET\' WHERE [字段三] = \'HAIWA\'
-
-新增字段：
-ALTER TABLE [表名] ADD [字段名] NVARCHAR (50) NULL
-
-删除字段：
-ALTER TABLE [表名] DROP COLUMN [字段名]
-
-修改字段：
-ALTER TABLE [表名] ALTER COLUMN [字段名] NVARCHAR (50) NULL
-
-重命名表：(Access 重命名表，请参考文章：在Access数据库中重命名表)
-sp_rename \'表名\', \'新表名\', \'OBJECT\'
-
+# 2代码实践
 //====================bilibli视频教程代码实践========================
-
+//第一节
 主键，唯一且非空
 
 外键，表示引用了别的表里的主键，可以为空，代表当前实体没有引用
