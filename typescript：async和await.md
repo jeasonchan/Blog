@@ -28,5 +28,5 @@ export async function jie_cheng(endNumber: number): Promise<number> {
 
 # 3 await语法
 作用是：
-1. 
-2. async 定义的方法本身就是异步，如果其内部再调用异步方法，就显然没有必要了。因此，为了使异步方法同步执行，就产生了await关键字，await的作用是就是等待异步方法执行完成，并取出异步方法返回的Promise对象中包装的值/对象
+1. 只能在async定义的函数内部使用
+2. async 定义的方法本身就是异步，如果其内部再调用异步方法，就显然没有必要了。因此，为了使异步方法同步执行，就产生了await关键字，await的作用是就是等待异步方法执行完成，并取出异步方法返回的Promise对象中包装的值/对象。
