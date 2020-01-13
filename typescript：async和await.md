@@ -77,31 +77,6 @@ Util.Http_get(url).then((resolve) => {
     console.log("line 14",resolve);
 });
 ```
-对export async function Http_get(url: string)方法进行改进，使其能**看上去异步**执行：
-```js
-export async function Http_get(url: string) {
-    console.log("line 13");
-    let result;
-    Request.get(url, (error, response, body) => {
-        result = {
-            "error": error,
-            "response": response,
-            "body": body
-        }
-        console.log("line 21", result);
-        return result;
-    });
-
-    //由于前面的get方法为异步方法，直行到这一步时，result仍是undefined
-    console.log("line 25", result);
-
-    //由于前面的get方法为异步方法，执行到这一步时，result仍是undefined
-    //直接返回了undefined
-    // return result;
-}
-```
-这样，该方法就变成了一个同步方法，同步的时间较长，就是回调函数负责进行该函数的返回值的返回，再将这个**同步结果**封装到Promise中，假装是异步方法……
-
 如果可以使用await，则变得十分简单：
 ```js
 export async function Http_get(url: string) {
