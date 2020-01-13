@@ -77,7 +77,7 @@ Util.Http_get(url).then((resolve) => {
     console.log("line 14",resolve);
 });
 ```
-如果可以使用await，则变得十分简单：
+**如果**可以使用await，则变得十分简单：
 ```js
 export async function Http_get(url: string) {
     //实际上这一步是无效的！！！！！
@@ -86,8 +86,144 @@ export async function Http_get(url: string) {
 ```
 await使基于Promise异步机制的异步调用，转换为同步函数，变得十分简单。
 # 4 async和await联合使用
+## 4.1 异常捕捉
+在async函数里，await会自动解析返回的Promise对象，是resolve则返回，是reject的则自动throw；所以最好把await放入try{}catch{}中，catch能够捕捉到Promise对象rejected的数据或者抛出的异常，比如：
+```js
+function timeout(ms) {
+
+  return new Promise((resolve, reject) => {
+
+    setTimeout(() => {reject('error')}, ms);  //reject模拟出错，返回error
+
+  });
+
+}
+
+async function asyncPrint(ms) {
+
+  try {
+
+    console.log('start');
+
+    //这里返回了错误,await相当于自动解析了Promise返回值
+    //是resolve则返回，是reject的则自动throw
+    await timeout(delayTme_ms);
+
+    console.log('end');  //所以这句代码不会被执行了
+
+  } catch(err) {
+
+     console.log(err); //这里捕捉到错误error
+
+  }
+
+}
+
+//==============开始调用==================
+asyncPrint(1000);
+```
+捕捉异常的地点还有多种，比如：
+
+在最终调用异步方法时捕捉：
+```js
+//改写原先的异步函数
+export async function asyncPrint(delayTme_ms: number) {
+    console.log("start");
+    await timeout(delayTme_ms);
+    console.log("end");
+}
+
+//调用
+Util.asyncPrint(12).catch(reason => {
+    console.log(reason);
+}).then(value => {
+    console.log(value);
+});
+
+```
+在内部的等待异步方法完成时调用：
+```js
+export async function asyncPrint(delayTme_ms: number) {
+    console.log("start");
+
+    //不让await解析异常，自己手动提前将异常捕捉，
+    //await对Promise对象进行解析时，已经异常了，只有value了
+    await timeout(delayTme_ms).catch(error => {
+        console.error(error);
+    });
+
+    console.log("end");
+}
+```
+**异常捕捉总结**
+
+await会对的Promise对象进行解析，是resolve则返回，是reject的则自动throw；捕捉方式就分为有try catch和Promise.catch两种，Promise.catch是自己主动catch掉异常，不让await捕捉/自动抛出，以达到不阻断后续语句运行的目的。
+# 5  Promise.all“并发”执行
+await 异步操做变为同步的操作，有时候也会有缺点，比如：
+```js
+/**
+ *  睡眠时间大于2000，则先睡眠到相应时间，然后抛出异常；
+ *  小于等于2000，则睡眠到相应的时间，正常退出。
+ * @param delayTime 单位 毫秒
+ */
+export async function sleep(delayTime: number) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            if (delayTime > 2000) {
+                reject(`sleep ${delayTime} ms, and ${delayTime}>2000, too long!`);
+            }
+
+            //正常情况下的，resolve也不能放值，因为是void类型
+            console.log(`sleep ${delayTime} ms`);
+            resolve(`sleep ${delayTime} ms`);
+        }, delayTime);
+    });
+}
+
+export async function sleep_500_and_1000_method1() {
+    let endTime: number;
+    let starTime: number = Date.now();
+    console.log(`start time:${starTime}`);
+
+    //以下两步各个都是同步执行时，两者是串行的
+    await sleep(500).catch(error => console.log(error));
+    await sleep(1000).catch(error => console.log(error));
+
+    endTime = Date.now();
+    console.log(`end time:${endTime} and cost ${endTime - starTime}`);
+}
+
+export async function sleep_500_and_1000_method2() {
+    let endTime: number;
+    let starTime: number = Date.now();
+    console.log(`start time:${starTime}`);
+
+    //以下两步分别是同步执行时，但是，开始执行的时间相同
+    await Promise.all([sleep(500), sleep(1000)]);
+
+    endTime = Date.now();
+    console.log(`end time:${endTime} and cost ${endTime - starTime}`);
+}
+
+sleep_500_and_1000_method1();
+sleep_500_and_1000_method2();
 
 
+```
+输出：
+```
+start time:1578904081654
+start time:1578904081668
+sleep 500 ms
+sleep 500 ms
+sleep 1000 ms
+end time:1578904082662 and cost 994
+sleep 1000 ms
+end time:1578904083172 and cost 1518
+```
+查看输出发现，使用await配合Promise.all()同时处理/等待多个Promise对象时，能解决更多时间。
+
+但是，运行过程中发现：new Promise对象时，如果回调函数内部没有resolve操作，虽然得到的是个一个Promise对象，但是并不能异步……并不知道为什么……
 
 
 
