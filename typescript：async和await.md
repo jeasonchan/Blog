@@ -24,9 +24,95 @@ export async function jie_cheng(endNumber: number): Promise<number> {
     return result;//此处不需要返回Promise<number>类型
 }
 ```
-2. 只有async函数内部的异步操作执行完，才会执行then方法指定的回调函数
-
+2. 只有async函数内部的Promise异步操作全执行完，才会执行then方法指定的回调函数
+## 2.1代码实践
+```js
+console.log("line 3");
+let result: Promise<number> = Util.jie_cheng(20);
+result.then((resolve) => {
+    console.log(resolve);
+});
+console.log("line 8");
+```
+打印结果为：
+```
+line 3
+line 8
+2432902008176640000
+```
 # 3 await语法
 作用是：
 1. 只能在async定义的函数内部使用
 2. async 定义的方法本身就是异步，如果其内部再调用异步方法，就显然没有必要了。因此，为了使异步方法同步执行，就产生了await关键字，await的作用是就是等待异步方法执行完成，并取出异步方法返回的Promise对象中包装的值/对象。
+## 3.1代码实践
+如果没有await方法，现在有如下的方法:
+```js
+export async function Http_get(url: string) {
+    console.log("line 13");
+    let result;
+    Request.get(url, (error, response, body) => {
+        result = {
+            "error": error,
+            "response": response,
+            "body": body
+        }
+        console.log(result);
+    });
+    
+    //由于前面的get方法为异步方法，直行到这一步时，result仍是undefined
+    console.log(result);
+    
+    //由于前面的get方法为异步方法，执行到这一步时，result仍是undefined
+    //直接返回了undefined
+    return result;
+}
+```
+调用该方法：
+```js
+let url: string = "https://www.baidu.com/";
+Util.Http_get(url).then((resolve) => {
+    //打印undefined，并不会等待get操作执行完
+    //因为，直接上面的方法return了，并且不是一个假的Promise对象，
+    //假在Promise里装的是一个同步结果，undefined
+    console.log("line 14",resolve);
+});
+```
+对export async function Http_get(url: string)方法进行改进，使其能**看上去异步**执行：
+```js
+export async function Http_get(url: string) {
+    console.log("line 13");
+    let result;
+    Request.get(url, (error, response, body) => {
+        result = {
+            "error": error,
+            "response": response,
+            "body": body
+        }
+        console.log("line 21", result);
+        return result;
+    });
+
+    //由于前面的get方法为异步方法，直行到这一步时，result仍是undefined
+    console.log("line 25", result);
+
+    //由于前面的get方法为异步方法，执行到这一步时，result仍是undefined
+    //直接返回了undefined
+    // return result;
+}
+```
+这样，该方法就变成了一个同步方法，同步的时间较长，就是回调函数负责进行该函数的返回值的返回，再将这个**同步结果**封装到Promise中，假装是异步方法……
+
+如果可以使用await，则变得十分简单：
+```js
+export async function Http_get(url: string) {
+    //实际上这一步是无效的！！！！！
+    //因为，Request.get的返回值不是Promise类型，Request.get的返回值要进行类似toPromise的操作，await才有效
+    return await Request.get(url)
+```
+await使基于Promise异步机制的异步调用，转换为同步函数，变得十分简单。
+# 4 async和await联合使用
+
+
+
+
+
