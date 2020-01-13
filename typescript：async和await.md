@@ -1,7 +1,9 @@
 # 1背景
 写公司项目时，看到有人在angular中使用了async、await还有Promise，隐约感觉和Future类似；显然易见，是和js中的异步机制有关，来学习一下。
 
-文章参考了<https://www.jianshu.com/p/1e75bd387aa0>。
+文章主要参考了<https://www.jianshu.com/p/1e75bd387aa0>，进行写作。
+
+仍有大量有用内容还在<https://www.jianshu.com/p/fe0159f8beb4>，未进行进一步的学习，再进阶学习，需要查看该篇文章。
 
 ## 1.1为什么需要async和await关键字
 在async/await之前，我们有三种方式写异步代码：
