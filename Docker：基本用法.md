@@ -1,6 +1,8 @@
 # 1 背景
 买了阿里云，发现用dockers部署应用十分方便，尤其不会污染宿主机！十分便利！之前的部署都是跟着教程来的，没有系统的学习相关知识，现在系统学习一下基本的东西。
 
+参考<<https://www.runoob.com/docker/docker-hello-world.html>>。
+
 # 2 安装
 Windows上使用docker体验不好，完全没有Linux上的便利感……建议不如直接安装VMware然后安装Ubuntu server使用，安装命令很简单：
 ```sh
@@ -10,7 +12,8 @@ sudo apt install docker.io
 
 # 3 使用
 # 3.1 基本范式
-* docker run，直接在容器中执行命令
+* **docker run，直接在容器中执行命令**
+
 Docker 可以让我们在容器内运行应用程序， 使用 docker run 命令来在容器内运行一个应用程序，比如：
 ```sh
 jeason@ubuntu:~$ docker run ubuntu:15.10 /bin/echo "Hello world"
@@ -28,7 +31,8 @@ ubuntu:15.10 指定要运行的镜像，Docker 首先从本地主机上查找镜
 
 以上命令完整的意思可以解释为：Docker 以 ubuntu15.10 镜像**创建一个新容器**，然后在容器里执行 bin/echo "Hello world"，然后输出结果。
 
-* 运行交互式容器
+* **运行交互式容器**
+
 我们通过 docker 的两个参数 -i -t，让 docker 运行的容器实现"对话"的能力：
 ```sh
 jeason@ubuntu:~$ docker run -i -t ubuntu:15.10 /bin/bash
@@ -56,4 +60,20 @@ exit
 jeason@ubuntu:~# 
 ``
 注意第三行中 jeason@ubuntu 表明我已经退出了当期的容器，返回到当前的主机中。
+
+* **容器后台运行程序**
+
+```sh
+jeason@ubuntu:~$ docker run -d ubuntu:15.10 /bin/sh -c "while true; do echo hello world; sleep 1; done"
+2b1b7a428627c51ab8810d541d759f072b4fc75487eed05812646b8534a2fe63
+```
+参数解析：
+
+docker run：容器运行命令
+
+-d 参数：后台运行容器，并返回容器ID；和第一种的区别就体现出来了。
+
+ubuntu:15.10：运行的目标镜像
+
+
 
