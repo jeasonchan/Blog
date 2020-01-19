@@ -12,7 +12,7 @@ sudo apt install docker.io
 
 # 3 使用
 # 3.1 基本范式
-* **docker run，直接在容器中执行命令**
+* **docker run，直接在容器中执行命令**会在当前控制台输出，就行没有nohup一样。
 
 Docker 可以让我们在容器内运行应用程序， 使用 docker run 命令来在容器内运行一个应用程序，比如：
 ```sh
