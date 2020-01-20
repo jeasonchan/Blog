@@ -31,7 +31,9 @@ ubuntu:15.10 指定要运行的镜像，Docker 首先从本地主机上查找镜
 
 以上命令完整的意思可以解释为：Docker 以 ubuntu15.10 镜像**创建一个新容器**，然后在容器里执行 bin/echo "Hello world"，然后输出结果。
 
-* **运行交互式容器**
+---
+
+* **启动一个镜像，并运行交互式容器**
 
 我们通过 docker 的两个参数 -i -t，让 docker 运行的容器实现"对话"的能力：
 ```sh
@@ -75,5 +77,24 @@ docker run：容器运行命令
 
 ubuntu:15.10：运行的目标镜像
 
+在输出中，我们没有看到期望的 "hello world"，而是一串长字符：2b1b7a428627c51ab8810d541d759f072b4fc75487eed05812646b8534a2fe63，这个长字符串叫做**容器 ID**，对每个容器来说都是唯一的，我们可以通过容器 ID 来查看对应的容器发生了什么，或者说，查看容器的状态
+
+首先，我们需要确认容器有在运行，可以通过 docker ps 来查看：
+```sh
+runoob@runoob:~$ docker ps
+CONTAINER ID        IMAGE                  COMMAND              ...  
+5917eac21c36        ubuntu:15.10           "/bin/sh -c 'while t…"    ...
+```
+输出的详情共有5列：
+* CONTAINER ID: 容器 ID。
+* IMAGE: 使用的镜像。
+* COMMAND: 启动容器时运行的命令，也就是 docker run ………… command args中的，command args
+* CREATED: 容器的创建时间。
+* STATUS: 容器状态，状态有7种：created（已创建），restarting（重启中），running（运行中），removing（迁移中），paused（暂停），exited（停止），dead（死亡）
+* PORTS: 容器的端口信息和使用的连接类型（tcp\udp）。
+* NAMES: 自动分配的容器名称。
 
 
+---
+
+* **进入一个存在的镜像**
