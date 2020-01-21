@@ -106,4 +106,13 @@ CONTAINER ID        IMAGE                  COMMAND              ...
 
 ---
 
-* **进入一个运行中的镜像**
+* **让一个运行中的镜像执行命令**
+```sh
+docker exec -it containerID sh
+```
+参数解析：
+
+exec：和run唯一区别是，run是从一个镜像启动容器实例，exec是直接选取一个存在的容器实例
+
+---
+* **剩下的用法较为简单，可直接使用docker --help进行查看**
