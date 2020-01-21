@@ -11,4 +11,4 @@
 
 [bash -c 注意事项](https://www.jianshu.com/p/198d819d24d1)
 
-＃　２
+#　２
