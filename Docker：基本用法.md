@@ -18,6 +18,14 @@ Windows上使用docker体验不好，完全没有Linux上的便利感……建�
 sudo apt install docker.io 
 ```
 因为，在Ubuntu的仓库里，已经有其他的不相关的软件已经使用了docker这个软件名，所有，真正的docker安装名称是docker.io。
+# 2.1 windows安装方法
+win10专业版，直接去docker官网下载docker for Windows即可。
+
+对于win10 家庭版，按照以下步骤安装，每一步的详细做法可参考<https://blog.csdn.net/zhuiyisinian/article/details/88700889>：
+1. 使用脚本安装hyper-v组件
+2. 更改注册表，临时改变系统信息，从家庭版变为专业版
+3. 管理员权限运行docker for windows
+
 
 # 3 使用
 # 3.1 基本范式
