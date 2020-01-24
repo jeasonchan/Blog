@@ -164,7 +164,7 @@ CMD service nginx start
 正确的做法是直接执行 nginx 可执行文件，并且要求以前台形式运行。比如：
 
 CMD ["nginx", "-g", "daemon off;"]
-# 2.6 ENTRYPOINT
+## 2.6 ENTRYPOINT
 ENTRYPOINT 入口点
   ENTRYPOINT 的格式和 RUN 指令格式一样，分为 exec 格式和 shell 格式。
 
@@ -285,7 +285,7 @@ CMD [ "redis-server" ]
 6
 7
   可以看到其中为了 redis 服务创建了 redis 用户，并在最后指定了 ENTRYPOINT 为 dockerentrypoint.sh 脚本。
-
+```sh
 #!/bin/sh
 ...
 # allow the container to be started with `--user`
@@ -294,14 +294,7 @@ if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
     exec su-exec redis "$0" "$@"
 fi
 exec "$@"
-1
-2
-3
-4
-5
-6
-7
-8
+```
   该脚本的内容就是根据 CMD 的内容来判断，如果是 redis-server 的话，则切换到 redis 用户身份启动服务器，否则依旧使用 root 身份执行。比如：
 
 $ docker run -it redis id
@@ -375,6 +368,10 @@ docker run -d -v mydata:/data xxxx
 ## 2.9 EXPOSE 声明端口
 
 ## 2.10 WORKDIR 指定工作目录
+
+## 2.11 USER 指定当前用户
+
+## 2.12 HEALTHCHECK 健康检查
 
 # 3 构建镜像（docker builder）
 docker builder命令，根据dockerfile进行镜像构建。
