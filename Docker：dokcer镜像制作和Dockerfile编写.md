@@ -134,7 +134,7 @@ CMD的功能是，指定容器启动时的默认执行命令，即直接使用 d
 CMD 指令的格式和 RUN 相似，也是两种格式：
 * shell 格式： CMD <命令>
 * exec 格式： CMD ["可执行文件", "参数1", "参数2"...]
-* 特殊用法，只当作参数列表。 CMD ["参数1", "参数2"...] 。在指定了 ENTRYPOINT 指令的情况下，用 CMD 指定具体的参数。
+* 特殊用法，只当作参数列表。 CMD ["参数1", "参数2"...] 。只要指定了 ENTRYPOINT 指令，用 CMD 只能用于指定具体的参数。
 
 Docker 不是虚拟机，容器就是进程。既然是进程，那么在启动容器的时候，需要指定所运行的程序及参数。 CMD 指令就是用于指定默认的容器主进程的启动命令的。
 
@@ -162,72 +162,58 @@ CMD service nginx start
 而使用 service nginx start 命令，则是希望 systemd 来以后台守护进程形式启动 nginx 服务。而刚才说了 CMD service nginx start 会被理解为 CMD [ “sh”, “-c”, “service nginxstart”] ，因此主进程实际上是 sh 。那么当 service nginx start 命令结束后， sh 也就结束了， sh 作为主进程退出了，自然就会令容器退出。
 
 正确的做法是直接执行 nginx 可执行文件，并且要求以前台形式运行。比如：
-
+```dockerfile
 CMD ["nginx", "-g", "daemon off;"]
+```
 ## 2.6 ENTRYPOINT
-ENTRYPOINT 入口点
-  ENTRYPOINT 的格式和 RUN 指令格式一样，分为 exec 格式和 shell 格式。
+ENTRYPOINT 的目的和 CMD 一样，都是在指定容器启动程序及参数。ENTRYPOINT 在运行时也可以替代，不过比 CMD 要略显繁琐，需要通过 docker run 的参数 –entrypoint 来指定。
 
-  ENTRYPOINT 的目的和 CMD 一样，都是在指定容器启动程序及参数。ENTRYPOINT 在运行时也可以替代，不过比 CMD 要略显繁琐，需要通过 docker run 的参数 –entrypoint 来指定。
+ENTRYPOINT 的格式和 RUN 指令格式一样，分为 exec 格式和 shell 格式。
 
-  当指定了 ENTRYPOINT 后， CMD 的含义就发生了改变，不再是直接的运行其命令，而是将CMD 的内容作为参数传给 ENTRYPOINT 指令，换句话说实际执行时，将变为：
-
-<ENTRYPOINT> "<CMD>"
-1
-  那么有了 CMD 后，为什么还要有 ENTRYPOINT 呢？这种 <ENTRYPOINT> "<CMD>" 有什么好处么？让我们来看几个场景。
-
-场景一：让镜像变成像命令一样使用
-  假设我们需要一个得知自己当前公网 IP 的镜像，那么可以先用 CMD 来实现：
-
+当指定了 ENTRYPOINT 后， CMD 的含义就发生了改变，不再是直接的运行其命令，而是将CMD 的内容作为参数传给 ENTRYPOINT 指令，换句话说实际执行时，将变为：
+```sh
+<ENTRYPOINT指定的指定文件> "<CMD中的参数>"
+```
+那么有了 CMD 后，为什么还要有 ENTRYPOINT 呢？这种 <ENTRYPOINT> "<CMD>" 有什么好处么？让我们来看两个场景。
+### 场景一：让镜像变成像命令一样使用
+假设我们需要一个得知自己当前公网 IP 的镜像，那么可以先用 CMD 来实现：
+```dockerfile
 FROM ubuntu:16.04
 RUN apt-get update \
 && apt-get install -y curl \
 && rm -rf /var/lib/apt/lists/*
 CMD [ "curl", "-s", "http://ip.cn" ]
-1
-2
-3
-4
-5
-  假如我们使用 docker build -t myip . 来构建镜像的话，如果我们需要查询当前公网 IP，只需要执行：
-
+```
+假如我们使用 docker build -t myip . 来构建镜像的话，如果我们需要查询当前公网 IP，只需要执行：
+```sh
 $ docker run myip
 当前 IP：61.148.226.66 来自：北京市 联通
-1
-2
-  嗯，这么看起来好像可以直接把镜像当做命令使用了，不过命令总有参数，如果我们希望加参数呢？比如从上面的 CMD 中可以看到实质的命令是 curl ，那么如果我们希望显示 HTTP头信息，就需要加上 -i 参数。那么我们可以直接加 -i 参数给 docker run myip 么？
-
+```
+嗯，这么看起来好像可以直接把镜像当做命令使用了，不过命令总有参数，如果我们希望加参数呢？比如从上面的 CMD 中可以看到实质的命令是 curl ，那么如果我们希望显示 HTTP头信息，就需要加上 -i 参数。那么我们可以直接加 -i 参数给 docker run myip 么？
+```sh
 $ docker run myip -i
 docker: Error response from daemon: invalid header field value "oci runtime error: con
 tainer_linux.go:247: starting container process caused \"exec: \\\"-i\\\": executable
 file not found in $PATH\"\n".
-1
-2
-3
-4
-  我们可以看到可执行文件找不到的报错， executable file not found 。之前我们说过，跟在镜像名后面的是 command ，运行时会替换 CMD 的默认值。因此这里的 -i 替换了原来的 CMD ，而不是添加在原来的 curl -s http://ip.cn 后面。而 -i 根本不是命令，所以自然找不到。
+```
+我们可以看到可执行文件找不到的报错， executable file not found 。之前我们说过，跟在镜像名后面的是 command ，运行时会替换 CMD 的默认值。因此这里的 -i 替换了原来的 CMD ，而不是添加在原来的 curl -s http://ip.cn 后面。而 -i 根本不是命令，所以自然找不到。
 
-  那么如果我们希望加入 -i 这参数，我们就必须重新完整的输入这个命令：
-
+那么如果我们希望加入 -i 这参数，我们就必须重新完整的输入这个命令：
+```sh
 $ docker run myip curl -s http://ip.cn -i
-1
-  这显然不是很好的解决方案，而使用 ENTRYPOINT 就可以解决这个问题。现在我们重新用 ENTRYPOINT 来实现这个镜像：
-
+```
+这显然不是很好的解决方案，而使用 ENTRYPOINT 就可以解决这个问题。现在我们重新用 ENTRYPOINT 来实现这个镜像：
+```dockerfile
 FROM ubuntu:16.04
 RUN apt-get update \
     && apt-get install -y curl \
     && rm -rf /var/lib/apt/lists/*
 ENTRYPOINT [ "curl", "-s", "http://ip.cn" ]
-1
-2
-3
-4
-5
-  这次我们再来尝试直接使用 docker run myip -i ：
-
+```
+这次我们再来尝试直接使用 docker run myip -i ：
+```sh
 $ docker run myip
 当前 IP：61.148.226.66 来自：北京市 联通
-
 $ docker run myip -i
 HTTP/1.1 200 OK
 Server: nginx/1.8.0
@@ -243,51 +229,25 @@ Via: 1.1 cache-2:80, 1.1 proxy-2_6:8006
 Connection: keep-alive
 
 当前 IP：61.148.226.66 来自：北京市 联通
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-  可以看到，这次成功了。这是因为当存在 ENTRYPOINT 后， CMD 的内容将会作为参数传给 ENTRYPOINT ，而这里 -i 就是新的 CMD ，因此会作为参数传给 curl ，从而达到了我们预期的效果。
+```
+可以看到，这次成功了。这是因为当存在 ENTRYPOINT 后， CMD 的内容将会作为参数传给 ENTRYPOINT ，而这里 -i 就是新的 CMD ，因此会作为参数传给 curl ，从而达到了我们预期的效果。
 
-场景二：应用运行前的准备工作
-  启动容器就是启动主进程，但有些时候，启动主进程前，需要一些准备工作。比如 mysql 类的数据库，可能需要一些数据库配置、初始化的工作，这些工作要在最终的 mysql 服务器运行之前解决。
+### 场景二：应用运行前的准备工作
+启动容器就是启动主进程，但有些时候，启动主进程前，需要一些准备工作。比如 mysql 类的数据库，可能需要一些数据库配置、初始化的工作，这些工作要在最终的 mysql 服务器运行之前解决。
 
-  此外，可能希望避免使用 root 用户去启动服务，从而提高安全性，而在启动服务前还需要以 root 身份执行一些必要的准备工作，最后切换到服务用户身份启动服务。或者除了服务外，其它命令依旧可以使用 root 身份执行，方便调试等。
+此外，可能希望避免使用 root 用户去启动服务，从而提高安全性，而在启动服务前还需要以 root 身份执行一些必要的准备工作，最后切换到服务用户身份启动服务。或者除了服务外，其它命令依旧可以使用 root 身份执行，方便调试等。
 
-  这些准备工作是和容器 CMD 无关的，无论 CMD 为什么，都需要事先进行一个预处理的工作。这种情况下，可以写一个脚本，然后放入 ENTRYPOINT 中去执行，而这个脚本会将接到的参数（也就是 ）作为命令，在脚本最后执行。比如官方镜像 redis 中就是这么做的：
-
+这些准备工作是和容器 CMD 无关的，无论 CMD 为什么，都需要事先进行一个预处理的工作。这种情况下，可以写一个脚本，然后放入 ENTRYPOINT 中去执行，而这个脚本会将接到的参数（也就是 ）作为命令，在脚本最后执行。比如官方镜像 redis 中就是这么做的：
+```dockerfile
 FROM alpine:3.4
-...
 RUN addgroup -S redis && adduser -S -G redis redis
-...
 ENTRYPOINT ["docker-entrypoint.sh"]
 EXPOSE 6379
 CMD [ "redis-server" ]
-1
-2
-3
-4
-5
-6
-7
-  可以看到其中为了 redis 服务创建了 redis 用户，并在最后指定了 ENTRYPOINT 为 dockerentrypoint.sh 脚本。
+```
+可以看到其中为了 redis 服务创建了 redis 用户，并在最后指定了 ENTRYPOINT 为 dockerentrypoint.sh 脚本，脚本内容是：
 ```sh
 #!/bin/sh
-...
 # allow the container to be started with `--user`
 if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
     chown -R redis .
@@ -295,27 +255,26 @@ if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
 fi
 exec "$@"
 ```
-  该脚本的内容就是根据 CMD 的内容来判断，如果是 redis-server 的话，则切换到 redis 用户身份启动服务器，否则依旧使用 root 身份执行。比如：
-
+该脚本的内容就是根据 CMD 的内容来判断，如果是 redis-server 的话，则切换到 redis 用户身份启动服务器，否则依旧使用 root 身份执行。比如：
+```sh
 $ docker run -it redis id
 uid=0(root) gid=0(root) groups=0(root)
-1
-2
+```
 ## 2.6 ENV
- 格式有两种：
-
+这个指令很简单，就是设置环境变量而已，无论是后面的其它指令，如 RUN ，还是运行时的应用，都可以直接使用这里定义的环境变量。格式有两种：
+```dockerfile
 ENV <key> <value>
 ENV <key1>=<value1> <key2>=<value2>...
-  这个指令很简单，就是设置环境变量而已，无论是后面的其它指令，如 RUN ，还是运行时的应用，都可以直接使用这里定义的环境变量。
-
+```
+比如：
+```dockerfile
 ENV VERSION=1.0 DEBUG=on \
     NAME="Happy Feet"
-1
-2
-  这个例子中演示了如何换行，以及对含有空格的值用双引号括起来的办法，这和 Shell 下的行为是一致的。
+```
+这个例子中演示了如何换行，以及对含有空格的值用双引号括起来的办法，这和 Shell 下的行为是一致的。
 
-  定义了环境变量，那么在后续的指令中，就可以使用这个环境变量。比如在官方 node 镜像 Dockerfile 中，就有类似这样的代码：
-
+定义了环境变量，那么在后续的指令中，就可以使用这个环境变量。比如在官方 node 镜像 Dockerfile 中，就有类似这样的代码：
+```dockerfile
 ENV NODE_VERSION 7.2.0
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.ta
 r.xz" \
@@ -325,21 +284,14 @@ r.xz" \
     && tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
     && rm "node-v$NODE_VERSION-linux-x64.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
     && ln -s /usr/local/bin/node /usr/local/bin/nodejs
-1
-2
-3
-4
-5
-6
-7
-8
-9
-  在这里先定义了环境变量 NODE_VERSION ，其后的 RUN 这层里，多次使用 $NODE_VERSION 来进行操作定制。可以看到，将来升级镜像构建版本的时候，只需要更新 7.2.0 即可， Dockerfile 构建维护变得更轻松了。
+```
+在这里先定义了环境变量 NODE_VERSION ，其后的 RUN 这层里，多次使用 $NODE_VERSION 来进行操作定制。可以看到，将来升级镜像构建版本的时候，只需要更新 7.2.0 即可， Dockerfile 构建维护变得更轻松了。
 
-  下列指令可以支持环境变量展开：
+下列指令可以支持环境变量展开：
   ADD 、 COPY 、 ENV 、 EXPOSE 、 LABEL 、 USER 、 WORKDIR 、 VOLUME 、 STOPSIGNAL 、 ONBUILD 。
 
-  可以从这个指令列表里感觉到，环境变量可以使用的地方很多，很强大。通过环境变量，我们可以让一份 Dockerfile 制作更多的镜像，只需使用不同的环境变量即可。
+可以从这个指令列表里感觉到，环境变量可以使用的地方很多，很强大。通过环境变量，我们可以让一份 Dockerfile 制作更多的镜像，只需使用不同的环境变量即可。
+
 ## 2.7 ARG 构建参数
  格式： ARG <参数名>[=<默认值>]
 
