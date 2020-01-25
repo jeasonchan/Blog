@@ -441,10 +441,3 @@ cat Dockerfile | docker build -
 $ docker build - < context.tar.gz
 ```
 如果发现标准输入的文件格式是 gzip 、 bzip2 以及 xz 的话，将会使其为上下文压缩包，直接将其展开，将里面视为上下文，并开始构建。
-
-
-
-
-
-
-
