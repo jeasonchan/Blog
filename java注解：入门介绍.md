@@ -157,14 +157,12 @@ public @interface MyAnnotation1 {
 
 @Retention(RetentionPolicy.RUNTIME) 的意思就是指定该 Annotation 的策略是 RetentionPolicy.RUNTIME。这就意味着，编译器会将该 Annotation 信息保留在 .class 文件中，并且能被虚拟机读取。
 
-定义 Annotation 时，@Retention 可有可无。若没有 @Retention，则默认是 RetentionPolicy.CLASS。
+定义 Annotation 时，@Retention 可有可无。**若没有 @Retention，则默认是 RetentionPolicy.CLASS。**像springboot中的主程序什么的注解，应该就是保留到运行期的，还有dropwizard的@service注解。
 
-2）java自带的Annotation
+### 2.3.2 java自带的Annotation
 通过上面的示例，我们能理解：@interface 用来声明 Annotation，@Documented 用来表示该 Annotation 是否会出现在 javadoc 中， @Target 用来指定 Annotation 的类型，@Retention 用来指定 Annotation 的策略。
 
-理解这一点之后，我们就很容易理解 java 中自带的 Annotation 的实现类，即 Annotation 架构图的右半边。如下图：
-
-
+理解这一点之后，我们就很容易理解 java 中自带的 Annotation 的实现类，即 Annotation 架构图的右半边。
 
 java 常用的 Annotation：
 
