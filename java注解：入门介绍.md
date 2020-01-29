@@ -119,12 +119,14 @@ c) 若 Annotation 的类型为 RUNTIME，则意味着：编译器将 Annotation 
 ## 2.3 java 自带的 Annotation
 理解了上面的 3 个类的作用之后，我们接下来可以讲解 Annotation 实现类的语法定义了。
 
-1）Annotation 通用定义
+### 2.3.1 Annotation 通用定义
+```java
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MyAnnotation1 {
 }
+```
 说明：
 
 上面的作用是定义一个 Annotation，它的名字是 MyAnnotation1。定义了 MyAnnotation1 之后，我们可以在代码中通过 "@MyAnnotation1" 来使用它。 其它的，@Documented, @Target, @Retention, @interface 都是来修饰 MyAnnotation1 的。下面分别说说它们的含义：
@@ -133,8 +135,7 @@ public @interface MyAnnotation1 {
 
 使用 @interface 定义注解时，意味着它实现了 java.lang.annotation.Annotation 接口，即该注解就是一个Annotation。
 
-定义 Annotation 时，@interface 是必须的。
-注意：它和我们通常的 implemented 实现接口的方法不同。Annotation 接口的实现细节都由编译器完成。通过 @interface 定义注解后，该注解不能继承其他的注解或接口。
+定义 Annotation 时，@interface 是必须的。注意：它和我们通常的 implemented 实现接口的方法不同。Annotation 接口的实现细节都由编译器完成。通过 @interface 定义注解后，该注解不能继承其他的注解或接口。
 
 (02) @Documented
 
@@ -148,7 +149,7 @@ public @interface MyAnnotation1 {
 
 @Target(ElementType.TYPE) 的意思就是指定该 Annotation 的类型是 ElementType.TYPE。这就意味着，MyAnnotation1 是来修饰"类、接口（包括注释类型）或枚举声明"的注解。
 
-定义 Annotation 时，@Target 可有可无。若有 @Target，则该 Annotation 只能用于它所指定的地方；若没有 @Target，则该 Annotation 可以用于任何地方。
+定义 Annotation 时，@Target 可有可无。若有 @Target，则该 Annotation 只能用于它所指定的地方；**若没有 @Target，则该 Annotation 可以用于任何地方。**
 
 (04) @Retention(RetentionPolicy.RUNTIME)
 
