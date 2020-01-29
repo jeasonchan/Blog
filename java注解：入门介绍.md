@@ -116,7 +116,7 @@ b) 若 Annotation 的类型为 CLASS，则意味着：编译器将 Annotation �
 c) 若 Annotation 的类型为 RUNTIME，则意味着：编译器将 Annotation 存储于 class 文件中，并且可由JVM读入。
 这时，只需要记住"每 1 个 Annotation" 都与 "1 个 RetentionPolicy" 关联，并且与 "1～n 个 ElementType" 关联。学完后面的内容之后，再回头看这些内容，会更容易理解。
 
-3、java 自带的 Annotation
+## 2.3 java 自带的 Annotation
 理解了上面的 3 个类的作用之后，我们接下来可以讲解 Annotation 实现类的语法定义了。
 
 1）Annotation 通用定义
