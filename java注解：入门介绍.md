@@ -165,24 +165,24 @@ public @interface MyAnnotation1 {
 理解这一点之后，我们就很容易理解 java 中自带的 Annotation 的实现类，即 Annotation 架构图的右半边。
 
 java 常用的 Annotation：
+* @Deprecated  -- @Deprecated 所标注内容，不再被建议使用。
+* @Override    -- @Override 只能标注方法，表示该方法覆盖父类中的方法。
+* @Documented  -- @Documented 所标注内容，可以出现在javadoc中。
+* @Inherited   -- @Inherited只能被用来标注“Annotation类型”，它所标注的Annotation具有继承性。即，父类拥有该注解时，子类会继承该注解。
+* @Retention   -- @Retention只能被用来标注“Annotation类型”，而且它被用来指定Annotation的RetentionPolicy属性。
+* @Target      -- @Target只能被用来标注“Annotation类型”，而且它被用来指定Annotation的ElementType属性。
+* @SuppressWarnings -- @SuppressWarnings 所标注内容产生的警告，编译器会对这些警告保持静默。
 
-@Deprecated  -- @Deprecated 所标注内容，不再被建议使用。
-@Override    -- @Override 只能标注方法，表示该方法覆盖父类中的方法。
-@Documented  -- @Documented 所标注内容，可以出现在javadoc中。
-@Inherited   -- @Inherited只能被用来标注“Annotation类型”，它所标注的Annotation具有继承性。
-@Retention   -- @Retention只能被用来标注“Annotation类型”，而且它被用来指定Annotation的RetentionPolicy属性。
-@Target      -- @Target只能被用来标注“Annotation类型”，而且它被用来指定Annotation的ElementType属性。
-@SuppressWarnings -- @SuppressWarnings 所标注内容产生的警告，编译器会对这些警告保持静默。
 由于 "@Deprecated 和 @Override" 类似，"@Documented, @Inherited, @Retention, @Target" 类似；下面，我们只对 @Deprecated, @Inherited, @SuppressWarnings 这 3 个 Annotation 进行说明。
 
-2.1) @Deprecated
-
+#### 2.3.2.1 @Deprecated
 @Deprecated 的定义如下：
-
+```java
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Deprecated {
 }
+```
 说明：
 
 (01) @interface -- 它的用来修饰 Deprecated，意味着 Deprecated 实现了 java.lang.annotation.Annotation 接口；即 Deprecated 就是一个注解。 (02) @Documented -- 它的作用是说明该注解能出现在 javadoc 中。
