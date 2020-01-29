@@ -48,8 +48,9 @@ Annotation 的每一个实现类，都 "和 1 个 RetentionPolicy 关联" 并且
 
 ## 2.2 Annotation 组成部分
 java Annotation 的组成中，有 3 个非常重要的主干类。它们分别是：
+* Annotation.java
 
-Annotation.java
+```java
 package java.lang.annotation;
 public interface Annotation {
 
@@ -61,9 +62,11 @@ public interface Annotation {
 
     Class<? extends Annotation> annotationType();
 }
-ElementType.java
-package java.lang.annotation;
+```
+* ElementType.java
 
+package java.lang.annotation;
+```java
 public enum ElementType {
     TYPE,               /* 类、接口（包括注释类型）或枚举声明  */
 
@@ -81,7 +84,8 @@ public enum ElementType {
 
     PACKAGE             /* 包声明  */
 }
-RetentionPolicy.java
+* RetentionPolicy.java
+```java
 package java.lang.annotation;
 public enum RetentionPolicy {
     SOURCE,            /* Annotation信息仅存在于编译器处理期间，编译器处理完之后就没有该Annotation信息了  */
@@ -90,22 +94,25 @@ public enum RetentionPolicy {
 
     RUNTIME            /* 编译器将Annotation存储于class文件中，并且可由JVM读入 */
 }
+```
 说明：
 
-(01) Annotation 就是个接口。
+* Annotation 类就是个普通的接口。
 
 "每 1 个 Annotation" 都与 "1 个 RetentionPolicy" 关联，并且与 "1～n 个 ElementType" 关联。可以通俗的理解为：每 1 个 Annotation 对象，都会有唯一的 RetentionPolicy 属性；至于 ElementType 属性，则有 1~n 个。
 
-(02) ElementType 是 Enum 枚举类型，它用来指定 Annotation 的类型。
+* ElementType 是 Enum 枚举类型，它用来指定 Annotation 的可以使用的对象（类、方法、属性等）。
 
 "每 1 个 Annotation" 都与 "1～n 个 ElementType" 关联。当 Annotation 与某个 ElementType 关联时，就意味着：Annotation有了某种用途。例如，若一个 Annotation 对象是 METHOD 类型，则该 Annotation 只能用来修饰方法。
 
-(03) RetentionPolicy 是 Enum 枚举类型，它用来指定 Annotation 的策略。通俗点说，就是不同 RetentionPolicy 类型的 Annotation 的作用域不同。
+* RetentionPolicy 是 Enum 枚举类型，它用来指定 Annotation 的策略。通俗点说，就是不同 RetentionPolicy 类型的 Annotation 的作用域不同。
 
-"每 1 个 Annotation" 都与 "1 个 RetentionPolicy" 关联。
+"每 1 个 Annotation" 都与 "1 个 RetentionPolicy" 关联。枚举类型一共有三种：
 
 a) 若 Annotation 的类型为 SOURCE，则意味着：Annotation 仅存在于编译器处理期间，编译器处理完之后，该 Annotation 就没用了。 例如，" @Override" 标志就是一个 Annotation。当它修饰一个方法的时候，就意味着该方法覆盖父类的方法；并且在编译期间会进行语法检查！编译器处理完后，"@Override" 就没有任何作用了。
+
 b) 若 Annotation 的类型为 CLASS，则意味着：编译器将 Annotation 存储于类对应的 .class 文件中，它是 Annotation 的默认行为。
+
 c) 若 Annotation 的类型为 RUNTIME，则意味着：编译器将 Annotation 存储于 class 文件中，并且可由JVM读入。
 这时，只需要记住"每 1 个 Annotation" 都与 "1 个 RetentionPolicy" 关联，并且与 "1～n 个 ElementType" 关联。学完后面的内容之后，再回头看这些内容，会更容易理解。
 
