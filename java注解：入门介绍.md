@@ -7,9 +7,7 @@ Java 注解（Annotation）又称 Java 标注，是 JDK5.0 引入的一种注释
 
 我按照自己的思路，对 Annotation 进行了整理。理解 Annotation 的关键，是理解 Annotation 的语法和用法。
 
-# 2 内置的注解:
-
-
+# 2 内置的注解
 Java 定义了一套注解，共有 7 个，3 个在 java.lang 中，剩下 4 个在 java.lang.annotation 中。
 
 作用在代码的注解是
@@ -28,27 +26,27 @@ Java 定义了一套注解，共有 7 个，3 个在 java.lang 中，剩下 4 �
 @SafeVarargs - Java 7 开始支持，忽略任何使用参数为泛型变量的方法或构造函数调用产生的警告。
 @FunctionalInterface - Java 8 开始支持，标识一个匿名函数或函数式接口。
 @Repeatable - Java 8 开始支持，标识某注解可以在同一个声明上使用多次。
-1、Annotation 架构
 
+## 2.1 Annotation 架构
+
+![java注解架构.jpg](./resources/java注解架构.jpg)
 
 从中，我们可以看出：
 
-(01) 1 个 Annotation 和 1 个 RetentionPolicy 关联。
+1. 1 个 Annotation 和 1 个 RetentionPolicy 关联。
 
 可以理解为：每1个Annotation对象，都会有唯一的RetentionPolicy属性。
-(02) 1 个 Annotation 和 1~n 个 ElementType 关联。
+2. 1 个 Annotation 和 1~n 个 ElementType 关联。
 
 可以理解为：对于每 1 个 Annotation 对象，可以有若干个 ElementType 属性。
 
-(03) Annotation 有许多实现类，包括：Deprecated, Documented, Inherited, Override 等等。
+3. Annotation 有许多实现类，包括：Deprecated, Documented, Inherited, Override 等等。
 
 Annotation 的每一个实现类，都 "和 1 个 RetentionPolicy 关联" 并且 " 和 1~n 个 ElementType 关联"。
 
-下面，我先介绍框架图的左半边(如下图)，即 Annotation, RetentionPolicy, ElementType；然后在就 Annotation 的实现类进行举例说明。
+下面，我先介绍框架图的左半边，即 Annotation, RetentionPolicy, ElementType；然后在就 Annotation 的实现类进行举例说明。
 
-
-
-2、Annotation 组成部分
+## 2.2 Annotation 组成部分
 java Annotation 的组成中，有 3 个非常重要的主干类。它们分别是：
 
 Annotation.java
