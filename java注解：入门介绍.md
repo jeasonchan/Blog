@@ -185,79 +185,40 @@ public @interface Deprecated {
 ```
 说明：
 
-(01) @interface -- 它的用来修饰 Deprecated，意味着 Deprecated 实现了 java.lang.annotation.Annotation 接口；即 Deprecated 就是一个注解。 (02) @Documented -- 它的作用是说明该注解能出现在 javadoc 中。
+(01) @interface -- 它的用来修饰 Deprecated，意味着 Deprecated 实现了 java.lang.annotation.Annotation 接口；即 Deprecated 就是一个注解。 
+
+(02) @Documented -- 它的作用是说明该注解能出现在 javadoc 中。
+
 (03) @Retention(RetentionPolicy.RUNTIME) -- 它的作用是指定 Deprecated 的策略是 RetentionPolicy.RUNTIME。这就意味着，编译器会将Deprecated 的信息保留在 .class 文件中，并且能被虚拟机读取。
+
 (04) @Deprecated 所标注内容，不再被建议使用。
-例如，若某个方法被 @Deprecated 标注，则该方法不再被建议使用。如果有开发人员试图使用或重写被 @Deprecated 标示的方法，编译器会给相应的提示信息。示例如下:
 
-
-
-DeprecatedTest.java
-import java.util.Date;
-import java.util.Calendar;
-
-public class DeprecatedTest {
-    // @Deprecated 修饰 getString1(),表示 它是建议不被使用的函数
-    @Deprecated
-    private static void getString1(){
-        System.out.println("Deprecated Method");
-    }
-   
-    private static void getString2(){
-        System.out.println("Normal Method");
-    }
-   
-    // Date是日期/时间类。java已经不建议使用该类了
-    private static void testDate() {
-        Date date = new Date(113, 8, 25);
-        System.out.println(date.getYear());
-    }
-    // Calendar是日期/时间类。java建议使用Calendar取代Date表示"日期/时间"
-    private static void testCalendar() {
-        Calendar cal = Calendar.getInstance();
-        System.out.println(cal.get(Calendar.YEAR));
-    }
-   
-    public static void main(String[] args) {
-        getString1();
-        getString2();
-        testDate();
-        testCalendar();
-    }
-}
-说明：
-
-上面是 eclipse 中的截图，比较类中 "getString1() 和 getString2()" 以及 "testDate() 和 testCalendar()" 。
-
-(01) getString1() 被 @Deprecated 标注，意味着建议不再使用 getString1(); 所以 getString1() 的定义和调用时，都会一横线。这一横线是eclipse() 对 @Deprecated 方法的处理。
-
-getString2() 没有被 @Deprecated 标注，它的显示正常。
-
-(02) testDate() 调用了 Date 的相关方法，而 java 已经建议不再使用 Date 操作日期/时间。因此，在调用 Date的API 时，会产生警告信息，途中的 warnings。
-
-testCalendar() 调用了 Calendar 的 API 来操作日期/时间，java 建议用 Calendar 取代 Date。因此，操作 Calendar 不会产生 warning。
-
-2.2) @Inherited
-
+#### 2.3.2.2 @Inherited
 @Inherited 的定义如下：
-
+```java
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface Inherited {
 }
+```
 说明：
 
 (01) @interface -- 它的用来修饰 Inherited，意味着 Inherited 实现了 java.lang.annotation.Annotation 接口；即 Inherited 就是一个注解。
+
 (02) @Documented -- 它的作用是说明该注解能出现在 javadoc 中。
+
 (03) @Retention(RetentionPolicy.RUNTIME) -- 它的作用是指定 Inherited 的策略是 RetentionPolicy.RUNTIME。这就意味着，编译器会将 Inherited 的信息保留在 .class 文件中，并且能被虚拟机读取。
+
 (04) @Target(ElementType.ANNOTATION_TYPE) -- 它的作用是指定 Inherited 的类型是 ANNOTATION_TYPE。这就意味着，@Inherited 只能被用来标注 "Annotation 类型"。
+
 (05) @Inherited 的含义是，它所标注的Annotation将具有继承性。
-假设，我们定义了某个 Annotaion，它的名称是 MyAnnotation，并且 MyAnnotation 被标注为 @Inherited。现在，某个类 Base 使用了
-MyAnnotation，则 Base 具有了"具有了注解 MyAnnotation"；现在，Sub 继承了 Base，由于 MyAnnotation 是 @Inherited的(具有继承性)，所以，Sub 也 "具有了注解 MyAnnotation"。
 
 @Inherited 的使用示例:
 
+假设，我们定义了某个 Annotaion，它的名称是 MyAnnotation，并且 MyAnnotation 被标注为 @Inherited。现在，某个类 Base 使用了
+MyAnnotation；现在，Sub 继承了 Base，由于 MyAnnotation 是 @Inherited的(具有继承性)，所以，Sub 也 "具有了注解 MyAnnotation"。
+```java
 InheritableSon.java
 import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
@@ -300,69 +261,21 @@ public class InheritableSon extends InheritableFather
         InheritableSon is = new InheritableSon();
     }
 }
+```
 运行结果：
-
+```
 InheritableFather:true
 InheritableSon:true
-现在，我们对 InheritableSon.java 进行修改：注释掉 "Inheritable 的 @Inherited 注解"。
-
-InheritableSon.java
-import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Inherited;
-
-/**
- * 自定义的Annotation。
- */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-//@Inherited
-@interface Inheritable
-{
-}
-
-@Inheritable
-class InheritableFather
-{
-    public InheritableFather() {
-        // InheritableBase是否具有 Inheritable Annotation
-        System.out.println("InheritableFather:"+InheritableFather.class.isAnnotationPresent(Inheritable.class));
-    }
-}
-
-/**
- * InheritableSon 类只是继承于 InheritableFather，
- */
-public class InheritableSon extends InheritableFather
-{
-    public InheritableSon() {
-        super();    // 调用父类的构造函数
-        // InheritableSon类是否具有 Inheritable Annotation
-        System.out.println("InheritableSon:"+InheritableSon.class.isAnnotationPresent(Inheritable.class));
-    }
-   
-    public static void main(String[] args)
-    {
-        InheritableSon is = new InheritableSon();
-    }
-}
-运行结果：
-
-InheritableFather:true
-InheritableSon:false
-对比上面的两个结果，我们发现：当注解 Inheritable 被 @Inherited 标注时，它具有继承性。否则，没有继承性。
-
-2.3) @SuppressWarnings
-
+```
+#### 2.3.2.3 @SuppressWarnings
 @SuppressWarnings 的定义如下：
-
+```java
 @Target({TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE})
 @Retention(RetentionPolicy.SOURCE)
 public @interface SuppressWarnings {
-    String[] value();
+    String[] value();//调用该方法，能返回的注解的入参；使用时，也是通过该方法取出使用
 }
+```
 说明：
 
 (01) @interface -- 它的用来修饰 SuppressWarnings，意味着 SuppressWarnings 实现了 java.lang.annotation.Annotation 接口；即 SuppressWarnings 就是一个注解。
@@ -372,20 +285,21 @@ public @interface SuppressWarnings {
 (03) @Target({TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE}) -- 它的作用是指定 SuppressWarnings 的类型同时包括TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE。
 
 TYPE 意味着，它能标注"类、接口（包括注释类型）或枚举声明"。
+
 FIELD 意味着，它能标注"字段声明"。
+
 METHOD 意味着，它能标注"方法"。
+
 PARAMETER 意味着，它能标注"参数"。
+
 CONSTRUCTOR 意味着，它能标注"构造方法"。
+
 LOCAL_VARIABLE 意味着，它能标注"局部变量"。
+
 (04) String[] value(); 意味着，SuppressWarnings 能指定参数
 
 (05) SuppressWarnings 的作用是，让编译器对"它所标注的内容"的某些警告保持静默。例如，"@SuppressWarnings(value={"deprecation", "unchecked"})" 表示对"它所标注的内容"中的 "SuppressWarnings 不再建议使用警告"和"未检查的转换时的警告"保持沉默。示例如下：
-
-
-
-
-
-SuppressWarningTest.java
+```java
 import java.util.Date;
 
 public class SuppressWarningTest {
@@ -400,68 +314,38 @@ public class SuppressWarningTest {
         doSomething();
     }
 }
-说明：
-
-(01) 左边的图中，没有使用 @SuppressWarnings(value={"deprecation"}) , 而 Date 属于 java 不再建议使用的类。因此，调用 Date 的 API 时，会产生警告。而右边的途中，使用了 @SuppressWarnings(value={"deprecation"})。因此，编译器对"调用 Date 的 API 产生的警告"保持沉默。
-
-补充：SuppressWarnings 常用的关键字的表格
+```
+SuppressWarnings 常用的关键字:
 
 deprecation  -- 使用了不赞成使用的类或方法时的警告
+
 unchecked    -- 执行了未检查的转换时的警告，例如当使用集合时没有用泛型 (Generics) 来指定集合保存的类型。
+
 fallthrough  -- 当 Switch 程序块直接通往下一种情况而没有 Break 时的警告。
+
 path         -- 在类路径、源文件路径等中有不存在的路径时的警告。
+
 serial       -- 当在可序列化的类上缺少 serialVersionUID 定义时的警告。
+
 finally      -- 任何 finally 子句不能正常完成时的警告。
+
 all          -- 关于以上所有情况的警告。
-4、Annotation 的作用
-Annotation 是一个辅助类，它在 Junit、Struts、Spring 等工具框架中被广泛使用。
+
+## 2.4 注解 的作用
+注解 在 Junit、Struts、Spring 等工具框架中被广泛使用。
 
 我们在编程中经常会使用到的 Annotation 作用有：
 
-1）编译检查
+1. 编译检查
 Annotation 具有"让编译器进行编译检查的作用"。
 
 例如，@SuppressWarnings, @Deprecated 和 @Override 都具有编译检查作用。
 
-(01) 关于 @SuppressWarnings 和 @Deprecated，已经在"第3部分"中详细介绍过了。这里就不再举例说明了。
-
-(02) 若某个方法被 @Override 的标注，则意味着该方法会覆盖父类中的同名方法。如果有方法被 @Override 标示，但父类中却没有"被 @Override 标注"的同名方法，则编译器会报错。示例如下：
-
-
-
-OverrideTest.java
-public class OverrideTest {
-
-    /**
-     * toString() 在java.lang.Object中定义；
-     * 因此，这里用 @Override 标注是对的。
-     */
-    @Override
-    public String toString(){
-        return "Override toString";
-    }
-
-    /**
-     * getString() 没有在OverrideTest的任何父类中定义；
-     * 但是，这里却用 @Override 标注，因此会产生编译错误！
-     */
-    @Override
-    public String getString(){
-        return "get toString";
-    }
-   
-    public static void main(String[] args) {
-    }
-}
-上面是该程序在 eclipse 中的截图。从中，我们可以发现 "getString()" 函数会报错。这是因为 "getString() 被 @Override 所标注，但在OverrideTest 的任何父类中都没有定义 getString1() 函数"。
-
-"将 getString() 上面的 @Override注释掉"，即可解决该错误。
-
-2) 在反射中使用 Annotation
+2. 在反射中使用 Annotation
 在反射的 Class, Method, Field 等函数中，有许多于 Annotation 相关的接口。
 
 这也意味着，我们可以在反射中解析并使用 Annotation。
-
+```java
 AnnotationTest.java
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Target;
@@ -527,6 +411,8 @@ public class AnnotationTest {
         iteratorAnnotations(mEmpty);
     }
    
+
+    
     public static void iteratorAnnotations(Method method) {
 
         // 判断 somebody() 方法是否包含MyAnnotation注解
@@ -547,8 +433,9 @@ public class AnnotationTest {
         }
     }
 }
+```
 运行结果：
-
+```
 somebody: lily, 18
 girl, boy, 
 @com.skywang.annotation.MyAnnotation(value=[girl, boy])
@@ -557,10 +444,11 @@ empty
 unknown, 
 @com.skywang.annotation.MyAnnotation(value=[unknown])
 @java.lang.Deprecated()
-3) 根据 Annotation 生成帮助文档
+```
+3. 根据 Annotation 生成帮助文档
 通过给 Annotation 注解加上 @Documented 标签，能使该 Annotation 标签出现在 javadoc 中。
 
-4) 能够帮忙查看查看代码
+4. 能够帮忙查看代码
 通过 @Override, @Deprecated 等，我们能很方便的了解程序的大致结构。
 
 另外，我们也可以通过自定义 Annotation 来实现一些功能。
