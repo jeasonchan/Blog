@@ -1,5 +1,5 @@
 # 1 配置文件
-使用spring initializr创建spring boot工程时，默认的app全局配置文件是：src/main/resources/application.properties，但是，还支持src/main/resources/application.yaml，配置的**名字是固定的**。(很久之前，大多使用XML文件作为配置文件，现在仍然有这中方式。)目前，主流使用yaml书写配置文件。
+使用spring initializr创建spring boot工程时，默认的app全局配置文件是：src/main/resources/application.properties(默认以)，但是，还支持src/main/resources/application.yaml，配置的**名字是固定的**。(很久之前，大多使用XML文件作为配置文件，现在仍然有这中方式。)目前，主流使用yaml书写配置文件。
 
 配置文件的作用是：修改springboot的默认配置（auto configuration）
 ## 1.1 YAML语法
@@ -127,6 +127,14 @@ person:
 ```
 
 
+
+## 1.2 配置文件和类的绑定
+
+最终目的很简单：
+
+1. 以某个类为反序列化模板
+2. 从配置文件中反序列化出一个实例，应该是使用Jackson之类的库
+3. 并注入到spring容器中以供使用，在模板类上使用＠component注解即可
 
 
 
