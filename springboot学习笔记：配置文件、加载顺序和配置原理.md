@@ -116,6 +116,16 @@ person:
     age: 666
 ```
 
+并且，使用如下的依赖，在已经使用prefix="beanName"进行配置bean绑定的情况下，在yaml中编写beanName时，会有提示：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-configuration-processor</artifactId>
+    <optional>true</optional>
+</dependency>
+```
+
 
 
 
