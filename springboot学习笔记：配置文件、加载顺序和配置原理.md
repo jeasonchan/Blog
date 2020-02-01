@@ -48,6 +48,78 @@ animalList:
     - monkey
 ```
 
+或者直接使用数组的行内写法：
+
+```yaml
+animalList: [cat, dog, monkey]
+```
+
+
+
+将以上的类型进行综合利用：
+
+```java
+@Getter
+@Setter
+public class Person {
+    private String lastName;
+    private Integer age;
+    private Boolean isBoss;
+    private Date birthday;
+
+    private Map<String, Object> maps;
+    private List<Object> objectList;
+    private Dog petDog;
+
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "lastName='" + lastName + '\'' +
+                ", age=" + age +
+                ", isBoss=" + isBoss +
+                ", birthday=" + birthday +
+                ", maps=" + maps +
+                ", objectList=" + objectList +
+                ", petDog=" + petDog +
+                '}';
+    }
+}
+
+```
+
+尤其注意：
+
+Person只配置@ConfigurationProperties注解是无法反序列化并被容器内的实例获取的，必须配合@Component或者@EnableConfigurationProperties 。
+
+如果一个配置类只配置@ConfigurationProperties注解，而没有使用@Component，那么在IOC容器中是获取不到properties 配置文件转化的bean。说白了 @EnableConfigurationProperties 相当于把使用  @ConfigurationProperties 的类进行了一次注入。
+ 测试发现 @ConfigurationProperties 与 @EnableConfigurationProperties 关系特别大。
+
+
+
+对应的yaml可写为：
+
+```yaml
+person:
+  lastName: jeason
+  age: 16
+  isBoss: true
+  birthday: 2017/12/12
+  objectList:
+    - 123
+    - hahahaha
+  maps:
+    key1: value1
+    key2: value2
+  petDog:
+    name: sb
+    age: 666
+```
+
+
+
+
+
 # 2 加载顺序
 
 # 3 配置原理
