@@ -11,20 +11,41 @@
 
 * value的类型：
 
-字面量（数字、字符串、布尔）：
+字面量（数字、字符串、布尔）：	字面量所见即所得，直接写即可。但是，双引号的和单引号包括字符串时有稍有区别。
+
+​	英文双引号：不会进行任何转译，真正的所见即所得
+
+​	引文单引号：会像java中的字符串输出，进行转译
 
 
-对象（属性和值）、Map（键值对）：
+
+对象（属性和值）、Map（键值对）：对象直接写成key:[空格]value的形式，比如：
+
+```yaml
+person:
+	name: jeason
+	age: 16
+	country: China
+```
+
+或者
+
+```yaml
+person: {name: jeason, age: 16, country: China}
+```
 
 
-数组（List、Set）
+
+数组（List、Set）：
+
+使用一个短横表示的数组的中的一个元素的，短横和value之间也必须有空格，比如：
 
 
 ```yaml
-sever:
-    port: 6666
-    path: /hello 
-
+animalList:
+    - cat
+    - dog
+    - monkey
 ```
 
 # 2 加载顺序
