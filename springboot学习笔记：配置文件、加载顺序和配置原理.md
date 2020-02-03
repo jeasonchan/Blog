@@ -214,6 +214,21 @@ public class MainApplication {
 }
 ```
 
+### 1.3.4 向IOC容器中添加组件的方式
+
+spring向容器中添加组件（Bean）的方式（也就是装配方式）有多种：xml文件配置、java配置类、注解配置。到了springboot中，官方推荐使用Java配置类的方式像容器中添加组件，比如：
+
+```java
+@Configuration//指定当前类是配置类，来替代之前spring的配置文件；此处，也就是使用Java类作为装配依据
+public class MyAppConf {
+
+    @Bean//将方法的返回值放入容器，默认ID是方法名
+    public Person person2() {
+        return null;
+    }
+}
+```
+
 
 
 # 2 加载顺序
