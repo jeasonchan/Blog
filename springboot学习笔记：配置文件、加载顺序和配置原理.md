@@ -156,7 +156,51 @@ person:
 
 3. 并注入到spring容器中以供使用，在模板类上使用＠component注解即可
 
-**part 13 00：07**
+## 1.3 加载指定的配置文件@PropertySource
+
+使用@ConfigurationProperties 注解是，是默认直接读取 resource 文件夹下面的application.yaml（这就是全局配置文件）。但是！有时候，数据库、redis也有配置文件的需求，都写在一个文件，可能的会写很长，并且，对应的配置类的属性也越来越多。我们就会有多个自定义配置类的需求，并且，就可以在自定义的配置类上**再额外使用**@PropertySource以指定配置文件。
+
+配置类
+
+```java
+@Getter
+@Setter
+@Component  //将该注入到spring容器中，使其能够被获取
+@ConfigurationProperties(prefix = "person") //将配置文件中的 person 反序列化成这个类
+@PropertySource(value = {"classpath:person.yaml"})
+public class Person {
+    private String lastName;
+    private Integer age;
+    private Boolean isBoss;
+    private Date birthday;
+
+    private Map<String, Object> maps;
+    private List<Object> objectList;
+    private Dog petDog;
+    }
+}
+```
+
+对应的配置文件src/main/resources/person.yaml：
+
+```yam
+person:
+  lastName: jeason_chan
+  age: 16
+  isBoss: true
+  birthday: 2017/12/12
+  objectList:
+    - 123
+    - hahahaha
+  maps:
+    key1: value1
+    key2: value2
+  petDog:
+    name: sb
+    age: 666
+```
+
+
 
 # 2 加载顺序
 
