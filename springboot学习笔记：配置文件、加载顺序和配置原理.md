@@ -200,6 +200,20 @@ person:
     age: 666
 ```
 
+1.4 加载spring的配置文件@ImportResource
+
+在springboot工程中，如果在的资源文件夹里spring的xxxx.xml文件，以希望springboot自动读取这个xml文件，并生成相应的bean，那必定是无法自动实现的………为了让spring应用可以完全迁移到的springboot中，springboot支持的在springboot的应用启动类上使用@ImportResource，以使spring的xml的配置文件生效，比如：
+
+```java
+@ImportResource(value = {"classpath:spring.xml"})
+@SpringBootApplication //运行该类的main方法来运行应用
+public class MainApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MainApplication.class, args);
+    }
+}
+```
+
 
 
 # 2 加载顺序
