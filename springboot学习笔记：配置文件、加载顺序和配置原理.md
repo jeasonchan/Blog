@@ -290,7 +290,9 @@ spring:
 
 ### 1.6.3 如何激活指定Profile
 
-直接说的yaml文件的，开头加一个文档，并指明当前激活的profile即可。
+激活特定的profile的方式也有多种：
+
+1. 直接说的yaml文件的，开头加一个文档，并指明当前激活的profile即可。
 
 ```yaml
 spring:
@@ -315,8 +317,30 @@ spring:
 
 ```
 
-
+2. java参数： --spring.profiles.active=a，既可以作为java -jar xxxxx 的参数，也可以作为idea里面的启动参数。该方式的优先级高于的文档里写的激活。
+3. 虚拟机参数：虚拟参数   -Dspring.profiles.active=a
 
 # 2 加载顺序
+
+springboot会自动的扫描四个位置的配置文件，优先级从高到低是：
+
+1. 项目目录/config/application.yaml
+2. 项目目录/application.yaml
+3. classpath:/config/application.yaml，也就是resource文件夹
+4. classpath:/application.yaml，也就是resource文件夹
+
+但是！有冲突时，采用优先级最高的文件里的描述，没有冲突的（尽管优先级最低），还是会和并进最终的配置，这是**互补配置**。
+
+
+
+同时还可以通过java参数的形式，使用jar包之外的配置文件，比如：
+
+```sh
+$:ls
+a.jar     application.yml
+$:java -jar a.jar --spring.config.location ./application.yml
+```
+
+最终和jar包内的配置文件形成互补配置，在运维时十分常用。
 
 # 3 配置原理
