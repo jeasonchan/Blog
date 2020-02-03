@@ -200,7 +200,7 @@ person:
     age: 666
 ```
 
-1.4 加载spring的配置文件@ImportResource
+## 1.4 加载spring的配置文件@ImportResource
 
 在springboot工程中，如果在的资源文件夹里spring的xxxx.xml文件，以希望springboot自动读取这个xml文件，并生成相应的bean，那必定是无法自动实现的………为了让spring应用可以完全迁移到的springboot中，springboot支持的在springboot的应用启动类上使用@ImportResource，以使spring的xml的配置文件生效，比如：
 
@@ -214,7 +214,7 @@ public class MainApplication {
 }
 ```
 
-### 1.3.4 向IOC容器中添加组件的方式
+### 1.4.1向IOC容器中添加组件的方式
 
 spring向容器中添加组件（Bean）的方式（也就是装配方式）有多种：xml文件配置、java配置类、注解配置。到了springboot中，官方推荐使用Java配置类的方式像容器中添加组件，比如：
 
@@ -227,6 +227,92 @@ public class MyAppConf {
         return null;
     }
 }
+```
+
+## 1.5 配置文件的占位符(${...}表达式)
+
+```yaml
+person:
+  lastName: jeason
+  age: 16
+  isBoss: true
+  birthday: 2017/12/12
+  objectList:
+    - 123
+    - hahahaha
+  maps:
+    key1: value1
+    key2: value2
+  petDog:
+    name: sb
+    age: 666
+
+admin:
+  lasNname: ${person.lastName}
+  fullNAme: ${person.lastName}chan
+  age: ${random.int}
+  address: ${person.address:default}
+```
+
+总结：
+
+从admin的配置看出来，也就是使用${xxxxx}表达式，取不到值时，可以使用冒号来指定默认值。
+
+## 1.6 Profile
+
+Profile是Spring对不同环境提供不同配置功能的，可以通过激活、指定参数等方式快速切换环境。利用Profile实现多环境切换，针对applicaiton.properties和application.yaml格式，主要有以下2种实现方式。
+
+### 1.6.1 多Profile文件
+
+如果applicaiton.properties，直接通过不同名称的全局配置文件来区别不同的环境，比如：application.properties（默认的配置文件名称必须跟这个一摸一样）、application-a.properties、application-b.properties、application-c.properties。
+
+### 1.6.2 yaml本身支持多文档块方式
+
+使用yaml文档同页多文档特定和profile标注，比如：
+
+```yaml
+person:
+  lastName: jeason
+
+spring:
+  profiles: a  
+---
+person:
+  lastName: jeason
+  age: 17
+
+spring:
+  profiles: b
+
+```
+
+标注出了不同的环境a和b，a和b的名称是可以自定义的，比如，dev、test、prod什么的。
+
+### 1.6.3 如何激活指定Profile
+
+直接说的yaml文件的，开头加一个文档，并指明当前激活的profile即可。
+
+```yaml
+spring:
+  profiles:
+    active: a
+
+---
+person:
+  lastName: jeason
+  age: 16
+
+spring:
+  profiles: a
+
+---
+person:
+  lastName: jeason
+  age: 16
+
+spring:
+  profiles: b
+
 ```
 
 
