@@ -361,6 +361,22 @@ java -jar a.jar --spring.profiles.active=a
 java -jar a.jar --spring.config.location ./application.yml
 ```
 
+2. jar包**外**的application**-{profile}**.yaml
 
+   jar包和application**-{profile}**.yaml在**同一个目录时**，直接使用javar -jar 运行jar包时，默认**直接使用**在同一个目录中的pplication**-{profile}**.yaml，**没有必要**使用 --spring.config.location ./application.yml 指定配置文件。
+
+3. jar包**内**的application**-{profile}**.yaml
+
+   同上。
+
+4. jar包**外**的application.yaml
+
+   同上。
+
+5. jar包**内**的application.yaml
+
+   同上。
+
+上面的四条就是，**由外向内，profile优先**。
 
 # 3 配置原理
