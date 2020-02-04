@@ -349,6 +349,18 @@ $:java -jar a.jar --spring.config.location ./application.yml
 
 能够打包进的jar包的文件只有的各种类和classpath下的文件，也就是，**能打包进jar包的配置文件只有，上面提到的3和4**，上面提到的1和2也只有在IDE里点运行时才会有高的优先级。但是！如果要改一次配置文件就必须编译一次的jar包，太麻烦了，因此，有时候还必须使用外部文件、字符串等作为配置输入，和jar内的配置文件形成**互补配置**。
 
+以下开始介绍几种主流的，使用来源于外部的配置信息的方法，配置由高到低的优先级是：
+
 1. 命令行
+
+比如：
+
+```sh
+java -jar a.jar --spring.server.port=6666
+java -jar a.jar --spring.profiles.active=a
+java -jar a.jar --spring.config.location ./application.yml
+```
+
+
 
 # 3 配置原理
