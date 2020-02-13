@@ -1,6 +1,6 @@
 # 0 声明
 
-本文并非原创，我自己能找到的源地址是：<https://legacy.gitbook.com/book/yulinfeng/-java/details>，自己一边学习一边二次加工，调整一些顺序，加入了自己的理解。
+本文并非原创，我自己能找到的源地址是：<https://legacy.gitbook.com/book/yulinfeng/-java/details>，本文是自己一边学习原文，一边二次加工记录所得。
 
 感谢原作者。
 
@@ -302,7 +302,41 @@ IMemory appleMemory=apple.createMemory();
 
 ### 1.3.2 Java源码中的抽象工厂模式
 
+在Java源码中通过JDBC可以连接操作不同的数据库，它的设计同样是基于抽象工厂模式。严格来讲，它更属于是工厂模式，至于抽象工厂模式和工厂模式在后面会提到。
 
+对于使用JDBC连接数据库，首先会经历下面两个阶段：加载、连接，但是，不同类型的数据库驱动，加载和连接做的事情是不一样的（也就是，实现不同）。
+
+```java
+//加载数据库驱动
+Class.forName("com.mysql.jdbc.Driver"); 
+//连接相应的数据库
+Connection connection = DriverManager.getConnection("url", "username", "password");
+```
+
+```DriverManager.getConnection()```是我们在**1.1工厂模式**一节的**Tips**中提到的静态工厂方法，它用于创建并返回一个`Connection`数据连接。在其内部，最终调用了一个私有的重载方法getConnection(String, java.util.Properties, Class)`。在这个私有`getConnection`方法中会遍历已经注册的数据库驱动，也就是会得到我们手动加载的MySQL数据库驱动```Class.forName("com.mysql.jdbc.Driver")```。
+
+```java
+private static Connection getConnection(String url, java.util.Properties info, Class<?> caller){
+	...略...
+    for(DriverInfo aDriver : registeredDrivers)
+    ...略...
+    Connection con = aDriver.driver.connect(url, info);    
+}
+```
+
+代码中`aDriver.driver`返回的正是MySQL实现的具体驱动类，也就是一个具体的抽象工厂接口实现类——`com.mysql.jdbc.Driver`，它的抽象工厂接口则是Java定义的——`com.sql.Driver`。
+
+分析到这个地方，我们已经能画出**数据库驱动接口及驱动实现类UML图**。
+
+![数据库抽象接口及驱动类UML图](https://patterns.coderbuff.com/chapter1/abstract_factory_design_pattern/jdk_abstract_factory_design_pattern.png)
+
+
+
+驱动的抽象工厂接口```java.sql.Driver```中定义的接口不止connect这一个，此处为了简略，只写了一个出来。本质上，从Driver到Conenction实例创建，就是一个的抽象工厂模式，正是因为设计成抽象工厂模式，数据库厂商新增驱动时变得方便，同时，使用者也是直接调用”通用的“接口。
+
+### 1.3.3 小结
+
+通过对比工厂模式和抽象工厂模式，工厂模式只是抽象工厂模式的一直特殊情况，即为，工厂接口包含的方法数为1的特殊情况，抽象工厂模式的本质就是面向抽象、接口编程，代码的实现就是，用工厂接口的实现类去生成”产品“接口/抽象类 实例的过程，从而去使用”产品“的共同特性，比如，方法、属性。
 
 # 2 结构型设计模式
 
