@@ -1,8 +1,12 @@
+# 0 声明
+
+本文并非原创，我自己能找到的源地址是：<https://legacy.gitbook.com/book/yulinfeng/-java/details>，自己一边学习一边二次加工，调整一些顺序，加入了自己的理解。
+
+感谢原作者。
+
 # 1 创建型设计模式
 
 创建型的设计模式一共有5种，顾名思义，用于创建对象实例的一种设计模式。由于**直接new对象会造成耦合度高、扩展性不强等问题**，遵循创建型的设计模式进行编码设计能较好的避免这种问题的发生。使得代码更加健壮，更具有扩展性和更低的耦合度。
-
-参考文章：<https://patterns.coderbuff.com/chapter1/>。
 
 ## 1.1 工厂模式
 
@@ -256,11 +260,49 @@ Collections通过静态工厂方法导出集合方式不仅仅在于API数量的
 
 以`Collections.synchronizedList`举例，其内部方法返回的是List类型，而它的真正子类型则是`SynchronizedList`，这在其Collections作为内部类实现。这样我们不必暴露出SynchronizedList，也就是隐藏了我们真正实现的类，但又可以返回真正的对象，这个意义所在就是实现了基于接口编程。本质就是使用静态方法（synchronizedList()），产生了接口（List接口）的实现类（SynchronizedList，但是，该类的实现是内部类）。
 
-## 1.3 抽象工程模式
+## 1.3 抽象工厂模式
 
 在现实生活中商品有许多品牌，每一个品牌的商品又是有许多零零散散的零件组成。例如电脑是一个商品，它由CPU、内存等组成，同时又有华硕、苹果、联想等品牌生产电脑这种商品。
 
 ### 1.3.1 原型介绍
+
+在前文的工厂方法模式中一个工厂接口只会包含一个工厂方法，用于创建对象实例，它的子类具体工厂类负责实现接口中的这个方法。
+
+在抽象工厂模式中，一个工厂接口有多个方法，这些方法返回不同的对象实例，工厂接口的具体子类工厂实现这些方法，这些方法都返回不同类型（不类型体现在，实现了不同的接口或者继承了不同的抽象类）的对象实例。从代码形式上看，抽象工厂模式不过是在工厂中定义了多个方法，而工厂方法模式则只有一个。所以，工厂方法模式就是一种特殊的抽象工厂方法。
+
+所以，抽象工厂模式，本质就是用实现了Factory接口的工厂类，去生成实现了A接口/抽象类的实例、实现了B接口/抽象类的实例……
+
+从引子中的例子就可以得出，“生产电脑”是一个工厂接口，在这个工厂接口中定义了“生产CPU”、“生产内存”方法等。而“生产电脑”的实现类又有“华硕”、“苹果”、“联想”等，它们各自“生产CPU”、“生产内存”的方式又不尽相同（也就是方法实现不同）。这种情况下使用抽象工厂方法就是较好的选择。
+
+综上，如果一个对象中并没有其他对象的组合，只是一个单一且不依赖的对象，可以使用**工厂模式方法**，而如果一个对象中**包含**其他对象，相互依赖，此时则可以选择使用**抽象工厂方法**，抽象工厂模式的类图如下图所示：
+
+![抽象工厂模式的UML图](https://patterns.coderbuff.com/chapter1/abstract_factory_design_pattern/abstract_factory_design_pattern.png)
+
+和之前的工厂模式相比，**本质上唯一的区别就是，工厂接口IFactory包含了多个接口**，因此，工厂接口的实现类ConcreateFactory，要同时实现多个接口，从而最终实现将多个对象组合成一个对象（也就是，只需要一个工厂类比如联想，就能同时生产CPU、内存，~~最终给出一个组装对象~~）。
+
+利用抽象工厂模式设计一下，一开始提到的，各品牌生产电脑配件，并最终组装成电脑的类图：
+
+![电脑生产商生产、组装类图](https://patterns.coderbuff.com/chapter1/abstract_factory_design_pattern/computer_abstract_factory_design_pattern.png)
+
+用代码的形式，尝试生成一个电脑实例：
+
+```java
+//Lenovo实现了IComputerFactory接口
+IComputerFactory lenove=new Lenovo();
+ICpu lenovoCpu=lenovo.createCpu();
+IMemory lenovoMemory=lenovo.createMemory();
+//假设有增加了一个需求，来了一个Apple制造商
+//只需要新增代码即可实现功能拓展
+IComputerFactory apple=new Apple();
+ICpu appleCpu=apple.createCpu();
+IMemory appleMemory=apple.createMemory();
+```
+
+代码使用起来其实和工厂模式差不多，本质上还是接口的实现类生成接口的实现类，面向接口编程的思想。
+
+### 1.3.2 Java源码中的抽象工厂模式
+
+
 
 # 2 结构型设计模式
 
