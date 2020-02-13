@@ -16,7 +16,7 @@
 
 直接先用UML类图来直观感受下工厂模式（**非简单工厂模式**）。
 
-![工厂模式UML类图](https://patterns.coderbuff.com/chapter1/factory_design_pattern/factory_design_pattern.png)
+![工厂模式UML类图](<https://patterns.coderbuff.com/chapter1/factory_design_pattern/factory_design_pattern.png>)
 
 对于工厂方法，首先是需要定义一个用于产生具体对象的工厂接口（IFactory接口类，createFactory()方法），其次还有一个具体对象的公共父接口（IProduct接口） 或者 抽象类（上图使用的是接口，暂无抽象类）。产生具体对象是工厂接口的子类（上图中的ConcreateFactory），注意是工厂接口的子类。如果只定义一个实体工厂类用于生成类，就是简单工厂模式了。
 
