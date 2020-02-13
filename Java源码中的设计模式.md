@@ -338,6 +338,138 @@ private static Connection getConnection(String url, java.util.Properties info, C
 
 通过对比工厂模式和抽象工厂模式，工厂模式只是抽象工厂模式的一直特殊情况，即为，工厂接口包含的方法数为1的特殊情况，抽象工厂模式的本质就是面向抽象、接口编程，代码的实现就是，用工厂接口的实现类去生成”产品“接口/抽象类 实例的过程，从而去使用”产品“的共同特性，比如，方法、属性。
 
+## 1.4 单例模式
+
+通过new关键字创建一个对象实例是我们在学习Java时的第一课，这背后Java做了哪些操作是我们学习JVM时的第一课。
+
+当使用new创建一个对象实例时，JVM会在**堆区域**分配相应的内存，让这块内存也就是这个实例对象还有引用指向它时它便会一直存在，如果没有引用指向它此时便会对它进行GC（可达性分析）。也就是说我们在不断new一个对象时会带来两个问题：
+
+- 占用堆内存空间。
+- GC带来的影响。
+
+很多类在无状态（通过传递参数只做逻辑处理）的情况下重复利用就可以了，并不需要每次都new一个对象，例如在Spring中对于bean对象的创建默认都是singleton单例模式，也就是，每次从IOC中get出来的引用，指向同一块堆内存，修改一个会影响全部的同一ID的bean。
+
+### 1.4.1 原型介绍
+
+单例模式可以按不同维度对其进行分类
+
+- 线程安全维度：线程安全的单例模式、线程不安全的单例模式
+- 对象创建时机：饿汉式的单例模式、懒汉式的单例模式、singletonHolder式
+
+对于线程不安全的单例模式在多线程环境下对象并不是真正的单例，它还是极有可能被创建为“多例”，所以这种形式的单例模式实际当中并不常见，甚至不会有。接下来的单例模式均是基于**基本线程安全的单例模式**，补充一下，不带synchronized的double check不是线程安全的。
+
+**饿汉式单例模式**，指的是急不可耐的创建一个对象，也就是在类被JVM加载时就会被创建。
+
+```java
+/**
+ * 饿汉式单例模式
+ */
+public class Demo {
+    private static Demo instance = new Demo();
+
+    private Demo() {}
+
+    public static Demo getInstance() {
+        return instance;
+    }
+}
+```
+
+**饱汉式单例模式**指的是不必急着创建对象，而是用到的时候再去创建。
+
+```java
+/**
+ * 饱汉式单例模式
+ */
+public class Demo {
+    private static Demo instance;
+
+    private Demo() {}
+
+    public static synchronized Demo getInstance() {
+        if (instance == null) {
+            instance = new Demo();
+        }
+        return instance;
+    }
+}
+```
+
+但是！由于JVM的指令顺序优化原因，就算加了synchronized关键字，在new一个十分大的对象时，会发生线程安全问题。
+
+**singletonHolder式**，利用JVM内部静态类机制，达到线程安全和效率的平衡。
+
+```java
+public class Demo {
+    private static class SingetonHoler{
+        public final static Demo singleton=new Demo();
+    }
+
+    private Demo(){
+        System.out.println("调用"+this.getClass()+"构造函数！");
+    }
+
+    public static Demo getSingleton(){
+        return SingetonHoler.singleton;
+    }
+}
+```
+
+这种方法使用内部类来做到延迟加载对象，因为java机制规定，静态内部类SingletonHolder只有在getSingleton()方法第一次调用的时候才会被加载（实现了lazy，而懒汉模式的单例实例是个实例对象，一load就直接初始化了），而且其加载过程是线程安全的（java自己的实现是线程安全的）。内部类加载的时候实例化一次instance。这种写法最大的美在于，完全使用了Java虚拟机的机制进行同步保证，没有一个同步的关键字。
+
+### 1.4.2 Java源码中的单例模式
+
+Java源码中的单例模式并不常见，Java作为一个基础语言的支撑，将类设置为单例模式显然它是作为一种工具存在。
+
+Java中有一个类在一些特定需求例如性能监控上一定会被用到——Runtime。这个类就是使用了单例模式。
+
+```java
+public class Runtime {
+    private static Runtime currentRuntime = new Runtime();
+
+    public static Runtime getRuntime() {
+        return currentRuntime;
+    }
+    ······
+```
+
+对于获取Java应用程序中的一些状态，并不需要创建很多实例，使用单例模式就是很好的解决方案，Java源码在Runtime类上使用的饿汉式单例模式。
+
+### 1.4.3 Spring源码中的单例模式
+
+前面提到Spring框架中默认产生的bean对象是一个单例，如果想要它是多例可以将bean对象scope属性改为“prototype”表示每次使用这个bean时都会创建一个新的对象实例。另外还有“request”，每一次http request请求都会创建一个新的对象实例。当然还有“session”等。
+
+由于Spring比较复杂，bean对象的创建和初始化过程也会横跨多个类。在这里只摘取出Spring创建单例bean的部分代码，有兴趣可以查看Spring源码。
+
+```java
+//AbstractBeanFactory#doGetBean
+if (mbd.isSingleton()) {
+    sharedInstance = getSingleton(beanName, new ObjectFactory<Object>() {
+        
+        @Override
+        public Object getObject() throws BeansException {
+            try {
+                return createBean(beanName, mbd, args);
+            }
+            catch (BeansException ex) {
+// Explicitly remove instance from singleton cache: It might have been put there
+// eagerly by the creation process, to allow for circular reference resolution.
+// Also remove any beans that received a temporary reference to the bean.
+                destroySingleton(beanName);
+                throw ex;
+            }
+        }
+        
+    });
+    
+    bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
+}
+```
+
+前文提到过**静态工厂方法**，并且提出其能应用在单例设计模式中。单例模式中，```getSingleton()```方法都被设计成public和static，正是使用了静态工厂方法。
+
+
+
 # 2 结构型设计模式
 
 # 3 行为型设计模式
