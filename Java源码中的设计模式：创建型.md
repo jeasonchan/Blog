@@ -4,7 +4,7 @@
 
 参考文章：<https://patterns.coderbuff.com/chapter1/>。
 
-# 1.1 工厂模式
+## 1.1 工厂模式
 
 ### 1.1.1 引子
 
@@ -157,5 +157,103 @@ IProduct product2 = factory.createProduct();
 
 **在实际编码中，往往来得快来得爽的代码大多都会埋下未知的隐患。**
 
+
+
+总结一下，工厂模式就是用Factory接口的实现类，去产生Product接口的实现类。
+
 ### 1.2.3 Java源码中的工厂模式
 
+在Java源码中Iterator迭代器的实例对象创建使用的就是工厂模式，所以这里举例Iterator探寻JDK作者们是如何将工厂模式应用到Java源码中的。
+
+由于Java源码的多样性和复杂性，有的看起来并不那么像一个“标准”的设计模式，所以原作者对一些类进行简化，例如省去泛型，或将类的继承关系简化，或在分析源码结构时先将内部类剥离出来等等。
+
+先来一段创建Iterator迭代器的代码。
+
+```java
+//创建Iterator迭代器
+Collection collection = new ArrayList();
+Iterator iterator = collection.iterator();
+
+//工厂模式原型
+IFactory factory = new ConcreteFactory();
+Product product = factory.createProduct();
+```
+
+这和介绍中的工厂模式如出一辙（尽管实际上我们可能并不会这么写，`List list = new ArrayList()`的方式更常用）。迭代器创建的本质就是，由Collection接口的实现类（ArrayList），创建（iterator()方法，工厂类实现的方法）Iterator接口的实现类（ArrayListItr）。
+
+所以我们能依葫芦画瓢照着工厂模式的UML类图画出Iterator工厂模式的类图。
+
+![Iterator工厂模式的类图](https://patterns.coderbuff.com/chapter1/factory_design_pattern/jdk_iterator_factory.png)
+
+事实上在Java源码中并没有一个叫ArrayListItr的实现类，Iterator的实现类在ArrayList内部，也就是说在ArrayList有一个内部类。如果我们将Iterator的实现类单独定义，代码的包结构如下所示。
+
+```
+Factory Package
+├── Collection Interface
+├── ArrayList
+│
+Product Package
+├── Iterator Interface
+└── ArrayListItr
+```
+
+Java源码则将ArrayListItr在ArrayList内部，包结构如下所示。
+
+```
+java.util
+├── Collection Interface
+├── ArrayList
+└── Iterator Interface
+```
+
+将它们全部放在java.util下是因为还有其他功能的实现需要这么做。不单独实现Iterator从代码结构上来讲能更加清晰，把**Product的具体实现放到具体工厂中作为一个内部类是一种很好的设计思路，即为，ArrayList中返回的Iterator实例，本质上是ArrayList的内部类**。
+
+## 1.2 补充
+
+关于工厂模式有几个比较模糊的概念：**工厂方法模式**、**简单工厂模式**、**抽象工厂模式**、**静态工厂方法**。
+
+本文所述**工厂模式**指的是**工厂方法模式**。**简单工厂模式**并未列入23种设计模式之中，它与**工厂方法模式**的区别上文已做解释。有关**抽象工厂模式**会在下一节介绍。
+
+需要注意的是——**静态工厂方法**。
+
+### 1.2.1 静态工厂方法
+
+静态工厂方法在*《Effective Java》*中的开篇就大力推崇，它和工厂模式的目的都是创建实例对象。对于静态工厂方法，通常类的自身提供一个静态方法用于实例化（当然也可以是一个工具类例如`Collections`），从而避免使用构造器。例如Java源码中的Boolean包装类和线程池创建类。
+
+```java
+public static Boolean valueOf(boolean b) {
+    return (b ? TRUE : FALSE);
+}
+```
+
+Boolean自身就提供了一个工厂方法用于返回一个Boolean对象。
+
+对应到前面提到的创建一个具体产品的例子，如果ConcreteProduct提供了一个静态工厂方法，则变为以下形态。
+
+```java
+Product product = ConcreteProduct.getInstance();
+```
+
+这是一个类自身提供了一个静态方法用于对自身的实例化，它取代了new构造器的方式，而这是与工厂模式利用第三方类来创建对象的不同。取代构造器创建对象实例可以有3个好处：
+
+1. **可以自由的对方法进行命名。**命名是门学问，命的好事半功倍，命得差真的要跪。而构造器没法进行命名。
+
+2. **不必每次都创建一个对象。**这实际上就是熟悉的单例模式了，每次获取对象实例的时候都是同一个。
+
+静态工厂方法并不一定都是由类的自身提供，还有可能是工具类，例如`Collections`。
+
+Collections类中另外还实现了几十种集合供我们使用，但这些集合都不能通过直接new的方式获取，而是在Collections的内部提供了静态工厂方法，不能直接实例化大大减少了API的数量，如果几十种集合全部能直接实例化，各种API各种概念都是庞大的工作量，而使用静态工厂方法通过命名则很好的解决了这一个痛点。
+
+```java
+Collections.synchronizedMap(new HashMap<>());
+Collections.synchronizedList(new ArrayList<>());
+Collections.unmodifiableMap(new HashMap<>());
+Collections.unmodifiableList(new ArrayList<>());
+······
+```
+
+Collections通过静态工厂方法导出集合方式不仅仅在于API数量的减小，这就是静态工厂方法的第三个有点：
+
+3. **它能返回原有返回类型的子类型。**
+
+以`Collections.synchronizedList`举例，其内部方法返回的是List类型，而它的真正子类型则是`SynchronizedList`，这在其Collections作为内部类实现。这样我们不必暴露出SynchronizedList，也就是隐藏了我们真正实现的类，但又可以返回真正的对象，这个意义所在就是实现了基于接口编程。本质就是使用静态方法（synchronizedList()），产生了接口（List接口）的实现类（SynchronizedList，但是，该类的实现是内部类）。
