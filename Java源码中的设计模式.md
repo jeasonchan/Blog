@@ -3,7 +3,8 @@
 本文并非原创：
 
 * 1.1~1.4参考了<https://legacy.gitbook.com/book/yulinfeng/-java/details>
-* 1.5 参考了
+* 1.5 参考了<https://blog.csdn.net/ZixiangLi/article/details/82853950>
+* 
 
 感谢原作者。
 
@@ -509,7 +510,144 @@ if (mbd.isSingleton()) {
 
 以建造人（Person）为例，因人（Person）的属性不同，分为”胖人“和”熟人“，建造人（Person）的步骤都包括建造头（createHead）、建造身体（createBody）和建造四肢（createLegs）。
 
+产品类，Person类：
 
+```java
+@Getter
+@Setter
+public class Person {
+ 	public String head;
+	public String body;
+	public String legs;
+
+	@Override
+	public String toString() {
+		return this.getHead()+this.getBody()+this.getArms()+this.getLegs();
+	}
+}	
+```
+
+抽象工厂，PersonBuilderFactory：
+
+```java
+public interface PersonBuilderFactory {
+	
+	public abstract void createHead();
+	public abstract void createBody();
+	public abstract void createLegs();
+    
+	public abstract Person buildPerson();
+}
+```
+
+抽象工厂接口的的实现类，胖人制造器（FatPersonBuilder）和瘦人制造器（ThinPersonBuilder）：
+
+```java
+public FatPersonBuilder implements PersonBuilderFactory{
+    private Person fatPerson = null;
+	
+	public FatPersonBuilder() {
+		if(fatPerson == null){
+			fatPerson = new Person();
+		}
+	}
+	
+	@Override
+	public void createHead() {
+		fatPerson.setHead("胖头");
+	}
+ 
+	@Override
+	public void createBody() {
+		fatPerson.setBody("胖身体");
+	}
+ 
+	@Override
+	public void createLegs() {
+		fatPerson.setLegs("胖腿");
+	}
+ 
+	@Override
+	public Person buildPerson() {
+		return fatPerson;
+	}
+
+}
+```
+
+```java
+public ThinPersonBuilder implements PersonBuilderFactory{
+    private Person thinPerson = null;
+	
+	public ThinPersonBuilder() {
+		if(thinPerson == null){
+			thinPerson = new Person();
+		}
+	}
+	
+	@Override
+	public void createHead() {
+		thinPerson.setHead("瘦头");
+	}
+ 
+	@Override
+	public void createBody() {
+		thinPerson.setBody("瘦身体");
+	}
+ 
+	@Override
+	public void createLegs() {
+		thinPerson.setLegs("瘦腿");
+	}
+ 
+	@Override
+	public Person buildPerson() {
+		return thinPerson;
+	}
+
+}
+```
+
+人类制造直指挥者，PersonBuilderDirector：
+
+```java
+public PersonBuilderDirector {
+    private PersonBuilderFactory personBuilderImp;
+    
+    pulblic PersonBuilderDirector(PersonBuilderFactory personBuilderImp){
+        this.personBuilderImp=personBuilderImp;
+    }
+    
+    public Person buildPerson(){
+		personBuilderImp.createHead();
+		personBuilderImp.createBody();
+		personBuilderImp.createLegs();
+		return personBuilderImp.buildPerson();
+	}
+
+}
+```
+
+最终使用方法、测试代码：
+
+```java
+public static void main(String[] args) {
+		ThinPersonBuilder thinPersonBuilder = new ThinPersonBuilder();
+    //PersonBuilderFactory thinPersonBuilder = new ThinPersonBuilder(); 这样写也可以
+		PersonBuilderDirector director = new PersonBuilderDirector(thinPersonBuilder);
+		Person thinPerson = director.buildPerson();
+		System.out.println(thinPerson.toString());
+		    
+    	//假设来了个新功能，需要制造胖人，则可以继续这么写，
+    	//而不用改动现有代码
+		FatPersonBuilder fatPersonBuilder = new FatPersonBuilder();
+		PersonBuilderDirector director2 = new PersonBuilderDirector(fatPersonBuilder);
+		Person fatPerson = director2.buildPerson();
+		System.out.println(fatPerson.toString());
+	}
+```
+
+经过这么一番实践，越发觉得，和抽象工厂模式很像，但又有不同。总之，**抽方法、抽接口、抽抽象类！**。
 
 ### 1.5.3 Java源码中的建造者模式
 
