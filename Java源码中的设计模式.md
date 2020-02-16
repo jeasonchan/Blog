@@ -696,4 +696,3 @@ public static void main(String[] args) {
 ## 3.10 中介者模式
 
 ## 3.11 解释器模式
-
