@@ -499,7 +499,7 @@ if (mbd.isSingleton()) {
 
 **不同点**：
 
-1. 建造者模式最终产生的Product只有一个，而抽象工厂模式的产生对象是多个
+1. 建造者模式最终产生的Product只有一个，而抽象工厂模式的产生对象是多个；这点，体现在代码上，就是工厂接口中，多了一个方法，用于组装前面的产出的“零件”，并将组装完毕的整体返回。
 2. 抽象工厂模式，返回Product对象的最直接方法是抽象工厂接口包含的方法；建造者模式中，返回Product对象的最直接方法是指挥者接口包含的唯一的方法
 
 个人觉得，建造者模式，本质上只是对抽象工厂模式中，抽象工厂的包含的多个接口，做了一个封装，这个封装是可以有顺序的，从而返回**一个**组装好的对象，抽象工厂模式返回的是**散装**的多个对象。
@@ -536,6 +536,7 @@ public interface PersonBuilderFactory {
 	public abstract void createBody();
 	public abstract void createLegs();
     
+    //比抽象工厂多了一个方法，用“组装”前面的产出，返回一个组装、建造完毕的对象
 	public abstract Person buildPerson();
 }
 ```
