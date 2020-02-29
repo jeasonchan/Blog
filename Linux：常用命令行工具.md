@@ -57,6 +57,6 @@ https://www.cnblogs.com/jiftle/p/9707518.html
 
 cat test.txt | iconv -f GBK -t UTF-8
 
-iconv 用于对输出的字符重编码原始的是GBK，转为UTF-8
+原始的是GBK，转为UTF-8
 
 # 12 touch
