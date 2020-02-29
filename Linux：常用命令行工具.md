@@ -6,6 +6,8 @@
 
 或 过滤
 
+grep -inr 
+
 # 2 ftp、sftp
 
 ftp open  quit
