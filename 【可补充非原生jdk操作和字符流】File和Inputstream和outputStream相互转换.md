@@ -1,4 +1,7 @@
 ﻿@[TOC]
+# 0 推荐文章
+https://www.iteye.com/blog/chentian114-2246048
+ 
 # 1 File转Inputstream
 ```java
     public static InputStream fileToInputStream(File file) {
@@ -15,18 +18,23 @@
 ```
 很简单，直接用文件输入流，将文件转化为一个输入流即可，这个流是字节流，和文件内部的编码格式无关。
 # 2 File转outputStream
-# 3 InputStream转File
+
+
+# 3 InputStream转字符串输出
 ```java
         try {
             byte[] bytes=new byte[inputStream.available()];
             inputStream.read(bytes);  //将字节流中的字节读取到相同的字节数组中
-            String outString=new String(bytes);
+            String outString=new String(bytes,"GBK");//此处时字节转字符，必须要明确字符集！！！
             System.out.println(outString);
         } catch (IOException e) {
             e.printStackTrace();
         }
 ```
 # 4 InputStream转outputStream
+
+
+
 # 6 ouputStream转File
 ```java
     public static void stringAddToFile(String extraString, File file) {
@@ -47,6 +55,9 @@
         }
 ```
 # 7 ouputStream转InputStream
+
+
+
 # 8 流程总结
 1. inputstream和outputStream的read()和write()方法，其实就是在字节流和字节数组间搬运东西字节，因此，读写方法的入参都是字节数组
 2. 文件读取为文本流程：以文件实例为入参，新建文件输入流实例，将文件输入流实例中的字节读取进字节数组，以得到的自己数组为入参新建字符串，即为文件中的字符串，关闭文件输入流，结束。
