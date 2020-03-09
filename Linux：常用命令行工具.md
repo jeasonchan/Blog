@@ -18,7 +18,11 @@ cat file.type | grep "word1" | grep "word2"
 
 **或 过滤**
 
+```sh
+grep -E '123|abc' filename
+```
 
+-E 其实就是正则表达式
 
 
 
@@ -38,6 +42,7 @@ grep -irn "jeason"  /home/log/   --include=*.log
 -i  过滤时忽略大小写
 -r  向子文件夹迭代过滤
 -n  显示处过滤结果的所在行数
+-E  使用正则表达式进行匹配
 ```
 
 
