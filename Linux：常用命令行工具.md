@@ -12,6 +12,14 @@ grep -inr
 
 ftp open  quit
 
+sftp -oPort=60001 root@192.168.0.254
+
+使用-o选项来指定端口号.
+-oPort=远程端口号
+
+https://blog.csdn.net/qnavy123/article/details/79299151
+
+
 # 3 tar
 
 tar -cf
