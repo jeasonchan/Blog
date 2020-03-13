@@ -22,7 +22,7 @@ REST并没有创造新的技术，组件或服务，只是使用Web的现有特�
 
 REST 是以 资源 为中心, 名词即资源的地址, 动词即施加于名词上的一些有限操作, 表达是对各种资源形态的抽象.
 
-以HTTP为例, 名词即为URI(统一资源标识), 动词包括POST, GET, PUT, DELETE等(还有其它不常用的2个,所以 整个动词集合是有限的), 资源的形态(如text, html, image, pdf等)。REST架构对资源的操作包括获取、创建、修改和删除资源的操作正好对应HTTP协议提供的GET、POST、PUT和DELETE方法。
+以HTTP为例, 名词即为URI(统一资源标识), 动词包括POST, GET, PUT, DELETE等(还有其它不常用的2个,所以 整个动词集合是有限的), 资源的形态(如text, html, image, pdf等)。REST架构对资源的操作包括获取、创建、修改和删除资源的操作正好对应HTTP协议提供的GET、POST、PUT和DELETE方法：
 
 ![REST动词和HTTP动词对照表](https://ss1.baidu.com/6ONXsjip0QIZ8tyhnq/it/u=137802124,3403121526&fm=173&app=49&f=JPEG?w=640&h=321&s=E1158F7415F84C2D0ED055CB0200A0B9)
 
@@ -66,7 +66,9 @@ RPC框架要做到的最基本的三件事：
 
 3. 如何进行网络传输（选择何种网络协议）？
 
-多数RPC框架选择TCP作为传输协议，也有部分选择HTTP。(HTTP和TCP的区别和联系  https://www.cnblogs.com/baizhanshi/p/8482612.html)如gRPC使用HTTP2。不同的协议各有利弊。TCP更加高效，而HTTP在实际应用中更加的灵活。
+多数RPC框架选择TCP作为传输协议，也有部分选择HTTP。(HTTP和TCP的区别和联系  https://www.cnblogs.com/baizhanshi/p/8482612.html 。)
+
+如gRPC使用HTTP2。不同的协议各有利弊。TCP更加高效，而HTTP在实际应用中更加的灵活。
 
 # 3 对比
 RPC是以动词为中心的, REST是以名词为中心的, 此处的 动词指的是一些方法, 名词是指资源。
