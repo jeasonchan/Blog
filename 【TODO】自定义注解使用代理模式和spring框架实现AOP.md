@@ -145,8 +145,28 @@ Process finished with exit code 0
 
 # 3 原生实现AOP
 
+明显可以看出，以上的注解实现AOP，使用起来还有很多限制，每个方法内部还要手动去        handlerRecordAnnotation();   运行一下，明显业务代码和系统代码没有解耦，因此，急需AOP来拯救、解耦。为了实现解耦，可以通过静态代理模式和动态代理模式实现初级的AOP。
+
+## 3.1 静态代理模式实现AOP
+
+假设有个的业务接口Delete，每次执行的时候，我都需要对该接口的调用进行记录。
+
+https://www.cnblogs.com/pwc1996/p/4839150.html
+
+
+
+## 3.2 动态代理模式AOP
+
+https://www.cnblogs.com/pwc1996/p/4839150.html
+
 
 
 
 
 # 4 Spring实现AOP
+
+其实就是，将注解和代理模式结合了起来，实现目前来看，比较完美的AOP。
+
+
+
+https://blog.csdn.net/weixin_42184707/article/details/80348103
