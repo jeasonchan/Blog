@@ -174,12 +174,8 @@ rest接口的返回值是：{fuck=[XXX], user=jeasonchan}
 
 #  3 AOP注解详解
 
-[【SpringBoot】SpingBoot整合AOP](https://blog.csdn.net/lmb55/article/details/82470388)
+推荐阅读顺序：
 
-
-
-[@Pointcut()的execution、@annotation等参数说明](https://blog.csdn.net/java_green_hand0909/article/details/90238242)
-
-
-
-看了以后还是一脸懵逼……需要再学一点回来填坑……
+* [Spring AOP详解](https://www.cnblogs.com/hongwz/p/5764917.html)  ，后面基于xml的AOP配置可直接跳过
+*   [Spring boot中使用aop详解](https://www.cnblogs.com/bigben0123/p/7779357.html) 
+* [@Pointcut()的execution、@annotation等参数说明](https://blog.csdn.net/java_green_hand0909/article/details/90238242)
