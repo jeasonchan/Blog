@@ -1,6 +1,6 @@
 #  1 背景
 
-https://blog.csdn.net/weixin_42184707/article/details/80348103
+
 
 
 
@@ -172,3 +172,14 @@ logSth  haha
 rest接口的返回值是：{fuck=[XXX], user=jeasonchan}
 ```
 
+#  3 AOP注解详解
+
+[【SpringBoot】SpingBoot整合AOP](https://blog.csdn.net/lmb55/article/details/82470388)
+
+
+
+[@Pointcut()的execution、@annotation等参数说明](https://blog.csdn.net/java_green_hand0909/article/details/90238242)
+
+
+
+看了以后还是一脸懵逼……需要再学一点回来填坑……
