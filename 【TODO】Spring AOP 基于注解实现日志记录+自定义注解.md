@@ -99,7 +99,7 @@ import java.lang.reflect.Method;
 @Aspect
 public class LogAspect {
 
-    //切入点是这个注解，但实际还是被注解的方法
+    //切入点是这个注解，但切入点实际上还是被注解注释的方法，因为，Spring的AOP的切入粒度都是方法这个粒度
     @Pointcut("@annotation(com.jeasonchan.aopexercise.controller.Annotation.Log)")
     public void pointCut() {
         //此处用这个方法代表Log注解的使用处
