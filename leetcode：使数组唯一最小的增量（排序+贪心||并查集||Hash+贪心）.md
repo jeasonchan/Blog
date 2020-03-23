@@ -1,3 +1,4 @@
+# 1 排序+贪心
 ```java
 package com.zte.使数组唯一最小的增量;
 
@@ -86,3 +87,7 @@ public class Main {
 }
 
 ```
+
+# 2 Hash+贪心
+
+# 3 并查集
