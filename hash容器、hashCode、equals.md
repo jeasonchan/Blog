@@ -1,16 +1,17 @@
-# 1 hash容器原理
+# 1 hash容器原理（冲突解决等）
+[hashmap冲突的解决方法以及原理分析](https://www.cnblogs.com/peizhe123/p/5790252.html)
+
 查找：先调用对象的hashCode方法获取该对象的hash值，作为在hash表中的索引，根据索引找到的对象的引用，根据引用找到对象，再调用对象的equals方法判断是否相等。
 
-## 1.2 冲突解决
+HashMap中，put(key,value)时，如果的hash(key)算出的索引对应的位置已经有对象的，但是，key不是同一个key（也就是，不同的key，算出的哈希值相同，key的hashCode函数有问题……），就发生冲突了；HashMap冲突的解决方法是，生成一个Entry链表，越靠后进来的，就越在Entry链的前端。
 
-
-
-
+其余的冲突解决方法还有：
+（待补充）
 
 
 # 2 hashcode和equals方法
 ## 2.1 hashCode()
-hashCode() 的作用是获取哈希码，也称为散列码；它实际上是返回一个int整数。这个哈希码的作用是确定该对象在哈希表中(哈希表，可能就是 索引——对象引用地址 的对照表)的索引位置。hashCode() 定义在JDK的Object.java中，这就意味着Java中的任何类都包含有hashCode() 函数。
+hashCode() 的作用是获取哈希码，也称为散列码；它实际上是返回一个int整数。这个哈希码的作用是确定该对象在哈希表中(哈希表，就是   hash(key)--Entry<key,value> 的表 )的索引位置。hashCode() 定义在JDK的Object.java中，这就意味着Java中的任何类都包含有hashCode() 函数。
 
 不重写的话，就是直接对对象的内存地址计算哈希值。
 
