@@ -1,5 +1,6 @@
 # 1 hash容器原理（冲突解决等）
 [hashmap冲突的解决方法以及原理分析](https://www.cnblogs.com/peizhe123/p/5790252.html)
+[Map之HashMap的get与put流程，及hash冲突解决方式](https://www.cnblogs.com/many-object/p/8909846.html)
 
 查找：先调用对象的hashCode方法获取该对象的hash值，作为在hash表中的索引，根据索引找到的对象的引用，根据引用找到对象，再调用对象的equals方法判断是否相等。
 
