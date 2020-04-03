@@ -6,7 +6,19 @@
 HashMap中，put(key,value)时，如果的hash(key)算出的索引对应的位置已经有对象的，但是，key不是同一个key（也就是，不同的key，算出的哈希值相同，key的hashCode函数有问题……），就发生冲突了；HashMap冲突的解决方法是，生成一个Entry链表，越靠后进来的，就越在Entry链的前端。
 
 其余的冲突解决方法还有：
-（待补充）
+开发地址法
+
+## 1.1 冲突后的get
+当调用get方法时
+```java
+ public V get(Object key) {
+        Node<K,V> e;
+        return (e = getNode(hash(key), key)) == null ? null : e.value;
+    }
+```
+**会通过key的hash值获取table中的Node，并通过key的equals方法来确定要取的Node，在返回Node的value值。**
+
+通过HashMap的存储结构可以发现当我们遍历HashMap时通过entrySet方法性能会高一点，因为它直接返回了存储的Map.Entry类，而遍历key方式是通过遍历Map.Entry取出key，我们在调用get(key)方法时又会去取一次Entry，所以性能会比较低
 
 
 # 2 hashcode和equals方法
