@@ -30,3 +30,45 @@ hashCode() 的作用是获取哈希码，也称为散列码；它实际上是返
 向基于hash的hashSet里放对象的时候，先算取hashcode值，然后会定位到该对象所在的桶，然后再用equals比较内容，发现内容也一样，于是新对象会替换就旧对象（对于java，放的其实是对象的内存地址，放的是引用）。
 
 注意：累对象里属性会很多，每次属性会变动，我们都需要改动equals方法，可是还要保证上面的第二条原则，那自然是要重写hashcode的。
+
+## 2.3.1 有哪些覆写hashCode的诀窍
+**一个好的hashCode的方法的目标：为不相等的对象产生不相等的散列码，同样的，相等的对象必须拥有相等的散列码。**
+
+1. 把某个非零的常数值，比如17，保存在一个int型的result中；
+2. 对于每个关键域f（equals方法中设计到的每个域），作以下操作：
+
+a.为该域计算int类型的散列码；
+
+i.如果该域是boolean类型，则计算(f?1:0),
+
+ii.如果该域是byte,char,short或者int类型,计算(int)f,
+
+iii.如果是long类型，计算(int)(f^(f>>>32)).
+
+iv.如果是float类型，计算Float.floatToIntBits(f).
+
+v.如果是double类型，计算Double.doubleToLongBits(f),然后再计算long型的hash值
+
+vi.如果是对象引用，则递归的调用域的hashCode，如果是更复杂的比较，则需要为这个域计算一个范式，然后针对范式调用hashCode，如果为null，返回0
+
+vii. 如果是一个数组，则把每一个元素当成一个单独的域来处理。
+
+b.result = 31 * result + c;
+
+3、返回result
+
+4、编写单元测试验证有没有实现所有相等的实例都有相等的散列码。
+
+给个简单的例子：
+
+```java
+@Override
+public int hashCode() {  
+  int result = 17;  
+  result = 31 * result + name.hashCode();  
+  return result;
+}
+```
+这里再说下2.b中为什么采用31*result + c,乘法使hash值依赖于域的顺序，如果没有乘法那么所有顺序不同的字符串String对象都会有一样的hash值，而31是一个奇素数，如果是偶数，并且乘法溢出的话，信息会丢失，31有个很好的特性是31*i ==(i<<5)-i,即2的5次方减1，虚拟机会优化乘法操作为移位操作的。
+
+
