@@ -47,7 +47,7 @@
 
 Mary记取的工资数8000是一个脏数据
 
-  解决办法：如果在第一个事务提交前，任何其他事务不可读取其修改过的值，则可  以避免该问题。
+解决办法：设置当前事务隔离别READ_COMMITTED，只读取别的事务COMMITTED之后的，只读取commit之后，应该是读取的底线了。
 
 * 不可重复读
 
@@ -55,13 +55,15 @@ Mary记取的工资数8000是一个脏数据
 
 比如：
 
-1、在事务1中，Mary 读取了自己的工资为1000,操作并没有完成
+1、在事务1中，Mary 读取了自己的工资为1000，操作并没有完成
 
 2、在事务2中，这时财务人员修改了Mary的工资为2000,并提交了事务.
 
 3、在事务1中，Mary 再次读取自己的工资时，工资变为了2000
 
-解决办法：如果只有在修改事务完全提交之后才可以读取数据，则可以避免该问题。也就是，将当前事务隔离级别设置为 TRANSACTION_READ_COMMITTED。
+解决办法：设置当前事务级别是REPEATABLE_READ
+
+不可重复读和脏读看上去很像，一个是读取了别人事务commit之后的结果，一个是读取了为commit并且rollback的结果。
 
 * 幻读
 
@@ -85,38 +87,47 @@ Mary记取的工资数8000是一个脏数据
 
 解决办法：对行加锁，只允许并发一个更新事务
 
-
-
 为了解决事务的并发问题，数据库的标准隔离级别有四种，以JDBC中 connection的隔离级别参数为例：
 
-| 设置                         | 描述                                                         |
-| ---------------------------- | ------------------------------------------------------------ |
-| TRANSACTION_SERIALIZABLE     | 指示不可以发生脏读、不可重复读和幻读的常量。                 |
-| TRANSACTION_REPEATABLE_READ  | 指示不可以发生脏读和不可重复读的常量；幻读可以发生。         |
-| TRANSACTION_READ_UNCOMMITTED | 指示可以发生脏读 (dirty read)、不可重复读和幻读 (phantom read) 的常量。 |
-| TRANSACTION_READ_COMMITTED   | 指示不可以发生脏读的常量；不可重复读和虚读可以发生。         |
+| 设置                         | 脏读   | 不可重复读 | 幻读   |
+| ---------------------------- | ------ | ---------- | ------ |
+| TRANSACTION_SERIALIZABLE     | 不允许 | 不允许     | 不允许 |
+| TRANSACTION_REPEATABLE_READ  | 不允许 | 不允许     | 允许   |
+| TRANSACTION_READ_COMMITTED   | 不允许 | 允许       | 允许   |
+| TRANSACTION_READ_UNCOMMITTED | 允许   | 允许       | 允许   |
 
 
 
+# 2 commit和rollback
 
+Structured Query Language- - -结构化查询语言
+有 数据定义语言(DDL)，例如：CREATE、DROP、ALTER等语句；
+数据操作语言(DML)，例如：INSERT（插入）、UPDATE（修改）、DELETE（删除）语句；
+数据查询语言(DQL)，例如：SELECT语句；
+数据控制语言(DCL)，例如： COMMIT、ROLLBACK、GRANT、REVOKE等语句
 
+不管是什么的sql的客户端，本质上都是通过client（这里特指图形界面和终端）和server端之间的connection执行SQL语句的，一般情况下，我们在client中输入语句，执行一下，就立刻生效到表中，是因为，当前的这个client设置了autocommit，每输入执行一条语句，就commit当前执行的语句。
 
+由于事务隔离级别的不同，不同的数据库浏览器查到的数据可能是不同的，但是，数据库浏览器的隔离级别一般都是READ_COMMITED级别的。
 
-//=============================================
+**一般情况下，事务的DML操作，未commit之前，都是只是写在日志中的，未生效到表中。但是！！！DDL操作，会先隐式单独提交。但是，DDL中的drop命令有点特殊，如果事务还未结束，drop命令会被阻塞。**
 
-事务的焦点问题是其隔离级别和不同隔离级别带来的并发问题：
+rollback操作，会撤回日志中DML结果。
 
-- 隔离级别
-   ACID这4个特征中，最难理解的是隔离性。在标准SQL规范中，定义了4个事务隔离级别，不同的隔离级别对事务的处理不同。4个隔离级别分别是：读未提交（READ_UNCOMMITTED）、读已提交（READ_COMMITTED）、可重复读（REPEATABLE_READ）、顺序读（SERIALIZABLE）。
-- 事务并发引起的问题
-   数据库在不同的隔离性级别下并发访问可能会出现以下几种问题：脏读（Dirty Read）、不可重复读（Unrepeatable Read）、幻读（Phantom Read）。
+# 3 JDBC的事务操作
 
-DML（data manipulation language）：
-它们是SELECT、UPDATE、INSERT、DELETE，就象它的名字一样，这4条命令是用来对数据库里的数据进行操作的语言
+```java
+Class.forName(driverClassName);
+connection = DriverManager.getConnection(url, username, password);
 
-DDL（data definition language）：
-DDL比DML要多，主要的命令有CREATE、ALTER、DROP等，DDL主要是用在定义或改变表（TABLE）的结构，数据类型，表之间的链接和约束等初始化工作上，他们大多在建立表时使用
+connection.setAutoCommit(false);//设为false，关闭自动提交；对数据库的更改生效只发生在commit之后
+// 为true时，每句statement执行都是一条事务；
 
-DCL（Data Control Language）：
-是数据库控制功能。是用来设置或更改数据库用户或角色权限的语句，包括（grant,deny,revoke等）语句。在默认状态下，只有sysadmin,dbcreator,db_owner或db_securityadmin等人员才有权力执行DCL
+//JDBC默认隔离级别是4 可重复读级别，可避免不可重复读，不可避免幻读
+System.out.println("当前事务隔离级别是：" + connection.getTransactionIsolation());
+
+connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+
+statement = connection.createStatement();
+```
 
