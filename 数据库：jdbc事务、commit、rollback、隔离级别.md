@@ -131,3 +131,4 @@ connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
 statement = connection.createStatement();
 ```
 
+JDBC3.0 中新增了保存点：https://www.yiibai.com/jdbc/jdbc-transactions.html
