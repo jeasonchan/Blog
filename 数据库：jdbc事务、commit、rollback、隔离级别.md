@@ -89,12 +89,12 @@ Mary记取的工资数8000是一个脏数据
 
 为了解决事务的并发问题，数据库的标准隔离级别有四种，以JDBC中 connection的隔离级别参数为例：
 
-| 设置                         | 脏读   | 不可重复读 | 幻读   |
-| ---------------------------- | ------ | ---------- | ------ |
-| TRANSACTION_SERIALIZABLE     | 不允许 | 不允许     | 不允许 |
-| TRANSACTION_REPEATABLE_READ  | 不允许 | 不允许     | 允许   |
-| TRANSACTION_READ_COMMITTED   | 不允许 | 允许       | 允许   |
-| TRANSACTION_READ_UNCOMMITTED | 允许   | 允许       | 允许   |
+| 设置                         | 描述                                                         | 脏读   | 不可重复读 | 幻读   |
+| ---------------------------- | ------------------------------------------------------------ | ------ | ---------- | ------ |
+| TRANSACTION_SERIALIZABLE     | 在一个事务中进行查询时，不允许其他事务对这个查询表的数据修改。 | 不允许 | 不允许     | 不允许 |
+| TRANSACTION_REPEATABLE_READ  | 当前事务读取时，不读取其他事务update后的数据，不锁表；但是**可以读取新增的数据**。 | 不允许 | 不允许     | 允许   |
+| TRANSACTION_READ_COMMITTED   | 当前事务只读取其他事务提交的数据；当前事务update操作时不锁表。 | 不允许 | 允许       | 允许   |
+| TRANSACTION_READ_UNCOMMITTED | 能够读其他事务未提交的数据                                   | 允许   | 允许       | 允许   |
 
 
 
