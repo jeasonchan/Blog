@@ -5,6 +5,8 @@
 
 漫谈五种IO模型（主讲IO多路复用）    https://www.jianshu.com/p/6a6845464770
 
+Java NIO 多路复用  https://cs.xieyonghui.com/java/java-nio-multiplexing_33.html
+
 # 2 关键概念理解
 同步：发起一个调用，得到结果才返回。
 
