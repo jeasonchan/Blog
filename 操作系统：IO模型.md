@@ -5,7 +5,12 @@
 
 漫谈五种IO模型（主讲IO多路复用）    https://www.jianshu.com/p/6a6845464770
 
-Java NIO 多路复用  https://cs.xieyonghui.com/java/java-nio-multiplexing_33.html
+Java NIO 看这一篇就够了  https://blog.csdn.net/u011381576/article/details/79876754
+
+Java NIO IO和NIO的区别   https://www.cnblogs.com/xiaoxi/p/6576588.html
+
+Java NIO 理解分析和基本使用  https://my.oschina.net/u/4347428/blog/3220262
+
 
 # 2 关键概念理解
 同步：发起一个调用，得到结果才返回。
@@ -40,5 +45,7 @@ Java NIO 多路复用  https://cs.xieyonghui.com/java/java-nio-multiplexing_33.h
 
 
 IO多路复用，相当于复用了一个IO中间件，能够在一个线程中处理多个IO请求，把可读的socket告诉用户进程；而传统的处理多个IO的方式是，new出和IO请求同样数量的线程，再让各个线程以同步、异步的IO模型去处理各自负责的的IO
+
+Java NIO（多路复用IO模型） 其实也是阻塞IO模型，只不过解决了同步IO带来的一个线程处理一个IO的 多线程过多导致的server端压力过大问题。基于IO多路复用这个思想，典型的产品、实践：Nginx、Netty
 
 ## 4.4 异步IO
