@@ -5,14 +5,10 @@
 
 漫谈五种IO模型（主讲IO多路复用）    https://www.jianshu.com/p/6a6845464770
 
-Java NIO 看这一篇就够了  https://blog.csdn.net/u011381576/article/details/79876754
-
-Java NIO IO和NIO的区别   https://www.cnblogs.com/xiaoxi/p/6576588.html
-
-Java NIO 理解分析和基本使用  https://my.oschina.net/u/4347428/blog/3220262
 
 
 # 2 关键概念理解
+
 同步：发起一个调用，得到结果才返回。
 
 异步：调用发起后，调用直接返回；调用方主动询问被调用方获取结果，或被调用方通过回调函数。
