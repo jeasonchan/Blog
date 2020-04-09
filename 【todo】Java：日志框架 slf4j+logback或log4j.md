@@ -1,6 +1,6 @@
-# 1 前沿
+# 1 前言
 参考文章：
-我是程序汪 公众号：为什么阿里巴巴禁直接使用日志系统Log4j和Logback中的api？
+为什么阿里巴巴禁直接使用日志系统Log4j和Logback中的api？  https://mp.weixin.qq.com/s/cpc7nNYDvBIkpSXqHW09pg
 Log4j和slf4j      https://blog.csdn.net/qq_39691226/article/details/80428623
 
 要点：
