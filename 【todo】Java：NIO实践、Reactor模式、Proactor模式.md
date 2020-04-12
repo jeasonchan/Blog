@@ -29,6 +29,19 @@ Reactor模式     https://blog.csdn.net/xiaocaidexuexibiji/article/details/11135
 
 
 # 2 NIO 入门介绍
+
+NIO主要有三大核心部分：Channel(通道)，Buffer(缓冲区), Selector。
+
+
+
+
+
+
+
+
+
+## 2.1 传统IO和NIO简单对比
+
 ```java
 package default_package.NIO练习;
 
@@ -97,3 +110,41 @@ public class Main {
 }
 
 ```
+
+## 2.2 Buffer介绍
+
+使用Buffer一般遵循下面几个步骤：
+
+- 分配空间（ByteBuffer buf = ByteBuffer.allocate(1024); 还有一种allocateDirector后面再陈述
+- 写入数据到Buffe：readLength = fileChannel.read(byteBuffer)，
+- 调用filp()方法：byteBuffer.flip()
+- 从Buffer中读取数据（System.out.print((char)byteBuffer.get());）
+- 调用clear()方法或者compact()方法
+
+Buffer顾名思义：缓冲区，实际上是一个容器，**一个连续数组**。Channel提供从文件、网络读取数据的渠道，但是读写的数据都必须经过Buffer。如下图：
+
+![Buffer和Chann数据传输示意图.png](.\resources\Buffer和Chann数据传输示意图.png)
+
+向Buffer中写数据时可通过两种方式：
+
+- 从Channel写到Buffer (fileChannel.read(buf))
+- 通过Buffer的put()方法 （buf.put(…)）
+
+从Buffer中读取数据也有两种方式：
+
+- 从Buffer读取到Channel (channel.write(buf))
+- 使用get()方法从Buffer中读取数据 （buf.get()）
+
+### 2.2.1 capacity， position， limit， mark
+
+可以把Buffer**简单地**理解为一组基本数据类型的元素数组，它通过几个索引变量来保存这个数据的当前位置状态：capacity， position， limit， mark：
+
+| 索引     | 说明                                                    |
+| -------- | ------------------------------------------------------- |
+| capacity | 缓冲区数组的总长度                                      |
+| position | 下一个要操作的数据元素的位置                            |
+| limit    | 缓冲区数组中不可操作的下一个元素的位置：limit<=capacity |
+| mark     | 用于记录当前position的前一个位置或者默认是-1            |
+
+现在通过几个典型状态了解一下，四个索引的具体含义。
+
