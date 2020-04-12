@@ -148,3 +148,70 @@ Buffer顾名思义：缓冲区，实际上是一个容器，**一个连续数组
 
 现在通过几个典型状态了解一下，四个索引的具体含义。
 
+**使用ByteBuffer.allocate(10)创建一个Buffer时，四个索引指向的位置示意图**：
+
+![创建Buffer时四个索引指向位置.png](.\resources\创建Buffer时四个索引指向位置.png)
+
+创建一个长度是10的字节数组，capacity的值为10。创建完毕后，position=0，limit和capacity的数值大小都是"长度"，**如果直接作为索引，必然会访问越界！！！！！！！！！！**
+
+```java
+package default_package.NIO练习.Buffer用法;
+
+import java.nio.ByteBuffer;
+
+public class Main {
+    public static void main(String[] args) {
+        ByteBuffer buffer = ByteBuffer.allocate(10);
+        buffer.put("1234567890".getBytes());
+        System.out.println((char) buffer.get(buffer.capacity() - 1));
+
+
+        /*
+        打印：
+        0
+         */
+    }
+}
+```
+
+
+
+**向缓冲区写入5个字节后，索引的指向的位置发生变化：**
+
+![新Buffer写入数据后四个索引指向位置.png](.\resources\新Buffer写入数据后四个索引指向位置.png)
+
+正如一开始定义的那样，postion指向了“下一个要操作的数据元素的位置”，index为5的位置，也就是第6个Byte为位。其他的索引没有变化。
+
+
+
+**要将Buffer写入Channel，也就是从Buffer中取处已经写入的数据：**
+
+在读取数据之前，要先调用ByteBuffer.flip()方法，执行的操作就是：**position设回0，并将limit设成之前的position的值，便于后面按照作左闭右开原则进行读取。**
+
+![Buffer的flip方法效果.png](.\resources\Buffer的flip方法效果.png)
+
+这时底层操作系统就可以从缓冲区中正确读取这个5个字节数据并发送出去了，读取时，**直接按照左闭右开原则，读取数组的[position，limit)索引范围内的值**。在下一次**写数据之前**我们再调用clear()方法，缓冲区的索引位置又回到了Buffer刚创建时的位置。
+
+
+
+**调用clear()方法：**
+
+position将被设回0，limit设置成capacity，换句话说，Buffer被清空了，**其实Buffer中的数据并未被清除，**只是这些标记告诉我们可以从哪里开始往Buffer里写数据。如果Buffer中有一些未读的数据，调用clear()方法，数据将“被遗忘”，意味着不再有任何标记会告诉你哪些数据被读过，哪些还没有。如果Buffer中仍有未读的数据，且后续还需要这些数据，但是此时想要先写些数据，那么使用compact()方法。
+
+
+
+**compact()方法：**
+
+将所有未读的数据拷贝到Buffer起始处。然后将position设到最后一个未读元素正后面。limit属性依然像clear()方法一样，设置成capacity。现在Buffer准备好写数据了，但是不会覆盖未读的数据。
+
+
+
+**Buffer.mark()方法：**
+
+可以标记Buffer中的一个特定的position，之后可以通过调用Buffer.reset()方法**恢复到这个position**。
+
+
+
+**Buffer.rewind()方法：**
+
+将position设回0，limit保持不变，仍然表示能从Buffer中读取多少个元素，所以你可以重读Buffer中的所有数据。
