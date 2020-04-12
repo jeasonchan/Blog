@@ -234,9 +234,205 @@ NIO的强大功能部分来自于Channel的非阻塞特性，套接字的某些�
 channel.configureBlocking(false)
 ```
 
+在非阻塞式信道上调用一个方法总是会立即返回。这种调用的返回值指示了所请求的操作完成的程度。例如，在一个非阻塞式ServerSocketChannel上调用accept()方法，如果有连接请求来了，则返回客户端SocketChannel，否则返回null。(这种风格，有点同步非阻塞IO模型)
+
+举一个socket连接的例子，serve端采用BIO实现，client采用NIO实现：
+
+先看server实现：
+
+```java
+package default_package.NIO练习.SocketChannel练习.server;
 
 
+import default_package.NIO练习.Common;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
+
+
+public class BIOServer {
+    public static void main(String[] args) {
+        startServer();
+    }
+
+
+    /*
+    基于阻塞的socket server端实现
+    功能是，打印出client发过来的message
+
+
+     */
+    public static void startServer() {
+        ServerSocket serverSocket = null;
+        InputStream inputStream = null;
+
+
+        try {
+            serverSocket = new ServerSocket(8080);
+
+            int readLength = 0;
+            byte[] receiveBufferBytes = new byte[1024 * 4];
+
+            while (true) {
+                //这一步会一直阻塞，直到有了client连接
+                Socket client = serverSocket.accept();
+
+                SocketAddress clientAddress = client.getRemoteSocketAddress();
+                System.out.println("Handling client at:" + clientAddress);
+                inputStream = client.getInputStream();
+                while (-1 != (readLength = inputStream.read(receiveBufferBytes))) {
+                    System.out.println("received message:" + new String(receiveBufferBytes, 0, readLength));
+                }
+
+                //对该client没有多余操作
+
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            Common.closeObj(serverSocket);
+            Common.closeObj(inputStream);
+        }
+
+
+    }
+
+
+}
+
+```
+
+再来看一下Client端实现，注意！！！Client虽然用了NIO的写法，但是并没有使用Selector，本质上还是一种同步阻塞因为，只有finishConnect()为true时，才可以真正开始进行消息发送。
+
+```java
+package default_package.NIO练习.SocketChannel练习.client;
+
+import default_package.NIO练习.Common;
+
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.concurrent.TimeUnit;
+
+public class NIOClient {
+    public static void main(String[] args) {
+        startClient();
+    }
+
+
+    /*
+    NIO实现的socket client实现
+
+    功能是：
+     */
+
+    public static void startClient() {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1024 * 10);
+        SocketChannel socketChannel = null;
+        try {
+            socketChannel = SocketChannel.open();
+            socketChannel.configureBlocking(false);
+
+            //如果socketChann是非阻塞模式的，这一步会阻塞，直到连接成功
+            socketChannel.connect(new InetSocketAddress(8080));
+
+
+            /*
+             * finishConnect()
+             *<p> If this channel is already connected then this method will not block
+             * and will immediately return {@code true}.  If this channel is in
+             * non-blocking mode then this method will return {@code false} if the
+             * connection process is not yet complete.  If this channel is in blocking
+             * mode then this method will block until the connection either completes
+             * or fails, and will always either return {@code true} or throw a checked
+             * exception describing the failure.
+             * */
+            while (!socketChannel.finishConnect()) {
+                System.out.println("NOT connect yet...");
+                //就算是 socketChannel.configureBlocking(false);  连接也是需要时间的
+                //非阻塞的Channel，调用finishConnect会立即返回状态
+                //但是，也只有返回true时，接下来的才可以继继续进行下去
+                //这里暂时还未用到selector
+            }
+
+            System.out.println("Connect success!");
+
+            int i = 0;
+            while (i < 10) {
+                TimeUnit.SECONDS.sleep(1);
+                String message = "This is NO." + i + " message.";
+                byteBuffer.clear();
+
+                //向buffer中写入字节，position会移动
+                byteBuffer.put(message.getBytes());
+
+                //调整索引位置，准备让系统读取数据
+                byteBuffer.flip();
+
+                while (byteBuffer.hasRemaining()) {
+                    System.out.println(byteBuffer);
+                    socketChannel.write(byteBuffer);//其实没必要用while，这种写法代表一次性写完
+
+                }
+
+                i++;
+
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            Common.closeObj(socketChannel);
+        }
+
+
+    }
+
+
+}
+```
+
+分别运行Server和Client主函数。
+
+Server端的打印如下：
+
+```
+Handling client at:/192.168.3.6:65217
+received message:This is NO.0 message.
+received message:This is NO.1 message.
+received message:This is NO.2 message.
+received message:This is NO.3 message.
+received message:This is NO.4 message.
+received message:This is NO.5 message.
+received message:This is NO.6 message.
+received message:This is NO.7 message.
+received message:This is NO.8 message.
+received message:This is NO.9 message.
+```
+
+Client端的打印如下:
+
+```
+Connect success!
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+java.nio.HeapByteBuffer[pos=0 lim=21 cap=10240]
+```
+
+Client一上来就直接Connect成功，是因为，本机直连，十分迅速，0延迟。非本机直连的情况下，必定会打印"NOT connect yet..."。
 
 
 
