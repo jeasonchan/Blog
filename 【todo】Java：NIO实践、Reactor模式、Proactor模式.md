@@ -236,9 +236,9 @@ channel.configureBlocking(false)
 
 在非阻塞式信道上调用一个方法总是会立即返回。这种调用的返回值指示了所请求的操作完成的程度。例如，在一个非阻塞式ServerSocketChannel上调用accept()方法，如果有连接请求来了，则返回客户端SocketChannel，否则返回null。(这种风格，有点同步非阻塞IO模型)
 
-举一个socket连接的例子，serve端采用BIO实现，client采用NIO实现：
+举一个socket连接的例子，**serve端采用BIO实现，client采用NIO实现**：
 
-先看server实现：
+### 2.3.1 BIOServer实现
 
 ```java
 package default_package.NIO练习.SocketChannel练习.server;
@@ -306,6 +306,8 @@ public class BIOServer {
 }
 
 ```
+
+### 2.3.2 NIOClient实现
 
 再来看一下Client端实现，注意！！！Client虽然用了NIO的写法，但是并没有使用Selector，本质上还是一种同步阻塞因为，只有finishConnect()为true时，才可以真正开始进行消息发送。
 
@@ -397,6 +399,8 @@ public class NIOClient {
 
 }
 ```
+
+### 2.3.4 BIOServer+NIOClient运行效果
 
 分别运行Server和Client主函数。
 
