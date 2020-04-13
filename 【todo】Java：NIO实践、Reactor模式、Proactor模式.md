@@ -663,4 +663,124 @@ if(num == -1){
 }
 ```
 
+
+
+#### 2.3.5.1 讲解
+
+以上实现其实完全使用了NIO的特性，由BIO向前跨了两步：
+
+1、由   面向流  变为  面向缓存
+
+2、多线程的同步阻塞  变为   多路复用的“非阻塞”
+
+先讲如果只进行面两流到面向缓存的转换，ServerSocket应该如下实现：
+
+```java
+//打开一个SocketServerChanne
+ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+//设置监听的端口
+serverSocketChannel.socket().bind(new InetSocketAddress(9999));
+
+//======================================
+//如果设置成阻塞模式！！！！！监听进来的连接
+while(true){
+    //该accept会阻塞住
+    SocketChannel socketChannel = serverSocketChannel.accept();
+    // do something with socketChannel...
+}
+//======================================
+//如果设置成  非  阻塞模式！！！！！
+serverSocketChannel.configureBlocking(false); 
+//非阻塞模式，其实还是要等待连接可用 或者  accept到一个client
+while (true){
+    SocketChannel socketChannel = serverSocketChannel.accept();
+    if (socketChannel != null)
+    {
+        // do something with socketChannel...
+    }
+}
+
+//关闭连接
+```
+
+第二大步的Selector的使用和介绍放到下一节。
+
 ## 2.4 Selector
+
+### 2.4.1 创建选择器
+
+Selector的创建：Selector selector = Selector.open();
+
+### 2.4.2 选择器中注册感兴趣事件
+
+为了将Channel和Selector配合使用，必须将Channel注册到Selector上，通过SelectableChannel.register()方法来实现，沿用案例5中的部分代码：
+
+```
+ServerSocketChannel ssc= ServerSocketChannel.open();
+
+ssc.socket().bind(new InetSocketAddress(PORT));
+
+ssc.configureBlocking(false);
+
+//注册该通道感兴趣的事件
+ssc.register(selector, SelectionKey.OP_ACCEPT);
+```
+
+与Selector一起使用时，Channel必须处于非阻塞模式下。这意味着不能将FileChannel与Selector一起使用，因为FileChannel不能切换到非阻塞模式。而套接字通道都可以。FileChannel不能注册到选择器中是因为，register()是SelectableChannel的方法，而FileChannel没有继承/是实现SelectableChannel。
+
+SelectableChannel.register()方法的第二个参数。这是一个“interest集合”，意思是在通过Selector监听Channel时对什么事件感兴趣。可以监听四种不同类型的事件：
+
+1、连接就绪事件，用int 常量 SelectionKey.OP_CONNECT 表示
+
+2、接收就绪事件，用int 常量 SelectionKey.OP_ACCEPT 表示
+
+3、读就绪事件，用int 常量 SelectionKey.OP_READ 表示
+
+4、写就绪事件，用int 常量 SelectionKey.OP_WRITE 表示
+
+### 2.4.3 获取就绪的通道
+
+```java
+//This method performs a blocking
+if (0 == selector.select(Selector_TIMEOUT)) {
+    System.out.println("within "Selector_TIMEOUT + ", no channel ready");
+    continue;
+}
+
+System.out.println("就绪个数：" + selector.selectedKeys().size());
+
+//获取就绪的信道集合
+Iterator<SelectionKey> selectionKeyIterator = selector.selectedKeys().iterator();
+```
+
+一旦向Selector注册了一或多个通道，就可以调用几个重载的select()方法。这些方法返回你所感兴趣的事件（如连接、接受、读或写）已经准备就绪的那些通道。可以为四种就绪事件分别新建4个Selector，对应的事件分别注册到其中。
+
+下面是select()及其几种重载方法：
+
+- int select()，**阻塞到至少有一个通道在你注册**的事件上就绪了。
+- int select(long timeout)，select(long timeout)和select()一样，除了最长会阻塞timeout毫秒(参数)。
+- int selectNow()，selectNow()不会阻塞，不管什么通道就绪都立刻返回。此方法执行非阻塞的选择操作。如果自从前一次选择操作后，没有通道变成可选择的，则此方法直接返回零。
+
+
+
+select()方法返回的int值表示有多少通道已经就绪。亦即，自**上次调用select()方法后有多少通道变成就绪状态**。如果调用select()方法，因为有一个通道变成就绪状态，返回了1，若再次调用select()方法，如果另一个通道就绪了，它会再次返回1。如果对第一个就绪的channel没有做任何操作，现在就有两个就绪的通道，但在每次select()方法调用之间，只有一个通道就绪了。**每次select()调用只返回状态变为就绪的通道数。**
+
+然后可以通过调用selector的selectedKeys()方法，访问“已选择键集（selected key set）”中的就绪通道。如下所示：
+
+```
+Set<SelectionKey> selectedKeys = selector.selectedKeys();
+```
+
+当向Selector注册Channel时，Channel.register()方法会返回一个SelectionKey 对象。这个对象代表了注册到该Selector的通道。
+
+**注意每次迭代末尾的keyIterator.remove()调用。Selector不会自己从已选择键集中移除SelectionKey实例。必须在处理完通道时自己移除。下次该通道变成就绪时，Selector会再次将其放入已选择键集中。**
+
+SelectionKey.channel()方法返回的通道需要转型成你要处理的类型，如ServerSocketChannel或SocketChannel等。
+
+# 3 NIO 内存映射文件
+
+
+
+
+
+# 4 其余功能介绍
