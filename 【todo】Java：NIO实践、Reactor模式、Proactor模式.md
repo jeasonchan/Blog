@@ -654,7 +654,13 @@ public class NIOServer {
 2、selectionKey被cancel后，还去调用isAcceptable之类的操作，会抛出已经取消的异常；因此，必须使用if  else 来保证情况之间是互斥的，
 从而避免，前面的操作已经取消了，下面仍然去判断从而抛出异常
 
-3、注意SocketChannel的关闭时机，后续还有读写操作就不能提前关闭！！！
-
+3、注意SocketChannel的关闭时机，后续还有读写操作就不能提前关闭！！！客户端主动关闭时，可作为server关闭的标志！
+```java
+int num = channel.read(bytebuffer);
+if(num == -1){
+    selectionKey.cancel();
+    channel.close();
+}
+```
 
 ## 2.4 Selector
