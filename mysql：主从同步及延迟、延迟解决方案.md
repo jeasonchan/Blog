@@ -1,7 +1,7 @@
 # 1 前言
 参考文章   深入解析Mysql 主从同步延迟原理及解决方案     https://www.cnblogs.com/cnmenglang/p/6393769.html
 
-# 2 mysql分布式方案
+# 2 mysql主从复制及延迟
 MySQL的主从同步是一个很成熟的架构，优点为：
 
 （1）在从服务器可以执行查询工作(即我们常说的读功能)，降低主服务器压力;
@@ -29,6 +29,51 @@ DML和DDL的**IO操作**是随机（不是SQL的执行顺序是随机的），�
 ## 2.3 解决方案
 1、优化语句，能DDL和DML快速执行
 
-2、优化部署配置。还有就是主库是写，对数据安全性较高，比如 sync_binlog=1，innodb_flush_log_at_trx_commit = 1 之类的设置，而slave则不需要这么高的数据安全，完全可以讲sync_binlog设置为0或者关闭binlog，innodb_flushlog也 可以设置为0来提高sql的执行效率。
+2、优化部署方案、配置。
+还有就是主库是写，对数据安全性较高，比如 sync_binlog=1，innodb_flush_log_at_trx_commit = 1 之类的设置，而slave则不需要这么高的数据安全，完全可以讲sync_binlog设置为0或者关闭binlog，innodb_flushlog也 可以设置为0来提高sql的执行效率。
+
+减小slave_net_timeout，单位为秒 默认设置为 3600秒。参数含义：当slave想从主数据库读取log数据，能接收的网络连接超时。可减轻网络原因带来的主从延迟。
+
+减小master-connect-retry单位为秒 默认设置为 60秒。参数含义：当重新建立主从连接时，如果连接建立失败，**间隔多久后重试**。可减轻网络原因带来的主从延迟。
+
+使用多台slave来分摊读请求，再从这些slave中取一台专用的服务器，只作为备份用（不执行查询，避免锁等待），不进行其他任何操作。
 
 3、使用比主库更好的硬件设备作为slave。
+
+## 2.4 如何定位、判断主从延迟
+基于局域网的master/slave机制在通常情况下已经可以满足'实时'备份的要求了。如果延迟比较大，可先确认以下几个因素确定原因： 
+1. 网络延迟
+2. master负载(DML和DDL量大)
+3. slave负载（DML和DDL量很大、查询量大）
+
+判断主从延时，有两个指标：
+1. Seconds_Behind_Master
+2. mk-heartbeat
+
+下面具体说下两者在实现功能的差别。
+
+### 2.4.1 Seconds_Behind_Master
+show slave status 命令输出的Seconds_Behind_Master参数的值来判断，是否有发生主从延时。
+
+其值有这么几种：
+
+NULL - 表示io_thread或是sql_thread有任何一个发生故障，也就是该线程的Running状态是No,而非Yes.
+
+0 - 该值为零，是我们极为渴望看到的情况，**在主动网络良好的情况下**，0表示主从复制良好，可以认为lag不存在。
+
+正值 - 表示主从已经出现延时，数字越大表示从库落后主库越多。
+
+负值 - 几乎很少见，只是听一些资深的DBA说见过，其实，这是一个BUG值，该参数是不支持负值的，也就是不应该出现。
+
+Seconds_Behind_Master是通过比较sql_thread执行的event的timestamp和io_thread复制好的 event的timestamp(简写为ts)进行比较，而得到的这么一个差值。sql_thread执行的时间戳肯定是**大于等于**io_thread复制的binlog里记录的时间戳的，因为，DML和DDL语句执行需要一定的时间。
+
+我们都知道的relay-log和主库的bin-log里面的内容完全一 样，在记录sql语句的同时会记录当时的ts，所以比较参考的值来自于binlog，其实主从数据库的系统没有必要与NTP进行同步，也就是说无需保证主从时钟的 一致，因为比较的都是binlog里的时间戳时间差，io_thread的是刚取到的时间戳，sql_thread是刚执行完的时间戳。
+
+但是，问题就出来了， 当主库I/O负载很大或是网络阻塞，io_thread**不能及时复制**binlog（没有中断，也在复制），而sql_thread一直都能跟上 io_thread的脚本，这时Seconds_Behind_Master的值是0，也就是我们从Seconds_Behind_Master参数可以暂且判断为无延时，但是，实际上不是。这也就是为什 么大家要批判用这个参数来监控数据库是否发生延时不准的原因，但是这个值并不是总是不准，如果当io_thread与主库网络很好的情况下，那么 该值也是很有价值的。之前，提到 Seconds_Behind_Master这个参数会有负值出现，我们已经知道该值是io_thread的最近跟新的ts与sql_thread执行到 的ts差值，前者始终是大于后者的，唯一的肯能就是某个event的ts发生了错误，比之前的小了，那么当这种情况发生时，负值出现就成为可能。
+
+### 2.4.2 mk-heartbeat
+mk-heartbeat，Maatkit万能工具包中的一个工具，被认为可以准确判断复制延时的方法。
+
+mk-heartbeat的实现也是借助timestmp的比较实现的，它首先需要保证主从服务器必须要保持一致，通过与相同的一个NTP server同步时钟。它需要在主库上创建一个heartbeat的表，里面至少有id与ts两个字段，id为server_id，ts就是当前的时间戳 now()，该结构也会被复制到从库上，表建好以后，会在主库上以后台进程的模式去执行一行更新操作的命令，定期去向表中的插入数据，这个周期默认为1 秒，同时从库也会在后台执行一个监控命令，与主库保持一致的周期去比较，复制过来记录的ts值与主库上的同一条ts值，差值为0表示无延时，差值越大表示 延时的秒数越多。我们都知道复制是异步的ts不肯完全一致，所以该工具允许半秒的差距，在这之内的差异都可忽略认为无延时。这个工具就是通过实打实的复 制，巧妙的借用timestamp来检查延时，赞一个！
+
+
