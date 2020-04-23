@@ -90,7 +90,7 @@ public class Person {
 
 尤其注意：
 
-Person只配置@ConfigurationProperties注解是无法反序列化并被容器内的实例获取的，必须配合@Component或者@EnableConfigurationProperties 。
+Person只配置@ConfigurationProperties注解是无法反序列化并被容器内的实例获取的，必须配合@Component或者直接只使用@EnableConfigurationProperties 。
 
 如果一个配置类只配置@ConfigurationProperties注解，而没有使用@Component，那么在IOC容器中是获取不到properties 配置文件转化的bean。说白了 @EnableConfigurationProperties 相当于把使用  @ConfigurationProperties 的类进行了一次注入。
  测试发现 @ConfigurationProperties 与 @EnableConfigurationProperties 关系特别大。
@@ -158,7 +158,7 @@ person:
 
 ## 1.3 加载指定的配置文件@PropertySource
 
-使用@ConfigurationProperties 注解是，是默认直接读取 resource 文件夹下面的application.yaml（这就是全局配置文件）。但是！有时候，数据库、redis也有配置文件的需求，都写在一个文件，可能的会写很长，并且，对应的配置类的属性也越来越多。我们就会有多个自定义配置类的需求，并且，就可以在自定义的配置类上**再额外使用**@PropertySource以指定配置文件。
+**使用@ConfigurationProperties 注解是，是默认直接读取 resource 文件夹下面的application.yaml（这就是全局配置文件）**。但是！有时候，数据库、redis也有配置文件的需求，都写在一个文件，可能的会写很长，并且，对应的配置类的属性也越来越多。我们就会有多个自定义配置类的需求，并且，就可以在自定义的配置类上**再额外使用**@PropertySource以指定配置文件。
 
 配置类
 

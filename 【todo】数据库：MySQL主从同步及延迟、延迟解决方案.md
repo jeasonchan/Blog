@@ -1,5 +1,7 @@
 # 1 前言
-参考文章   深入解析Mysql 主从同步延迟原理及解决方案     https://www.cnblogs.com/cnmenglang/p/6393769.html
+ 深入解析Mysql 主从同步延迟原因及解决方案     https://www.cnblogs.com/cnmenglang/p/6393769.html
+
+MySQL主从同步部署、主从原理及读写分离     https://blog.csdn.net/qq_15092079/article/details/81672920
 
 # 2 mysql主从复制及延迟
 MySQL的主从同步是一个很成熟的架构，优点为：
