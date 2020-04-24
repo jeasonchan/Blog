@@ -22,3 +22,10 @@
 
 # 6 @Configuration
 
+
+
+# 7 @Qualifier
+
+百度百科  https://baike.baidu.com/item/%40Qualifier
+
+第三房博客小结  https://www.cnblogs.com/smileLuckBoy/p/5801678.html
