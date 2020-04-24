@@ -1,4 +1,3 @@
-使用SQL来记录日记：
 ```sql
 # =========函数定义区===========
 
@@ -36,29 +35,74 @@ insert into daily
     (create_time, content, extra_content)
 values (now(), '试试2', '');
 
-alter table daily modify status char(100);
-alter table daily modify status tinyint default 0 ;
+alter table daily
+    modify status char(100);
+alter table daily
+    modify status tinyint default 0;
 
-select content from daily where status=0;
+select content
+from daily
+where status = 0;
 
-select id,status,content from daily;
+select id, status, content
+from daily;
 
-select id from daily where status is null;
+select id
+from daily
+where status is null;
 
-update daily set status=0 where status is null;
+update daily
+set status=0
+where status is null;
 
-delete from daily where content like  '试试%';
+delete
+from daily
+where content like '试试%';
 
-alter table daily modify extra_content text;
+alter table daily
+    modify extra_content text;
 
-insert into daily (content,extra_content) values ('试试','');
+insert into daily (content, extra_content)
+values ('试试', '');
 
-alter table daily modify create_time datetime default now();
+alter table daily
+    modify create_time datetime default now();
 
-insert into daily (content,extra_content) values ('试试','');
+insert into daily (content, extra_content)
+values ('试试', '');
 
-update daily set create_time=now() where create_time is null;
+update daily
+set create_time=now()
+where create_time is null;
+
+delete
+from daily
+where length(content) < 100;
+
+insert into daily (content, extra_content)
+values ('1', '');
+insert into daily (content, extra_content)
+values ('22', '');
+insert into daily (content, extra_content)
+values ('333', '');
+insert into daily (content, extra_content)
+values ('4444', ''),
+       ('55555', '');
+
+select id, length(content)
+from daily;
 
 
+insert into daily (content, extra_content)
+values ('屌屌', '');
+insert into daily (content, extra_content)
+values ('屌', '');
+insert into daily (content, extra_content)
+values ('屌1', '');
+
+select id, content, extra_content
+from daily
+where content like '%1%'
+   or extra_content like '%1%';
 
 ```
