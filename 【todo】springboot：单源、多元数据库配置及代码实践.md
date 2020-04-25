@@ -109,6 +109,10 @@ public class DailyExerciseApplication {
 
 ## 3.1 使用Primary表明主数据库
 
+
+
+
+
 ## 3.2 自定义datasource及JdbcTemplate实例
 
 
