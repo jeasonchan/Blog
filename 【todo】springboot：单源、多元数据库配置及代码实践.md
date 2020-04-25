@@ -107,4 +107,9 @@ public class DailyExerciseApplication {
 
 此处介绍三种方式配置多数据库：
 
-3.1 Primary配合
+## 3.1 使用Primary表明主数据库
+
+## 3.2 自定义datasource及JdbcTemplate实例
+
+
+
