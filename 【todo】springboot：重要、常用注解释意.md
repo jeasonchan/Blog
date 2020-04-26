@@ -10,6 +10,23 @@
 
 # 3 @ConfigurationProperties
 
+在@Configuration内部，给Bean方法注解，表示返回的是prefix反序列化得到的实例
+
+```java
+@Configuration
+public class DBConfig {
+
+    @Bean
+    @ConfigurationProperties(prefix = "datasource1")
+    public DataSource dataSource1() {
+        return DataSourceBuilder.create().build();
+    }
+
+}
+```
+
+
+
 
 
 # 4 @Component
@@ -28,8 +45,20 @@ https://blog.csdn.net/icarus_wang/article/details/51649635
 
 
 
+
+
+
+
+
+
 # 7 @Qualifier
 
 百度百科  https://baike.baidu.com/item/%40Qualifier
 
 第三房博客小结  https://www.cnblogs.com/smileLuckBoy/p/5801678.html
+
+
+
+# 8 @Service@Repository@Component等对比
+
+https://www.cnblogs.com/lonecloud/p/5745885.html

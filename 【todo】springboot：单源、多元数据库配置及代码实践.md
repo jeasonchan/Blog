@@ -87,7 +87,7 @@ public class DailyExerciseApplication {
         SpringApplication.run(DailyExerciseApplication.class, args);
 
 
-        //这一步从IOC中获取bean
+        //这一步从IOC中获取bean，也可以使用Autowired进行构造注入或者设置注入
         MyJdbcTemplate myJdbcTemplate = (MyJdbcTemplate) SpringUtil.getBeanByName("myJdbcTemplate");
         System.out.println(myJdbcTemplate);
         
@@ -111,7 +111,148 @@ public class DailyExerciseApplication {
 
 
 
-## 3.2 自定义datasource及JdbcTemplate实例
+## 3.2 （推荐方法）自定义datasource及JdbcTemplate实例
+
+首先，引入springboot 的jdbc和依赖和数据库驱动：
+
+```xml
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-jdbc</artifactId>
+</dependency>
+```
 
 
+
+接着，编写yml文件，定义数据库连接信息：
+
+```yaml
+datasource1:
+  #  url: jdbc:mysql://localhost:3306/?serverTimezone=GMT%2B8
+  jdbc-url: jdbc:mysql://localhost:3306/?serverTimezone=GMT%2B8
+  username: root
+  password: 123456
+  driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+datasource2:
+  #  url: jdbc:mysql://localhost:3306/?serverTimezone=GMT%2B8
+  jdbc-url: jdbc:mysql://localhost:3306/?serverTimezone=GMT%2B8
+  username: root
+  password: 123456
+  driver-class-name: com.mysql.cj.jdbc.Driver
+
+```
+
+有两个重点：
+
+1、自定义的bean最好别跟默认的连接池同名，即dataSource，避免不必要的麻烦
+
+2、使用HiKari作为连接池时，hikari并没有url这个属性，反序列化会出错，因此要改名为jdbc-url，其他连接池的话可能又要改回url，可以两个都定义上（如果，反序列策略较为宽松的话）
+
+
+
+接着，从配置文件反序列化得到两个DataSource实例，用于之后构造JdbcTemplate和DataSourceTransactionManager实例：
+
+```java
+package com.jeasonchan.Config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class DBConfig {
+
+    @Bean
+    @ConfigurationProperties(prefix = "datasource1")
+    public DataSource dataSource1() {
+        return DataSourceBuilder.create().build();
+    }
+
+
+    @Bean
+    @ConfigurationProperties(prefix = "datasource2")
+    public DataSource dataSource2() {
+        return DataSourceBuilder.create().build();
+    }
+
+
+}
+```
+
+
+
+接着，通过从配置中得到的DataSource实例构造JdbcTemplate和DataSourceTransactionManager:
+
+```java
+package com.jeasonchan.DB;
+
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.stereotype.Repository;
+
+import javax.sql.DataSource;
+
+@Repository("dBService2")
+@Getter
+public class DBService2 {
+    private DataSource dataSource;
+    private JdbcTemplate jdbcTemplate;
+    private DataSourceTransactionManager dataSourceTransactionManager;
+
+    @Autowired 
+    //该注解用于构造函数自动注入，按class找唯一的bean，否则报错；
+    //入参加上Qualifier后，则按照bean的名称进行注入
+    public DBService2(@Qualifier("dataSource2") DataSource dataSource) {
+        this.dataSource = dataSource;
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.dataSourceTransactionManager = new DataSourceTransactionManager(dataSource);
+    }
+}
+```
+
+
+
+主函数，对两个连接池进行非事务性调用：
+
+```java
+package com.jeasonchan;
+
+import com.jeasonchan.DB.DBService1;
+import com.jeasonchan.DB.DBService2;
+import com.jeasonchan.util.SpringUtil;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Main {
+    public static void main(String[] args) {
+        SpringApplication.run(Main.class, args);
+
+        String sql = "show databases";
+
+        System.out.println("连接池1：");
+        DBService1 dBService1 = (DBService1) SpringUtil.getBeanByName("dBService1");
+        System.out.println(dBService1.getJdbcTemplate().queryForList(sql));
+
+
+        System.out.println("连接池2：");
+        DBService2 dBService2 = (DBService2) SpringUtil.getBeanByName("dBService2");
+        System.out.println(dBService2.getJdbcTemplate().queryForList(sql));
+
+    }
+}
+```
 
