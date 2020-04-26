@@ -105,4 +105,11 @@ from daily
 where content like '%1%'
    or extra_content like '%1%';
 
+delete from daily where id=1;
+
+insert into daily (content) values ('验证更UME之后的updateAgent接入问题'),
+                                   ('取消操作的退出升级模式问题');
+
+# 查询当天添加的字段
+select * from daily where to_days(now())-to_days(create_time)=0;
 ```
