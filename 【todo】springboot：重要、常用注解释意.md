@@ -21,6 +21,10 @@
 
 
 # 6 @Configuration
+https://blog.csdn.net/icarus_wang/article/details/51649635
+
+使用该注解配置时，配置类不需要再使用@Component
+
 
 
 
