@@ -1,5 +1,15 @@
 # 1 前言
 
+参考文章：
+
+springboot中jdbctemplate和jpa配置多数据源    https://www.cnblogs.com/fengmao/p/7538854.html
+
+
+
+
+
+
+
 SpringBoot能够快速配置并使用数据库是基于以下流程：
 
 1. 从yml文件序列化得到一些类实例
