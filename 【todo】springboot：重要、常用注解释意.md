@@ -59,6 +59,10 @@ https://blog.csdn.net/icarus_wang/article/details/51649635
 
 
 
+@Autowired是按照Class进行搜索，如果该Class只有一个实例，完美，直接注入即可；如果有多个实例Bean，就直接报错。为了解决IOC中有多个实例Bean的情况，使用@Qualifier，切换到按照Bean名字进行注入。
+
+
+
 # 8 @Service@Repository@Component等对比
 
 https://www.cnblogs.com/lonecloud/p/5745885.html
