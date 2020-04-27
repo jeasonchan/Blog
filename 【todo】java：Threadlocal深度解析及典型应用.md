@@ -12,7 +12,99 @@ Java并发编程：深入剖析ThreadLocal     https://www.cnblogs.com/dolphin05
 
 # 2 解析
 # 3 代码实践
-## 3.1 数据库连接
+## 3.1 TransactionTemplate分别设置事务隔离
+
+先看如何获取“独立”的TransactionTemplate对象
+
+```
+package com.jeasonchan.dao;
+
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.sql.DataSource;
+
+@Service("dBService1")
+
+public class DBService1 {
+    @Getter
+    private DataSource dataSource;
+
+    @Getter
+    private JdbcTemplate jdbcTemplate;
+
+    @Getter
+    private DataSourceTransactionManager dataSourceTransactionManager;
+
+    @Getter
+    private TransactionTemplate defaultTransactionTemplate;
+
+    @Getter
+    private ThreadLocal<TransactionTemplate> transactionTemplateThreadLocal = new ThreadLocal<>();
+
+    public void setIsolatoinLevel(int isolatoinLevel) {
+        transactionTemplateThreadLocal.set(new TransactionTemplate(
+                this.dataSourceTransactionManager,
+                new TransactionDefinition() {
+                    @Override
+                    public int getIsolationLevel() {
+                        return isolatoinLevel;
+                    }
+                }
+        ));
+    }
+
+    public TransactionTemplate getCustomTransactionTemplate() {
+        if (null == this.transactionTemplateThreadLocal.get()) {
+            setIsolatoinLevel(TransactionDefinition.ISOLATION_DEFAULT);
+        }
+        return this.transactionTemplateThreadLocal.get();
+    }
+
+
+    @Autowired
+    public DBService1(@Qualifier("dataSource1") DataSource dataSource) {
+        this.dataSource = dataSource;
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.dataSourceTransactionManager = new DataSourceTransactionManager(dataSource);
+        this.defaultTransactionTemplate = new TransactionTemplate(dataSourceTransactionManager);
+    }
+}
+```
+
+再看一下，实际的调用代码：
+
+```java
+System.out.println(System.identityHashCode(dbService1.getCustomTransactionTemplate()));
+//这一行获取的是隔离等级为默认的-1的TransactionTemplate实例，只不过只存在于当前线程，并且和defaultTransactionTemplate不是同一个对象
+
+dbService1.setIsolatoinLevel(level);
+//经过这次set操作，get出来的内容以发生变化，已经覆盖了Map里的对象
+
+TransactionTemplate customTransactionTemplate = bService1.getCustomTransactionTemplate();
+
+try {
+    customTransactionTemplate.execute(new TransactionCallbackWithoutResult() {
+        @Override
+        protected void doInTransactionWithoutResult(TransactionStatus status) {
+            //放事务操作
+        }
+    });
+
+} catch (TransactionException e) {
+    e.printStackTrace();
+}
+```
+
+
+
+
 
 ## 3.2 i18n
 ```java
@@ -62,4 +154,4 @@ public class CommonI18n {
 虽然是的静态的方法，但是，每个线程都可以设置自己的目标语言类型，也不必转化为的非静态类，避免了每次都要new一个对象，一定程度上能减少CPU和内存消耗
 
 # 4 重要
-一定要在finally中remove掉在当前线程中添加的拷贝值，也就是对ThreadLocal实例进行remove操作，尤其是使用了线程池的情况下，可以避免内存泄露（我们set进线程池线程的变量可能永远不会被访问了，内存泄露了）和变量污染（别人使用你用过的线程池，里面还有我们剩下的变量）。
+一定要在finally中remove掉在当前线程中添加的拷贝值，也就是对ThreadLocal实例进行remove操作，尤其是使用了线程池的情况下，可以避免内存泄露（我们set进线程池线程的变量可能永远不会被访问了，内存泄露了）和变量污染（别人使用你用过的线程池，里
