@@ -88,3 +88,49 @@ public class Singleton {
 CAS的一个重要缺点在于如果忙等待一直执行不成功(一直在死循环中,所有的线程都无法成功完成CAS种的Set操作),会对CPU造成较大的执行开销。
 
 另外，如果大量线程同时执行到singleton = new Singleton();的时候，会有大量对象同时创建，很可能导致内存溢出。同时，由于用于赋值的singleton = new Singleton();对象，写在了while循环中，就算是同一个线程也可能反复new对象，因此，可以将singleton = new Singleton();放到while外面，只创建一次，while内只进行CAS操作。
+
+2.3.1 AtomicReference
+更新原子引用的具体对象不能先get出来，再做一些改变，而是应该直接使用AtomicReference.getAndSet()方法。比如：
+```java
+// 普通引用
+private static Person person;
+
+// 原子性引用
+private static AtomicReference<Person> aRperson;
+
+public static void main(String[] args) throws InterruptedException {
+    person = new Person("Tom", 18);
+    aRperson = new AtomicReference<Person>(person);
+
+    System.out.println("Atomic Person is " + aRperson.get().toString());
+
+    Thread t1 = new Thread(new Task1());
+    Thread t2 = new Thread(new Task2());
+
+    t1.start();
+    t2.start();
+
+    t1.join();
+    t2.join();
+
+    System.out.println("Now Atomic Person is " + aRperson.get().toString());
+}
+
+static class Task1 implements Runnable {
+    public void run() {
+        aRperson.getAndSet(new Person("Tom1", aRperson.get().getAge() + 1));
+
+        System.out.println("Thread1 Atomic References "
+                + aRperson.get().toString());
+    }
+}
+
+static class Task2 implements Runnable {
+    public void run() {
+        aRperson.getAndSet(new Person("Tom2", aRperson.get().getAge() + 2));
+
+        System.out.println("Thread2 Atomic References "
+                + aRperson.get().toString());
+    }
+}
+```
