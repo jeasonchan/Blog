@@ -4,7 +4,7 @@ SpringBoot系列: JdbcTemplate 事务控制      https://www.cnblogs.com/harrych
 
 
 
-DataSourceTransActionManager实现事务即源码浅析   https://blog.csdn.net/songzehao/article/details/95603555
+TransactionTemplate实现事务即源码浅析   https://blog.csdn.net/songzehao/article/details/95603555
 
 
 
@@ -113,7 +113,9 @@ public <T> T execute(TransactionCallback<T> action) throws TransactionException 
     T result;
     
     try {
-        result = action.doInTransaction(status);  //这里就是我们要放DML代码的地方
+        result = action.doInTransaction(status);  
+        //这里就是我们要放DML代码的地方
+        //执行发生异常的话，会自动触发catch里的状态回滚
     
     }catch (RuntimeException | Error ex) {
         // Transactional code threw application exception -> rollback
@@ -129,15 +131,21 @@ public <T> T execute(TransactionCallback<T> action) throws TransactionException 
     return result;         
 }
 ```
-从上面代码中可以看到, 要想要回滚数据库操作, 可以在callback对象的doInTransaction函数抛出异常, 或者在doInTransaction函数中可以控制 一个 TransactionStatus 接口的变量(transactionStatus 变量), 该TransactionStatus 接口为处理事务的代码提供一个简单的控制事务执行和查询事务状态的方法,  调用 transactionStatus.setRollbackOnly() 可以回滚事务. 
+从上面代码中可以看到, 回滚数据库操作是自动触发的, 当callback对象的doInTransaction函数抛出异常时。或者在doInTransaction函数中可以控制 一个 TransactionStatus 接口的变量(transactionStatus 变量), 该TransactionStatus 接口为处理事务的代码提供一个简单的控制事务执行和查询事务状态的方法,  调用 transactionStatus.setRollbackOnly() 可以回滚事务. 
 
 TransactionTemplate.execute() 使用回调机制传参, 参数类型是 TransactionCallback<T> 接口, 实参可以是:
-1. TransactionCallbackWithoutResult 类实例, 适合于事务没有返回值, 例如save、update、delete等等.
-2. TransactionCallback<T> 虚拟类实例, TransactionCallback<T> 泛型中的类型 T 是 doInTransaction() 函数的返回类型, 一般情况下这个 T 类型并不是很重要的, 直接使用 Object 类型即可. 也可以使用将Select的结果保存到这个返回值上.
 
+1、TransactionCallbackWithoutResult **类实例**, 适合于事务没有返回值, 例如save、update、delete等等.
 
+2、TransactionCallback<T> **虚拟类的实现类的实例**, TransactionCallback<T> 泛型中的类型 T 是 doInTransaction() 函数的返回类型, 一般情况下这个 T 类型并不是很重要的, 直接使用 Object 类型即可. 也可以使用将Select的结果保存到这个返回值上.
+
+## 2.1.1 线程间TransactionTemplate实例隔离使用
+IOC中只有一个TransactionTemplate实例，如果多个线程都直接使用这唯一的一个实例，并对其设置隔离等级，显然会相互影响，因此，应该使用Threadlocal将该变量进行封装，避免相互影响。代码见：            
+
+https://github.com/jeasonchan/SpringBootDemo/blob/master/multi-datasource-jdbc-connect/src/main/java/com/jeasonchan/dao/DBService1.java
 
 ## 2.2 基于注解
+
 
 
 
