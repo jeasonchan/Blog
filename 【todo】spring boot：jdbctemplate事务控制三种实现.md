@@ -120,7 +120,7 @@ public <T> T execute(TransactionCallback<T> action) throws TransactionException 
     }catch (RuntimeException | Error ex) {
         // Transactional code threw application exception -> rollback
         rollbackOnException(status, ex);
-        throw ex;
+        throw ex;//注意！！如果当前的catch生效，则这一行的ex并不会下面的捕捉，而是直接从方法怕抛出
     
     }catch (Throwable ex) {
         // Transactional code threw unexpected exception -> rollback
@@ -131,7 +131,7 @@ public <T> T execute(TransactionCallback<T> action) throws TransactionException 
     return result;         
 }
 ```
-从上面代码中可以看到, 回滚数据库操作是自动触发的, 当callback对象的doInTransaction函数抛出异常时。或者在doInTransaction函数中可以控制 一个 TransactionStatus 接口的变量(transactionStatus 变量), 该TransactionStatus 接口为处理事务的代码提供一个简单的控制事务执行和查询事务状态的方法,  调用 transactionStatus.setRollbackOnly() 可以回滚事务. 
+从上面代码中可以看到, 回滚数据库操作是**自动触发**的，无论是抛出什么类型的异常，并且抛出的异常该可以从execute中捕捉, 当callback对象的doInTransaction函数抛出异常时。或者在doInTransaction函数中可以控制 一个 TransactionStatus 接口的变量(transactionStatus 变量), 该TransactionStatus 接口为处理事务的代码提供一个简单的控制事务执行和查询事务状态的方法,  调用 transactionStatus.setRollbackOnly() 可以回滚事务. 
 
 TransactionTemplate.execute() 使用回调机制传参, 参数类型是 TransactionCallback<T> 接口, 实参可以是:
 
