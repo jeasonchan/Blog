@@ -2,6 +2,7 @@
 # =========函数定义区===========
 
 
+
 # ==============================
 create database workcontent;
 
@@ -112,4 +113,40 @@ insert into daily (content) values ('验证更UME之后的updateAgent接入问�
 
 # 查询当天添加的字段
 select * from daily where to_days(now())-to_days(create_time)=0;
+# 查看近一个星期的记录
+select * from daily where to_days(now())-to_days(create_time)<=2;
+
+update daily set  status=1,extra_content='icener已更新方案' where to_days(now())-to_days(create_time)<=3 and content='取消操作的退出升级模式问题';
+
+
+create table mvcc_test(
+    id int auto_increment,
+    name varchar(20),
+    primary key(id)
+)
+
+select *
+from daily;
+
+delete from daily where length(content)<10;
+
+select id,content,extra_content,status from daily;
+
+# 定义当前会话有效的变量
+set @isDoneStatus =1;
+# 当前会话定义的变量
+select @isDoneStatus;
+
+update daily set status=@isDoneStatus;
+
+select * from daily;
+
+update daily set extra_content='已验证通过' where content like '%Agent%' and extra_content is null;
+
+select *
+from daily;
+
+select *
+from daily where content like '%Agent%';
+
 ```
