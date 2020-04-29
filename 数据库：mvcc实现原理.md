@@ -101,7 +101,37 @@ create table(
     primary key(id)
 )
 ```
-## 2.1 插入Insert
 
+假设系统版本号从1开始。
 
+## 2.1 DML插入操作
+```sql
+start transaction;
+insert into yang values(NULL,'yang') ;
+insert into yang values(NULL,'long');
+insert into yang values(NULL,'fei');
+commit;
 ```
+
+开启可重复读的事务，进行条目插入。最终，至少在redo日志里，表的状态是如下的：
+
+|  id   |   name  | 行的创建时间（也就是事务ID，等于系统版本号，递增的）  |   行的删除时间（）  |
+|---|---|---|---|
+| 1  | 	yang |	1 |	undefined  |
+| 2  |	long |	1 |	undefined  |
+|  3 |	fei  |	1 |	undefined  |
+
+## 2.2 DQL查询操作
+InnoDB会根据以下两个条件检查每行记录:
+
+1、InnoDB只会查找版本早于当前事务版本的数据行(也就是,行的系统版本号小于或等于当前事务的系统版本号)，这样可以确保事务读取的行，要么是在事务开始前已经存在的，要么是事务自身插入或者修改过的
+
+2、行的删除版本要么未定义,要么大于当前事务版本号,这可以确保事务读取到的行，在事务开始之前未被删除.
+只有a,b同时满足的记录，才能返回作为查询结果. 
+
+**只在同时符合1、2两个条件**的条目中进行具体的select条件查找
+
+## 2.3 DQL删除操作
+
+
+
