@@ -2,9 +2,11 @@
 参考文章：
 MVCC实现原理    https://www.jianshu.com/p/f692d4f8a53e
 
+以具体CRUD事务程为例，分析MVCC原理    https://blog.csdn.net/whoamiyang/article/details/51901888
 
 MVCC(Multi Version Concurrency Control的简称)，代表多版本并发控制。与MVCC相对的，是基于锁的并发控制，Lock-Based Concurrency Control)。
-MVCC最大的优势：读不加锁，读写不冲突。在读多写少的OLTP应用中，读写不冲突是非常重要的，极大的增加了系统的并发性能
+
+**MVCC最大的优势：读不加锁，读写不冲突。在读多写少的OLTP应用中，读写不冲突是非常重要的，极大的增加了系统的并发性能。**
 
 了解MVCC前，我们先学习下Mysql架构和数据库事务隔离级别
 
@@ -36,9 +38,9 @@ MySQL从概念上可以分为五层:
 
 这里再说一下不可重复读和幻读的区别：
 
-不可重复读是，读同一条数据（以主键来区分是否为同一条数据），前后读取的某些字段的值是不同的；幻读是，前后表中的数据条目，会都出来或者减少几条数据，也就是会多几个或者少几个主键。为了避免不可重复读，就要锁住自己正在读取的那几行，不让别人修改自己正在读取的条目，使用TRANSACTION_REPEATABLE_READ隔离级别。为了避免幻读，将表锁住，避免别人向表中增加、减少条目，影响统计。
+不可重复读是，读同一条数据（以主键来区分是否为同一条数据），前后读取的某些字段的值是不同的；幻读是，前后表中的数据条目，会都出来或者减少几条数据，也就是会多几个或者少几个主键。为了避免不可重复读，就要锁住自己正在读取的那几行，不让别人修改自己正在读取的条目，使用TRANSACTION_REPEATABLE_READ隔离级别。为了避免幻读，将表锁住，避免别人向表中增加、减少条目，影响统计。**但是，直接用悲观锁来避免这种情况会严重影响数据库的并发性能**
 
-大多数数据库系统的默认隔离级别都是READ COMMITTED（但MySQL不是)，InnoDB存储引擎默认隔离级别REPEATABLE READ，通过多版本并发控制（MVCC，Multiversion Concurrency Control）解决了幻读的问题。
+大多数数据库系统的默认隔离级别都是READ COMMITTED（但MySQL不是)，InnoDB存储引擎默认隔离级别REPEATABLE READ，但是，innoDB能通过多版本并发控制（MVCC，Multiversion Concurrency Control）在可重复读的隔离级别下，使用加锁行锁/间隙锁的select就能解决幻读的问题。
 
 # 4 事务日志
 ## 4.1 什么是事务日志
@@ -90,3 +92,16 @@ MySQL中跟数据持久性、一致性有关的日志，有以下几种：
 # 5 MVCC实现
 MVCC是通过在事务日志的每行记录后面再保存两个隐藏的列来实现的。这两个列，一个保存了行的创建时间，一个保存行的过期时间（或删除时间）。当然存储的并不是实际的时间值，而是系统版本号（system version number)。每开始一个新的事务，系统版本号都会自动递增。事务开始时刻的系统版本号会作为事务的版本号，用来和查询到的每行记录的版本号进行比较。
 下面看一下在REPEATABLE READ隔离级别下，MVCC具体是如何操作的。
+
+先创建一个表：
+```sql
+create table(
+    id int auto_increment,
+    name varchar(20),
+    primary key(id)
+)
+```
+## 2.1 插入Insert
+
+
+```
