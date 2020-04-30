@@ -149,4 +149,10 @@ from daily;
 select *
 from daily where content like '%Agent%';
 
+# 开始一个事务会话
+start transaction ;
+set session transaction isolation level repeatable read;
+select * from mvcc_test;
+commit ; # 提交会话
+
 ```
