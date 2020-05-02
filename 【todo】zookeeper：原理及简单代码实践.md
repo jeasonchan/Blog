@@ -10,10 +10,13 @@
 安装和配置   https://www.jianshu.com/p/de90172ea680
 
 
-（实现向）https://blog.csdn.net/qq_32717909/article/details/94836873     https://blog.csdn.net/qq_32717909/article/details/94836873
+（zookeeper代码实现分析）  https://blog.csdn.net/qq_32717909/article/details/94836873     
 
 
+（java  api 介绍）  https://www.jianshu.com/p/44843a3af9ba
 
+
+(zookeeper原生api高级封装 Curator介绍)   https://www.cnblogs.com/qingyunzong/p/8666288.html
 
 
 目前，分布式系统都是采用一主多从的方式进行部署，在分布式系统的多台服务器要对数据状态达成一致，其实是一件很有难度的事情，因为服务器集群的硬件的问题随时会发生，所以对数据的记录保持一致，是需要一定技巧的。
@@ -86,7 +89,7 @@ Zookeeper会维护一个具有层次关系的数据结构，它非常类似于�
 
 
 # 12 安装和配置
-# 12.1 下载、解压
+## 12.1 下载、解压
 从zookeeper官方下载包，并解压到合适的目录。
 
 官网有两个包，一个是源码包，一个是编译之后的包，选择编译之后的包进行下载。编译后的包，主程序都是一样的，只不过bin目录中包含适用于win和bash的程序启动脚本。
@@ -100,7 +103,7 @@ export PATH=$PATH:$ZOOKEEPER_HOME/bin
 ```
 为了能直接在终端启动zookeeper sever，需要配置以上的系统环境变量。如果自己不嫌麻烦，并且想实验单机集群的，就不用配环境变量，每次cd到bin目录下执行相应的启动、暂停脚本即可。
 
-## 12.3 编写配置文件
+## 12.3 编写核心配置文件
 初次使用 ZooKeeper 时, 需要将 $ZOOKEEPER_HOME/conf 目录下的 zoo_sample.cfg 重命名为 zoo.cfg, zoo.cfg 默认配置如下:
 
 ```bash
@@ -180,4 +183,68 @@ clientPort=2181
 #metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
 #metricsProvider.httpPort=7000
 #metricsProvider.exportJvmInfo=true
+```
+
+## 12.4 针对单机配置文件
+zoo.cfg配置文件：
+
+```bash
+ticketTime=2000
+clientPort=2181
+dataDir=/opt/zookeeper/data
+dataLogDir=/opt/zookeeper/logs
+```
+
+启动服务：
+
+```bash
+# cd 到apache的bin文件夹
+cd /c/CRsoftwares/apache-zookeeper-3.6.1/master/bin
+./zkServer.sh start
+
+# 启动信息打印如下：
+ZooKeeper JMX enabled by default
+Using config: C:\CRsoftwares\apache-zookeeper-3.6.1\master\conf\zoo.cfg
+Starting zookeeper ... STARTED
+```
+
+验证zookeeper服务：
+
+```bash
+cd /c/CRsoftwares/apache-zookeeper-3.6.1/master/bin
+./zkCli.sh
+ls  /
+
+# 输出如下，一开始只有系统自动创建的zookeeper目录
+[zookeeper]
+```
+
+
+
+
+
+## 12.5 针对集群配置文件
+
+
+
+
+# 13 Java api 实践
+zookeeper依赖：
+```xml
+<dependency>
+    <groupId>org.apache.zookeeper</groupId>
+    <artifactId>zookeeper</artifactId>
+    <version>3.4.8</version>
+</dependency>
+```
+
+导入以上依赖后就可以使用原生的api对zookeeper进行节点的增删改查和监听了，但是原生api实现分布式锁等高级功能，较为复杂，可以考虑使用第三方封装好的zookeeper客户端，比如：
+* ZkClient，第三方个人开发
+* Curator, Apache自身的开源项目,其中一个组件包含了几种典型场景的封装实现:
+```xml
+<dependency>
+    <groupId>org.apache.curator</groupId>
+    <artifactId>curator-recipes</artifactId>
+    <version>4.1.0</version>
+</dependency>
 ```
