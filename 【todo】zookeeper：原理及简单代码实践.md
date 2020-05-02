@@ -86,3 +86,98 @@ Zookeeper会维护一个具有层次关系的数据结构，它非常类似于�
 
 
 # 12 安装和配置
+# 12.1 下载、解压
+从zookeeper官方下载包，并解压到合适的目录。
+
+官网有两个包，一个是源码包，一个是编译之后的包，选择编译之后的包进行下载。编译后的包，主程序都是一样的，只不过bin目录中包含适用于win和bash的程序启动脚本。
+
+## 12.2 配置系统环境变量
+
+```
+# ZooKeeper Env
+export ZOOKEEPER_HOME=/opt/zookeeper
+export PATH=$PATH:$ZOOKEEPER_HOME/bin
+```
+为了能直接在终端启动zookeeper sever，需要配置以上的系统环境变量。如果自己不嫌麻烦，并且想实验单机集群的，就不用配环境变量，每次cd到bin目录下执行相应的启动、暂停脚本即可。
+
+## 12.3 编写配置文件
+初次使用 ZooKeeper 时, 需要将 $ZOOKEEPER_HOME/conf 目录下的 zoo_sample.cfg 重命名为 zoo.cfg, zoo.cfg 默认配置如下:
+
+```bash
+# The number of milliseconds of each tick
+# tick是指该应用的基本计时单位，下文的时间设置都是
+# 以tickTime乘以相应的数字得到最终的实际实际时间
+# zookeeper的默认时是2000，即2000毫秒
+tickTime=2000
+
+
+
+# The number of ticks that the initial
+# synchronization phase（同步） can take
+# 默认值是 10, 即 tickTime 属性值的 10 倍。
+# 它用于配置允许 followers 初始连接并同步到 leader 的最大时间。
+# 如果 ZooKeeper 管理的数据量很大的话可以增加这个值。
+initLimit=10
+
+
+# The number of ticks that can pass between
+# sending a request and getting an acknowledgement
+# 默认值是 5, 即 tickTime 属性值的 5 倍。
+# 它用于配置leader 和 followers 间进行心跳检测的最大延迟时间。
+# 如果在设置的时间内 followers 无法与 leader 进行通信, 那么 followers 将会被丢弃。
+syncLimit=5
+
+
+
+# the directory where the snapshot is stored.
+# do not use /tmp for storage, /tmp here is just
+# example sakes.
+# ZooKeeper 用来存储内存数据库快照的目录, 
+# 并且除非指定其它目录, 否则数据库更新的事务日志也将会存储在该目录下。
+# 建议单独配置 dataLogDir 参数来指定 ZooKeeper 事务日志的存储目录。
+# 该路径必须使用绝对路径，不支持相对路径也不支持用户路径（~标志）
+dataDir=/tmp/zookeeper
+
+
+# the port at which the clients will connect
+# 服务器监听客户端连接的端口, 也即客户端尝试连接的端口, 默认值是 2181。
+clientPort=2181
+
+
+# the maximum number of client connections.
+# increase this if you need to handle more clients
+# 在 socket 级别限制单个客户端与单台服务器之前的并发连接数量,
+# 可以通过 IP 地址来区分不同的客户端。
+# 它用来防止某种类型的 DoS 攻击, 包括文件描述符耗尽。
+# 默认值是 60。将其设置为 0 将完全移除并发连接数的限制。
+#maxClientCnxns=10
+
+
+
+# Be sure to read the maintenance section of the
+# administrator guide before turning on autopurge.
+#
+# http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance
+#
+# The number of snapshots to retain in dataDir
+# 配置 ZooKeeper 在自动清理的时候需要保留的数据文件快照的数量和对应的事务日志文件, 默认值是 3。
+#autopurge.snapRetainCount=3
+
+
+
+# Purge task interval（间隙） in hours
+# Set to "0" to disable auto purge feature
+# 和参数 autopurge.snapRetainCount 配套使用, 
+# 用于配置 ZooKeeper 自动清理文件的频率, 默认值是 1, 即1小时清理一次
+# 即默认开启自动清理功能, 设置为 0 则表示禁用自动清理功能。
+#autopurge.purgeInterval=1
+
+
+
+## Metrics Providers
+#
+# https://prometheus.io Metrics Exporter
+#metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
+#metricsProvider.httpPort=7000
+#metricsProvider.exportJvmInfo=true
+```
