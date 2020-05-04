@@ -399,7 +399,7 @@ zookeeper依赖：
 
 导入以上依赖后就可以使用原生的api对zookeeper进行节点的增删改查和监听了，但是原生api实现分布式锁等高级功能，较为复杂，可以考虑使用第三方封装好的zookeeper客户端，比如：
 * ZkClient，第三方个人开发
-* Curator, Apache自身的开源项目,其中一个组件包含了几种典型场景的封装实现:
+* Curator, Apache自身的开源项目,包含了很多组件，有一个组件像spring boot一样，叫curator-recipes，包含了几种典型场景的封装实现:
 ```xml
 <dependency>
     <groupId>org.apache.curator</groupId>
