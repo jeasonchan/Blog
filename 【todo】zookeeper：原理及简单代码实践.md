@@ -96,8 +96,27 @@ Zookeeper这种树形的数据结构有如下这些特点：
 注意：如果因为网络状态不好，client和Server失去联系，client会停留在当前状态，会尝试主动再次连接Zookeeper Server。**client不能宣称自己的session expired（session过期）**，session expired是由Zookeeper Server来决定的，client可以选择自己主动关闭session。
 
 # 5 ZooKeeper Watch
+Zookeeper watch是一种监听通知机制。Zookeeper可以对所有的读操作getData(), getChildren()和 exists()附加监视(watch)，即得到的内容发生了变化，就会触发执行watch里的回调函数。回调函数的入参是一个WatchEvent（监听事件）对象，监视事件可以理解为**一次性**的触发器，官方定义如下： a watch event is one-time trigger, sent to the client that set the watch, whichoccurs when the data for which the watch was set changes。Watch的三个关键点：
 
+*（一次性触发）One-time trigger
 
+当设置监视的数据发生改变时，该监视事件会被发送到客户端，例如，如果客户端调用了getData("/znode1", true) 并且稍后 /znode1 节点上的数据发生了改变或者被删除了，客户端将会获取到 /znode1 发生变化的监视事件，而如果 /znode1 再一次发生了变化，除非客户端在 /znode1 发生变化前再次对/znode1 设置监视，否则客户端不会收到事件通知。
+
+*（发送至客户端）Sent to the client
+
+Zookeeper客户端和服务端是通过 socket 进行通信的，由于网络存在故障，所以监视事件很有可能不会一次就成功地到达客户端，监视事件是异步发送至监视者的，Zookeeper 本身提供了顺序保证(ordering guarantee)：即**客户端只有首先收到了监视事件，get操作才能get出来和之前不一样的东西给，也就是watchEvent发送给客户端失败会屏蔽client获取到最新的节点数据**(a client will never see a change for which it has set a watch until it first sees the watch event)。网络延迟或者其他因素可能导致不同的客户端在不同的时刻感知某一监视事件，但是不同的客户端所看到的一切具有一致的顺序。
+
+*（被设置 watch 的数据）The data for which the watch was set
+
+这意味着znode节点本身具有不同的改变方式。你也可以想象 Zookeeper 维护了两条监视链表：数据监视和子节点监视(data watches and child watches)。 
+
+getData()查询znode存的二进制、exists()查询znode节点是否存在，这两个get方法相当于设置数据监视。
+
+getChildren()查询字节的列表，设置子节点监视。
+
+因此，setData() 会触发设置在某一节点上所设置的数据监视（假定数据设置成功），而一次成功的znode的create() 操作则会出发当前节点上所设置的数据监视（getExist()方法）以及父节点的子节点监视（getChildren()）。一次成功的znode delete操作将会触发当前节点的数据监视（getExist()方法）和子节点监视事件，同时也会触发该节点父节点的child watch。
+
+Zookeeper 中的监视是轻量级的，因此容易设置、维护和分发。当客户端与 Zookeeper 服务器失去联系时，客户端并不会收到监视事件的通知，只有当客户端重新连接后，若在必要的情况下，以前注册过的监视，但是未被客户端成功接收的watchEvent会被重新尝试发送（client收到这个之后，才可以get最新的节点数据，跟前文描述的一致：客户端只有首先收到了监视事件，get操作才能get出来和之前不一样的东西给，也就是watchEvent发送给客户端失败会屏蔽client获取到最新的节点数据），对于开发人员来说这通常是透明的。只有一种情况会导致监视事件的丢失，即：通过exists()设置了某个znode节点的监视，但是如果某个客户端在此znode节点被创建和删除的时间间隔内与zookeeper服务器失去了联系，该客户端即使稍后重新连接 zookeeper服务器后也得不到事件通知。
 
 
 # 6 Consistency Guarantees(一致性能保证)
