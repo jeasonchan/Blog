@@ -64,17 +64,48 @@ Zookeeper会维护一个具有层次关系的数据结构，它非常类似于�
 
 ![zoomkeeper数据结构图](./resources/zoomkeeper数据结构图.bmp)
 
+Zookeeper这种树形的数据结构有如下这些特点：
+
+1）每个子目录项,比如,图中的NameService都被称作为znode，这个znode是被它所在的路径唯一标识，再比如,其子节点  Server1这个znode的标识为/NameService/Server1。
+
+2）znode可以有子节点目录，并且每个znode可以存储数据，注意EPHEMERAL（临时的）类型的目录节点不能有子节点目录。
+
+3）znode是有版本的（version），每个znode中存储的数据可以有多个版本，也就是**一个访问路径中可以存储多份数据，version号自动增加**。
+
+4）znode的类型：
+
+* Persistent 节点，即持久节点,一旦被创建，便不会意外丢失，即使服务器全部重启也依然存在。每个 Persistent 节点即可包含数据，也可包含子节点。
+
+* Ephemeral 节点，即临时节点,在创建它的客户端与服务器间的 Session 结束时自动被删除。服务器重启会导致 Session 结束，因此 Ephemeral 类型的 znode 此时也会自动删除。
+
+* Non-sequence 节点，即非排序节点, 多个客户端同时创建同一 Non-sequence 节点时，只有一个可创建成功，其它匀失败。并且**创建出的节点名称与创建时指定的节点名完全一样。**
+
+* Sequence 节点，即自动增序节点, 创建出的节点名由两部分组成:原先指定的名称 + 自动生成的10位10进制数的序号。多个客户端创建同一名称的节点时，都能创建成功，只是序号不同。
+
+5）znode可以被监控，包括:这个目录节点中存储的数据的修改、子节点目录的变化等，一旦变化可以通知设置监控的客户端，**这个是Zookeeper的核心特性，Zookeeper的很多功能都是基于这个特性实现的**。
+
+6）ZXID：每次对Zookeeper的状态的改变都会产生一个zxid（ZooKeeper Transaction Id），zxid是全局有序的，如果zxid1小于zxid2，则zxid1在zxid2之前发生。ZXID和MySQL中的mvcc的事务ID相似，都能用来表示数据的新旧，事务ID越大，表明数据越新
 
 # 4 ZooKeeper Session
+**Client和Zookeeper集群建立连接，从Java代码的new Zookeeper的构造参数的connectString就可以看出，是个整个集群建立连接**，从**服务端的角度来看**整个client的session状态变化如图所示：
+
+![zookeeper客户端服务端session状态转移图.bmp](./resources/zookeeper客户端服务端session状态转移图.bmp)
+
+如果Client因为Timeout和Zookeeper Server失去连接，client处在CONNECTING状态，会自动尝试再去连接Server，如果在session有效期内再次成功连接到某个Server，则回到CONNECTED状态。
+
+注意：如果因为网络状态不好，client和Server失去联系，client会停留在当前状态，会尝试主动再次连接Zookeeper Server。**client不能宣称自己的session expired（session过期）**，session expired是由Zookeeper Server来决定的，client可以选择自己主动关闭session。
 
 # 5 ZooKeeper Watch
+
+
+
 
 # 6 Consistency Guarantees(一致性能保证)
 
 # 7 ZooKeeper的工作原理
 
 
-# 8 Leader Slection
+# 8 Leader Election
 
 
 
