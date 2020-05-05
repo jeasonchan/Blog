@@ -13,7 +13,7 @@
 （zookeeper代码实现分析）  https://blog.csdn.net/qq_32717909/article/details/94836873     
 
 
-（java  api 介绍）  https://www.jianshu.com/p/44843a3af9ba
+zookeeper原生 api 介绍）  https://www.jianshu.com/p/44843a3af9ba
 
 
 (zookeeper原生api高级封装 Curator介绍)   https://www.cnblogs.com/qingyunzong/p/8666288.html
@@ -583,4 +583,12 @@ public class Main {
 }
 ```
 
-    
+## 13.2 小结
+zookeeper中对节点的操作全部提供了同步和异步两种操作方式，并且有多种不同情况下的方法重载。但使，我们在操作Zookeeper的过程中也发现了一些很不灵活的点，一不小心就有可能导致开发过程中出现漏洞，例如：
+
+1. 原生Api的创建节点，必须按照层级创建，因此建议创建之前我们也要检查该节点是否存在
+
+2. Zookeeper中节点的删除操作也必须按照层级进行删除，即当前节点下存在子节点，必须优先删除子节点，再去删除当前节点，建议删除之前优先检查一下是否存在子节点
+
+除此之外，如果我们对某个节点进行监听，原生的Api实现中，监听触发一次以后就不会再触发了。可见Zookeeper的原生Api实现对于企业级开发而言，较为复杂、不人性化，那么我们能不能将这些操作进行封装，可以使用本章开头介绍的zkClient或者curator。
+
