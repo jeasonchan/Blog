@@ -28,7 +28,7 @@ Redis核心原理       https://www.jianshu.com/p/4e6b7809e10a
 
 2. 除了纯数据缓存的作用之外，得益于其超高速的响应能力，Redis也常用于**提供分布式锁的解决方案**。
 
-# 2 数据类型
+# 2 数据类型 使用介绍
 5种数据类型：Strings, Lists, Hashes, Sets 及 Ordered Sets
 
 ## 2.1 String类型
@@ -257,4 +257,98 @@ redis 127.0.0.1:6379> SDIFF birds mammals
 2) "pigeon"
 ```
 
-## 2.4 
+## 2.4 Sorted Set有序集合
+Sorted Sets和Sets结构相似，不同的是存在Sorted Sets中的数据会有一个甚至多个score属性，并会在写入时就按这个score排好序。针对该数据结构的命令，以Z开头。
+
+```bash
+# ZADD KEY_NAME SCORE1 VALUE1.. SCORE_N VALUE_N  
+# 可一次添加一个元素，也可以一次添加多个元素
+# 分数值可以是整数值或双精度浮点数。
+redis 127.0.0.1:6379> ZADD days 0 mon
+(integer) 1
+
+redis 127.0.0.1:6379> ZADD days 1 tue
+(integer) 1
+
+redis 127.0.0.1:6379> ZADD days 2 wed
+(integer) 1
+
+redis 127.0.0.1:6379> ZADD days 3 thu
+(integer) 1
+redis 127.0.0.1:6379> ZADD days 4 fri
+(integer) 1
+redis 127.0.0.1:6379> ZADD days 5 sat
+(integer) 1
+redis 127.0.0.1:6379> ZADD days 6 sun
+(integer) 1
+
+redis 127.0.0.1:6379> ZCARD days
+(integer) 7
+
+redis 127.0.0.1:6379> ZRANGE days 0 6
+1) "mon"
+2) "tue"
+3) "wed"
+4) "thu"
+5) "fri"
+6) "sat"
+7) "sun"
+
+redis 127.0.0.1:6379> ZSCORE days sat
+"5"
+
+# redis是[  ]的。count用于[score1,score2]之间的计数
+redis 127.0.0.1:6379> ZCOUNT days 3 6
+(integer) 4
+
+redis 127.0.0.1:6379> ZRANGEBYSCORE days 3 6
+1) "thu"
+2) "fri"
+3) "sat"
+4) "sun"
+
+```
+
+## 2.5 Hash
+Redis能够存储key对多个属性的数据（比如user1.uname user1.passwd）
+
+```bash
+redis 127.0.0.1:6379> HKEYS student
+1) "name"
+2) "age"
+3) "sex"
+
+redis 127.0.0.1:6379> HVALS student
+1) "Ganesh"
+2) "30"
+3) "Male"
+
+redis 127.0.0.1:6379> HGETALL student
+1) "name"
+2) "Ganesh"
+3) "age"
+4) "30"
+5) "sex"
+6) "Male"
+
+redis 127.0.0.1:6379> HDEL student sex
+(integer) 1
+
+redis 127.0.0.1:6379> HGETALL student
+1) "name"
+2) "Ganesh"
+3) "age"
+4) "30"
+```
+
+Hash数据结构能够批量修改和获取：
+
+```bash
+redis 127.0.0.1:6379> HMSET kid name Akshi age 2 sex Female
+OK
+redis 127.0.0.1:6379> HMGET kid name age sex
+1) "Akshi"
+2) "2"
+3) "Female"
+```
+# 3 发布/订阅 使用介绍
