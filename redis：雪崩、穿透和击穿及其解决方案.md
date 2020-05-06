@@ -75,7 +75,7 @@ public String get(key) {
             redis.del(key_mutex);
             return value;
 
-        } else {  //这个时候代表同时候的其他线程已经load db并回设到缓存了，这时候重试获取缓存值即可
+        } else { //这个时候代表同时候的其他线程已经load db并回设到缓存了，这时候重试获取缓存值即可
             sleep(50);
             return get(key);  //重试
         }
