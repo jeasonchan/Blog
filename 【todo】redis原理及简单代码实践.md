@@ -97,3 +97,4 @@ redis 127.0.0.1:6379> SUBSTR name 0 3
 "John"
 ```
 
+## 2.2 List类型
