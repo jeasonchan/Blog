@@ -28,3 +28,72 @@ Redis核心原理       https://www.jianshu.com/p/4e6b7809e10a
 
 2. 除了纯数据缓存的作用之外，得益于其超高速的响应能力，Redis也常用于**提供分布式锁的解决方案**。
 
+# 2 数据类型
+5种数据类型：Strings, Lists, Hashes, Sets 及 Ordered Sets
+
+## 2.1 String类型
+Redis能存储二进制安全的字符串，最大长度为1GB：
+
+```bash
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+redis 127.0.0.1:6379> GET name
+"John Doe"
+```
+
+String类型还支持批量的读写操作：
+
+```bash
+# multi set，简称 MSET 批量设置
+redis 127.0.0.1:6379> MSET age 30 sex "male"
+OK
+
+# multi get，简称 MGET 批量查询
+redis 127.0.0.1:6379> MGET age sex
+
+# set的时候用的30，get的时候是字符串"30"，和bash里面一样，字面量
+1) "30"
+2) "male"
+```
+
+String类型的纯数字字符串，其实也可以被当作数字来处理，从而支持对数字的加减操作（和bash一样）。
+
+```bash
+# INCR 命令将 key 中储存的数字值增1。
+# 如果 key 不存在，那么 key 的值会先被初始化为 0 ，然后再执行 INCR 操作。
+# 如果值包含错误的类型，或字符串类型的值不能表示为数字，那么返回一个错误。
+redis 127.0.0.1:6379> INCR age
+(integer) 31
+
+redis 127.0.0.1:6379> INCRBY age 4
+(integer) 35
+
+redis 127.0.0.1:6379> GET age
+"35"
+
+redis 127.0.0.1:6379> DECR age
+(integer) 34
+
+redis 127.0.0.1:6379> DECRBY age 4
+(integer) 30
+
+redis 127.0.0.1:6379> GET age
+"30"
+```
+
+String类型还支持对其部分的修改和获取操作：
+
+```bash
+# 追加操作，返回追加之后的，字符串的总长度
+redis 127.0.0.1:6379> APPEND name " Mr."
+(integer) 12
+redis 127.0.0.1:6379> GET name
+"John Doe Mr."
+
+# 字符串类型的常用命令
+redis 127.0.0.1:6379> STRLEN name
+(integer) 12
+redis 127.0.0.1:6379> SUBSTR name 0 3
+"John"
+```
+
