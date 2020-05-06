@@ -93,8 +93,168 @@ redis 127.0.0.1:6379> GET name
 # 字符串类型的常用命令
 redis 127.0.0.1:6379> STRLEN name
 (integer) 12
+
+# redis的索引不是左闭右开的！！！是[index1,index2]，和一般的编程语言不同！！！
 redis 127.0.0.1:6379> SUBSTR name 0 3
 "John"
 ```
 
 ## 2.2 List类型
+Redis能够将数据存储成一个链表，并能对这个链表进行丰富的操作。**针对List的操作命令都是以L开头的**：
+
+```bash
+redis 127.0.0.1:6379> LPUSH students "John Doe"
+(integer) 1
+redis 127.0.0.1:6379> LPUSH students "Captain Kirk"
+(integer) 2
+redis 127.0.0.1:6379> LPUSH students "Sheldon Cooper"
+(integer) 3
+
+redis 127.0.0.1:6379> LLEN students
+(integer) 3
+
+redis 127.0.0.1:6379> LRANGE students 0 2
+1) "Sheldon Cooper"
+2) "Captain Kirk"
+3) "John Doe"
+
+redis 127.0.0.1:6379> LPOP students
+"Sheldon Cooper"
+
+redis 127.0.0.1:6379> LLEN students
+(integer) 2
+
+redis 127.0.0.1:6379> LRANGE students 0 1
+1) "Captain Kirk"
+2) "John Doe"
+
+# Lrem 根据参数 COUNT 的值，移除列表中与参数 VALUE 相等的元素。
+# COUNT 的值可以是以下几种：
+# count > 0 : 从表头开始向表尾搜索，移除与 VALUE 相等的元素，数量为 COUNT 。
+# count < 0 : 从表尾开始向表头搜索，移除与 VALUE 相等的元素，数量为 COUNT 的绝对值。
+# count = 0 : 移除表中所有与 VALUE 相等的值。
+redis 127.0.0.1:6379> LREM students 1 "John Doe"
+(integer) 1
+
+redis 127.0.0.1:6379> LLEN students
+(integer) 1
+
+redis 127.0.0.1:6379> LRANGE students 0 0
+1) "Captain Kirk"
+```
+
+Redis也支持很多修改操作：
+
+```bash
+redis 127.0.0.1:6379> LINSERT students BEFORE "Captain Kirk" "Dexter Morgan"
+(integer) 3
+
+redis 127.0.0.1:6379> LRANGE students 0 2
+1) "Dexter Morgan"
+2) "Captain Kirk"
+3) "John Doe"
+
+redis 127.0.0.1:6379> LPUSH students "Peter Parker"
+(integer) 4
+
+redis 127.0.0.1:6379> LRANGE students 0 3
+1) "Peter Parker"
+2) "Dexter Morgan"
+3) "Captain Kirk"
+4) "John Doe"
+
+redis 127.0.0.1:6379> LTRIM students 1 3
+OK
+
+redis 127.0.0.1:6379> LLEN students
+(integer) 3
+
+redis 127.0.0.1:6379> LRANGE students 0 2
+1) "Dexter Morgan"
+2) "Captain Kirk"
+3) "John Doe"
+
+redis 127.0.0.1:6379> LREM students 1 "John Doe"
+(integer) 1
+
+redis 127.0.0.1:6379> LLEN students
+(integer) 1
+
+redis 127.0.0.1:6379> LRANGE students 0 1
+1) "Captain Kirk"
+```
+
+## 2.3 Set类型
+Redis能够将一系列不重复的值存储成一个集合，针对Set数据类型的操作以S开头：
+
+```bash
+redis 127.0.0.1:6379> SADD birds crow
+(integer) 1
+
+redis 127.0.0.1:6379> SADD birds pigeon
+(integer) 1
+
+redis 127.0.0.1:6379> SADD birds bat
+(integer) 1
+
+redis 127.0.0.1:6379> SADD mammals dog
+(integer) 1
+
+redis 127.0.0.1:6379> SADD mammals cat
+(integer) 1
+
+redis 127.0.0.1:6379> SADD mammals bat
+(integer) 1
+
+redis 127.0.0.1:6379> SMEMBERS birds
+1) "bat"
+2) "crow"
+3) "pigeon"
+
+redis 127.0.0.1:6379> SMEMBERS mammals
+1) "bat"
+2) "cat"
+3) "dog"
+```
+
+Sets结构也支持相应的修改操作：
+
+```bash
+redis 127.0.0.1:6379> SREM mammals cat
+(integer) 1
+
+redis 127.0.0.1:6379> SMEMBERS mammals
+1) "bat"
+2) "dog"
+
+redis 127.0.0.1:6379> SADD mammals human
+(integer) 1
+
+redis 127.0.0.1:6379> SMEMBERS mammals
+1) "bat"
+2) "human"
+3) "dog"
+```
+
+Redis还支持对集合的子交并补等操作
+
+```bash
+# 取交集
+redis 127.0.0.1:6379> SINTER birds mammals
+1) "bat"
+
+# 取补集
+redis 127.0.0.1:6379> SUNION birds mammals
+1) "crow"
+2) "bat"
+3) "human"
+4) "pigeon"
+5) "dog"
+
+# 取差集，即 第一个集合独一份的元素
+redis 127.0.0.1:6379> SDIFF birds mammals
+1) "crow"
+2) "pigeon"
+```
+
+## 2.4 
