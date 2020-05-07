@@ -478,12 +478,12 @@ redis 127.0.0.1:6379> EXPIRE name 5
 5秒后再查看：
 
 ```bash
+# 已过期，0表示不存在
 redis 127.0.0.1:6379> EXISTS name
 (integer) 0
 
 redis 127.0.0.1:6379> GET name
 (nil)
-# 这个值已经没有了。键名还是在的。
 ```
 
 上面在是直接设置多少秒后过期，redis也可以设置在某个时间戳过期，下面例子是设置2011-09-24 00:40:00过期。
@@ -499,3 +499,236 @@ redis 127.0.0.1:6379> EXISTS name
 (integer) 0
 ```
 
+redis 的 键 的过期有独特的清理策略：立即删除、懒删除、定期删除，详见 https://www.jianshu.com/p/9352d20fb2e0
+
+
+对有过期时间的键进行操作，对其生命周期的影响：
+
+http://www.redis.cn/commands/expire.html
+
+https://zhuanlan.zhihu.com/p/54758076
+
+# 5 事务性
+Redis本身支持一些简单的组合型的命令，比如以NX结尾命令都是判断在这个值没有时才进行某个命令。
+
+```bash
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+
+# 操作不成功，返回0
+redis 127.0.0.1:6379> SETNX name "Dexter Morgan"
+(integer) 0
+
+redis 127.0.0.1:6379> GET name
+"John Doe"
+
+# 先返回旧值，再设置新值
+redis 127.0.0.1:6379> GETSET name "Dexter Morgan"
+"John Doe"
+
+redis 127.0.0.1:6379> GET name
+"Dexter Morgan"
+```
+
+当然，Redis还支持自定义的命令组合，通过MULTI和EXEC，将几个命令组合起来执行：
+
+```bash
+redis 127.0.0.1:6379> SET counter 0
+OK
+
+# 组合命令/事务 的开始标志
+redis 127.0.0.1:6379> MULTI
+OK
+
+# 不会立刻执行
+redis 127.0.0.1:6379> INCR counter
+QUEUED
+
+redis 127.0.0.1:6379> INCR counter
+QUEUED
+
+redis 127.0.0.1:6379> INCR counter
+QUEUED
+
+# 事务结束标志，EXEC发出之后，才开始按序一起执行
+redis 127.0.0.1:6379> EXEC
+1) (integer) 1
+2) (integer) 2
+3) (integer) 3
+
+redis 127.0.0.1:6379> GET counter
+"3"
+```
+
+可以直接用DICARD命令来中断执行中的命令序列：
+
+```bash
+redis 127.0.0.1:6379> SET newcounter 0
+OK
+
+redis 127.0.0.1:6379> MULTI
+OK
+
+redis 127.0.0.1:6379> INCR newcounter
+QUEUED
+
+redis 127.0.0.1:6379> INCR newcounter
+QUEUED
+
+redis 127.0.0.1:6379> INCR newcounter
+QUEUED
+
+#声明事务中断
+redis 127.0.0.1:6379> DISCARD
+OK
+
+redis 127.0.0.1:6379> GET newcounter
+"0"
+```
+
+# 6 持久化
+Redis的所有运行数据都存储在内存中，但是他也提供对这些数据的持久化。分为三中方式：
+* 快照持久化，rdb
+* 追加式记录 aof
+* 两种混合
+
+## 6.1 数据快照
+数据快照的原理是将整个Redis中存的**所有数据遍历一遍**存到一个扩展名为rdb的数据文件中。通过SAVE命令可以调用这个过程。
+
+```bash
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+
+redis 127.0.0.1:6379> SAVE
+OK
+
+redis 127.0.0.1:6379> SET name "Sheldon Cooper"
+OK
+
+redis 127.0.0.1:6379> BGSAVE
+Background saving started
+```
+
+## 6.2 Append-Only File（追加式的操作日志记录）
+Redis还支持一种追加式的操作日志记录，叫append only file，其日志文件以aof后缀结尾，我们一般各为aof文件。要开启aof日志的记录，你需要在配置文件中进行如下设置：
+
+```
+appendonly yes
+```
+
+这时候你所有的操作都会记录在aof日志文件中
+
+```bash
+redis 127.0.0.1:6379> GET name
+(nil)
+
+redis 127.0.0.1:6379> SET name "Ganesh Gunasegaran"
+OK
+
+redis 127.0.0.1:6379> EXIT
+```
+
+aof日志文件如下：
+
+```
+→ cat /usr/local/var/db/redis/appendonly.aof
+*2
+$6
+SELECT
+$1
+0
+*3
+$3
+SET
+$4
+name
+$18
+Ganesh Gunasegaran
+```
+# 7 管理命令
+Redis支持多个DB，默认是16个，你可以设置将数据存在哪一个DB中，不同DB间的数据具有隔离性。也可以在多个DB间移动数据。
+
+```bash
+# 选取第一个DB为操作数据库对象
+redis 127.0.0.1:6379> SELECT 0
+OK
+
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+
+# 选取第二个DB为操作数据库对象
+redis 127.0.0.1:6379> SELECT 1
+OK
+
+redis 127.0.0.1:6379[1]> GET name
+(nil)
+
+redis 127.0.0.1:6379[1]> SELECT 0
+OK
+
+# 将 键 从当前数据库 移动到 DB 1
+redis 127.0.0.1:6379> MOVE name 1
+(integer) 1
+
+redis 127.0.0.1:6379> SELECT 1
+OK
+
+redis 127.0.0.1:6379[1]> GET name
+"John Doe"
+```
+Redis还能进行一些如下操作，获取一些运行信息：
+
+```bash
+redis 127.0.0.1:6379[1]> DBSIZE
+(integer) 1
+
+redis 127.0.0.1:6379[1]> INFO
+redis_version:2.2.13
+redis_git_sha1:00000000
+redis_git_dirty:0
+arch_bits:64
+multiplexing_api:kqueue
+```
+
+Redis还支持对某个DB数据进行清除（当然清空所有DB的数据的操作也是支持的）
+
+```bash
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+
+# 当前DB中 键 的个数
+redis 127.0.0.1:6379> DBSIZE
+(integer) 1
+
+redis 127.0.0.1:6379> SELECT 1
+OK
+
+redis 127.0.0.1:6379[1]> SET name "Sheldon Cooper"
+OK
+
+redis 127.0.0.1:6379[1]> DBSIZE
+(integer) 1
+
+redis 127.0.0.1:6379[1]> SELECT 0
+OK
+
+# 清空当前DB
+redis 127.0.0.1:6379> FLUSHDB
+OK
+
+redis 127.0.0.1:6379> DBSIZE
+(integer) 0
+
+redis 127.0.0.1:6379> SELECT 1
+OK
+
+redis 127.0.0.1:6379[1]> DBSIZE
+(integer) 1
+
+# 清空所有DB
+redis 127.0.0.1:6379[1]> FLUSHALL
+OK
+
+redis 127.0.0.1:6379[1]> DBSIZE
+(integer) 0
+```
