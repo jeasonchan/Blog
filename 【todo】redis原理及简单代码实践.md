@@ -352,3 +352,150 @@ redis 127.0.0.1:6379> HMGET kid name age sex
 3) "Female"
 ```
 # 3 发布/订阅 使用介绍
+Redis支持这样一种特性，你可以将数据推到某个信息管道/key中，然后其它人可以通过订阅这些管道来获取推送/更新过来的信息。
+
+## 3.1 发布/订阅单个
+
+客户端1订阅一个键：
+
+```bash
+# 控制台打印输出了一些反馈信息，然后终端进入独占状态
+redis 127.0.0.1:6379> SUBSCRIBE channelone
+Reading messages... (press Ctrl-C to quit)
+1) "subscribe"
+2) "channelone"
+3) (integer) 1
+```
+
+客户端2往这个管道推送信息：
+
+```bash
+redis 127.0.0.1:6379> PUBLISH channelone hello
+(integer) 1
+redis 127.0.0.1:6379> PUBLISH channelone world
+(integer) 1
+```
+
+然后客户端1就能获取到推送的信息：
+
+```bash
+redis 127.0.0.1:6379> SUBSCRIBE channelone
+Reading messages... (press Ctrl-C to quit)
+1) "subscribe"
+2) "channelone"
+3) (integer) 1
+# 以上是订阅时的反馈信息
+
+# 客户端2第一次发布触发的订阅更新
+1) "message"
+2) "channelone"
+3) "hello"
+
+# 客户端2第二次发布触发的订阅更新
+1) "message"
+2) "channelone"
+3) "world"
+```
+## 3.2 发布/订阅 多个
+
+用下面的命令订阅所有channel开头的键：
+
+```bash
+# PSUBSCRIBE  批量订阅
+redis 127.0.0.1:6379> PSUBSCRIBE channel*
+Reading messages... (press Ctrl-C to quit)
+1) "psubscribe"
+2) "channel*"
+3) (integer) 1
+```
+
+在另一个客户端对两个推送信息：
+
+```bash
+redis 127.0.0.1:6379> PUBLISH channelone hello
+(integer) 1
+
+redis 127.0.0.1:6379> PUBLISH channeltwo world
+(integer) 1
+```
+
+然后在第一个客户端就能收到推送的信息：
+
+```bash
+redis 127.0.0.1:6379> PSUBSCRIBE channel*
+Reading messages... (press Ctrl-C to quit)
+1) "psubscribe"
+2) "channel*"
+3) (integer) 1
+# 以上是订阅反馈
+
+# 比普通的订阅更新多一行描述信息
+1) "pmessage"
+2) "channel*"
+3) "channelone"
+4) "hello"
+
+1) "pmessage"
+2) "channel*"
+3) "channeltwo"
+4) "world"
+```
+
+# 4 数据过期设置
+
+Redis支持按key设置过期时间，过期后值将被删除（**仅仅是值被删除了，通过TTL key_name还是能查到该键已过期**，彻底删除需要使用Del）。
+
+```bash
+EXPIRE <KEY> <TTL> : 将键的生存时间设为 ttl 秒
+PEXPIRE <KEY> <TTL> :将键的生存时间设为 ttl 毫秒
+EXPIREAT <KEY> <timestamp> :将键的过期时间设为 timestamp 所指定的秒数时间戳
+PEXPIREAT <KEY> <timestamp>: 将键的过期时间设为 timestamp 所指定的毫秒数时间戳.
+```
+
+用TTL命令可以获取某个key值的过期时间（-1表示永不过期）：
+
+```bash
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+
+redis 127.0.0.1:6379> TTL name
+(integer) -1
+```
+
+下面命令先用EXISTS命令查看key值是否存在，然后设置了5秒的过期时间：
+
+```bash
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+
+redis 127.0.0.1:6379> EXISTS name
+(integer) 1
+
+redis 127.0.0.1:6379> EXPIRE name 5
+(integer) 1
+```
+
+5秒后再查看：
+
+```bash
+redis 127.0.0.1:6379> EXISTS name
+(integer) 0
+
+redis 127.0.0.1:6379> GET name
+(nil)
+# 这个值已经没有了。键名还是在的。
+```
+
+上面在是直接设置多少秒后过期，redis也可以设置在某个时间戳过期，下面例子是设置2011-09-24 00:40:00过期。
+
+```bash
+redis 127.0.0.1:6379> SET name "John Doe"
+OK
+
+redis 127.0.0.1:6379> EXPIREAT name 1316805000
+(integer) 1
+
+redis 127.0.0.1:6379> EXISTS name
+(integer) 0
+```
+
