@@ -23,7 +23,10 @@ Redis 支持的几种高效的数据结构 string（字符串）、hash（哈希
 流程示意图如下：
 ![redis IO多路复用示意图](https://p1.pstatp.com/large/pgc-image/a2eada5a14e9463185acf22b4b9ae8ef)
 
+Nginx也是采用IO多路复用原理解决C10K问题。c10k：https://www.jianshu.com/p/ba7fa25d3590
+
 # 4 事件机制
+
 redis 客户端与 redis 服务端建立连接，发送命令，redis 服务器响应命令都是需要通过事件机制来做的，如下图（来自互联网的某处...）
 
 ![redis 事件机制示意图](https://p9.pstatp.com/large/pgc-image/131366025f844253a98976124973efc6)

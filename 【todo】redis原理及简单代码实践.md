@@ -609,8 +609,21 @@ redis 127.0.0.1:6379> BGSAVE
 Background saving started
 ```
 
+但是，可以对 Redis 进行设置， 让它在N秒内数据集至少有M个改动这一条件被满足时， 自动保存一次数据集。
+
+比如说， 以下设置会让 Redis 在满足60秒内有至少有1000个键被改动”这一条件时， 自动保存一次数据集：
+
+```bash
+save 60 1000
+# redis 配置文件种默认rdb配置有：
+# save 900 1
+# save 300 10
+# save 60 10000
+```
+
+
 ## 6.2 Append-Only File（追加式的操作日志记录）
-Redis还支持一种追加式的操作日志记录，叫append only file，其日志文件以aof后缀结尾，我们一般各为aof文件。要开启aof日志的记录，你需要在配置文件中进行如下设置：
+Redis还支持一种追加式的操作日志记录，叫append only file，其日志文件以aof后缀结尾。这种将修改的每一条指令记录进文件要开启aof日志的记录，需要手动在配置文件中进行如下设置：
 
 ```
 appendonly yes
@@ -645,6 +658,30 @@ name
 $18
 Ganesh Gunasegaran
 ```
+
+可以配置 Redis 多久才将数据fsync（force sync，fsync() 把文件数据和文件元信息写入强刷到磁盘中，速度是比较慢的，文件是在内存中操作的，操作完让内核回写到磁盘）到磁盘一次。
+
+redis的fsync频率策略有三种：
+* 每次有新命令追加到 AOF 文件时就执行一次fsync：非常慢，也非常安全。
+* 每秒fsync一次：足够快（和使用 RDB 持久化差不多），并且在故障时只会丢失 1 秒钟的数据。
+* 从不fsync：将数据交给操作系统来处理。更快，也更不安全的选择。
+
+## 6.3 Redis 4.0 混合型持久化
+
+重启 Redis 时，我们很少使用 rdb 来恢复内存状态，因为会丢失大量数据。我们通常使用 AOF 日志重放，但是**重放 AOF 日志性能相对 rdb 来说要慢很多**，这样在 Redis 实例很大的情况下，启动需要花费很长的时间。 Redis 4.0 为了解决这个问题，带来了一个新的持久化选项——混合持久化。
+
+AOF在重写(aof文件里可能有太多没用指令，所以aof会定期根据内存的最新数据生成aof文件)时，将：
+
+* 重写这一刻之前的内存rdb快照文件的内容
+* 增量的 AOF修改内存数据的命令日志文件
+
+存在一起，都写入新的aof文件，新的文件一开始不叫appendonly.aof，等到重写完新的AOF文件才会进行改名，原子的覆盖原有的AOF文件，完成新旧两个AOF文件的替换；
+
+aof 根据配置规则在后台自动重写，也可以人为执行命令bgrewriteaof重写AOF。 于是在 Redis 重启的时候，可以先加载 rdb 的内容，然后再重放增量 AOF 日志就可以完全替代之前的 AOF 全量文件重放，重启效率因此大幅得到提升。
+
+![redis混合持久aof文件结构](./resources/redis混合持久aof文件结构.webp)
+
+
 # 7 管理命令
 Redis支持多个DB，默认是16个，你可以设置将数据存在哪一个DB中，不同DB间的数据具有隔离性。也可以在多个DB间移动数据。
 
@@ -732,3 +769,43 @@ OK
 redis 127.0.0.1:6379[1]> DBSIZE
 (integer) 0
 ```
+
+# 8 缓存淘汰策略
+
+当 Redis 内存超出物理内存限制时，内存的数据会开始和磁盘产生频繁的交换 (swap)。交换会让 Redis 的性能急剧下降，对于访问量比较频繁的 Redis 来说，这样龟速的存取效率基本上等于不可用。
+
+在生产环境中我们是不允许 Redis 出现交换行为的，为了限制最大使用内存，Redis 提供了配置参数 maxmemory 来限制redis的最大使用内存大小。
+
+当实际内存超出 maxmemory 时，Redis 提供了几种可选策略 (maxmemory-policy) 来让用户自己决定该如何腾出新的空间以继续提供读写服务。
+
+* noeviction：
+
+不会继续服务写请求 (DEL 请求可以继续服务)，读请求可以继续进行。这样可以保证不会丢失数据，但是会让线上的业务不能持续进行。这是默认的淘汰策略。
+
+
+**设置了过期时间的key是volatile的。**
+
+
+* volatile-lru（淘汰策略是LRU，least recently used）：
+
+尝试淘汰设置了过期时间的 key，最少使用的 key 优先被淘汰。没有设置过期时间的 key 不会被淘汰，这样可以保证需要持久化的数据不会突然丢失。
+
+* volatile-ttl：
+
+跟上面一样，除了淘汰的策略不是 LRU，而是 key 的剩余寿命 ttl 的值，ttl 越小越优先被淘汰。
+
+* volatile-random：
+
+跟上面一样，不过淘汰的 key 是过期 key 集合中随机的 key。
+
+* allkeys-lru：
+
+区别于 volatile-lru，这个策略要淘汰的 key 对象是全体的 key 集合，而不只是过期的 key 集合。这意味着没有设置过期时间的 key 也会被淘汰。
+
+* allkeys-random：
+
+跟上面一样，不过淘汰的策略是随机的 key。
+
+* volatile-xxxxxxxh和allkey-xxxxxxx ：
+
+volatile-xxxxxxx策略，表明当前策略只会针对带过期时间的 key 进行淘汰；allkeys-xxxxxxx 策略，表明会对所有的 key 进行淘汰。如果你只是拿 Redis 做缓存，那应该使用 allkeys-xxx，客户端写缓存时不必携带过期时间。如果你还想同时使用 Redis 的持久化功能，那就使用 volatile-xxx 策略，这样可以保留没有设置过期时间的 key，它们是永久的 key 不会被 LRU 算法淘汰。
