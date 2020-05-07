@@ -107,6 +107,9 @@ try {
 
 
 ## 3.2 i18n
+
+**错误示范**
+
 ```java
 public class CommonI18n {
     private static Logger logger = LoggerFactory.getLogger(CommonI18n.class);
@@ -128,6 +131,8 @@ public class CommonI18n {
     private static ThreadLocal<String> languageHolder = new ThreadLocal<String>() {
         {
             //设置ThreadLocal容器的初始值
+            //该种方法只能保证在主线程掉哟过有默认值
+            //static 是在主线程完成set的初始化的，所以主线程直接get就能得到
             this.set(LanguageTypeEnum.EN.type);
         }
     };
@@ -150,6 +155,35 @@ public class CommonI18n {
 
 }
 ```
+
+**正确示范**：
+
+```java
+package default_package.ThreadLocal实验;
+
+public class Util2 {
+    private static ThreadLocal<String> stringThreadLocal = new ThreadLocal<String>() {
+        
+        //在子线程里，threadLocal对象没有发生任何set操作，只能返回super.initialValue()，即为null
+        //要想改变默认值，重写super.initialValue()即可，见Util2
+        
+        @Override
+        protected String initialValue() {
+            return "super.initialValue()";
+        }
+    };
+
+
+    public static void setContent(String content) {
+        stringThreadLocal.set(content);
+    }
+
+    public static String getContent() {
+        return stringThreadLocal.get();
+    }
+}
+```
+
 
 虽然是的静态的方法，但是，每个线程都可以设置自己的目标语言类型，也不必转化为的非静态类，避免了每次都要new一个对象，一定程度上能减少CPU和内存消耗
 
