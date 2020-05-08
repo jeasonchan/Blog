@@ -139,11 +139,137 @@ version ：是一个乐观锁，每次都更新version，保证并发时数据�
 
 id biz_type max_id step version 1 101 1000 2000 0
 
-等这批号段ID用完，再次向数据库申请新号段，对max_id字段做一次update操作，update max_id= max_id + step，update成功则说明新号段获取成功，新的号段范围是(max_id ,max_id +step]。
+等这批号段ID(可使用的号段的范围是(max_id,max_id+step]))用完，再次向数据库申请新号段，对max_id和version字段做一次update操作，update max_id= max_id + step，update成功则说明新号段获取成功，新的号段范围是(max_id ,max_id +step]。
 
 ```sql
-update id_generator set max_id = max_id+step;
-version = version + 1 where version = version(上一次号段的版本号) and biz_type = XXX
+update id_generator set max_id = max_id+step,
+                        version = version + 1 where biz_type = XXX
 ```
 
 由于同一业务可能同时进行号段申请，所以同一业务类型，采用版本号version乐观锁方式更新，这种分布式ID生成方式不强依赖于数据库，不会频繁的访问数据库，对数据库的压力小很多。
+
+
+## 3.5 基于Redis模式
+Redis也同样可以实现，原理就是利用redis的 incr命令实现ID的原子性自增。
+
+```bash
+127.0.0.1:6379> set seq_id 1     // 初始化自增ID为1 
+OK
+
+127.0.0.1:6379> incr seq_id      // 增加1，并返回递增后的数值(integer) 2
+```
+
+用redis实现需要注意一点，要考虑到redis持久化的问题。redis宕机后，分布式ID不能从头开始，也不能跟之前的重复。redis有两种持久化方式RDB和AOF。
+
+RDB会定时打一个快照进行持久化，假如连续自增但redis没及时持久化，而这会Redis挂掉了，重启Redis后会出现ID重复的情况。
+
+AOF会对每条写命令进行持久化，即使Redis挂掉了也不会出现ID重复的情况，但由于incr命令的特殊性，会导致Redis重启恢复的数据时间过长。使用了混合模式redis，重启/恢复时会快很多。
+
+## 3.6 基于雪花算法
+雪花算法（Snowflake）是twitter公司内部分布式项目采用的ID生成算法，开源后广受国内大厂的好评，在该算法影响下各大公司相继开发出各具特色的分布式ID生成器。
+
+![Snowflake分布式ID结构](https://pic4.zhimg.com/80/v2-db168d8c5600654f38c6df3802450e1f_720w.jpg)
+
+Snowflake生成的是Long类型的ID，一个Long类型占8个字节，每个字节占8比特，也就是说一个Long类型占64个比特。
+
+Snowflake ID组成结构：正数位（占1比特）+ 时间戳（占41比特）+ 机器ID（占5比特）+ 数据中心（占5比特）+ 自增值（占12比特），总共64比特组成的一个Long类型。
+
+第一个bit位（1bit）：Java中long的最高位是符号位代表正负，正数是0，负数是1，一般生成ID都为正数，所以默认为0。
+
+时间戳部分（41bit）：毫秒级的时间，不建议存当前时间戳，而是用（当前时间戳 - 固定开始时间戳）的差值，可以使产生的ID从更小的值开始；41位的时间戳可以使用69年，(1L << 41) / (1000L * 60 * 60 * 24 * 365) = 69年
+
+工作机器id（10bit）：也被叫做workId，这个可以灵活配置，机房或者机器号组合都可以。
+
+
+序列号部分（12bit），自增值支持同一毫秒内同一个节点可以生成4096个ID
+
+
+根据这个算法的逻辑，只需要将这个算法用Java语言实现出来，封装为一个工具方法，那么各个业务应用可以直接使用该工具方法来获取分布式ID，只需保证每个业务应用有自己的工作机器id即可，而不需要单独去搭建一个获取分布式ID的应用。
+
+```java
+
+/**
+ * Twitter的SnowFlake算法,使用SnowFlake算法生成一个整数，然后转化为62进制变成一个短地址URL * * https://github.com/beyondfengyu/SnowFlake
+ */
+public class SnowFlakeShortUrl {
+    /**
+     * 起始的时间戳
+     */
+    private final static long START_TIMESTAMP = 1480166465631L;
+    /**
+     * 每一部分占用的位数
+     */
+    private final static long SEQUENCE_BIT = 12;   //序列号占用的位数    private final static long MACHINE_BIT = 5;     //机器标识占用的位数    
+    private final static long DATA_CENTER_BIT = 5; //数据中心占用的位数    /**     * 每一部分的最大值     */    private final static long MAX_SEQUENCE = -1L ^ (-1L << SEQUENCE_BIT);    private final static long MAX_MACHINE_NUM = -1L ^ (-1L << MACHINE_BIT);    
+    private final static long MAX_DATA_CENTER_NUM = -1L ^ (-1L << DATA_CENTER_BIT);
+    /**
+     * 每一部分向左的位移
+     */
+    private final static long MACHINE_LEFT = SEQUENCE_BIT;
+    private final static long DATA_CENTER_LEFT = SEQUENCE_BIT + MACHINE_BIT;
+    private final static long TIMESTAMP_LEFT = DATA_CENTER_LEFT + DATA_CENTER_BIT;
+    private long dataCenterId;  //数据中心    private long machineId;     //机器标识    private long sequence = 0L; //序列号    private long lastTimeStamp = -1L;  //上一次时间戳    
+
+    private long getNextMill() {
+        long mill = getNewTimeStamp();
+        while (mill <= lastTimeStamp) {
+            mill = getNewTimeStamp();
+        }
+        return mill;
+    }
+
+    private long getNewTimeStamp() {
+        return System.currentTimeMillis();
+    }
+
+    /**
+     * 根据指定的数据中心ID和机器标志ID生成指定的序列号
+     *
+     * @param dataCenterId 数据中心ID
+     * @param machineId    机器标志ID
+     */
+    public SnowFlakeShortUrl(long dataCenterId, long machineId) {
+        if (dataCenterId > MAX_DATA_CENTER_NUM || dataCenterId < 0) {
+            throw new IllegalArgumentException("DtaCenterId can't be greater than MAX_DATA_CENTER_NUM or less than 0！");
+        }
+        if (machineId > MAX_MACHINE_NUM || machineId < 0) {
+            throw new IllegalArgumentException("MachineId can't be greater than MAX_MACHINE_NUM or less than 0！");
+        }
+        this.dataCenterId = dataCenterId;
+        this.machineId = machineId;
+    }
+
+    /**
+     * 产生下一个ID
+     *
+     * @return
+     */
+    public synchronized long nextId() {
+        long currTimeStamp = getNewTimeStamp();
+        if (currTimeStamp < lastTimeStamp) {
+            throw new RuntimeException("Clock moved backwards.  Refusing to generate id");
+        }
+        if (currTimeStamp == lastTimeStamp) {
+            //相同毫秒内，序列号自增          
+            sequence = (sequence + 1) & MAX_SEQUENCE;
+            //同一毫秒的序列数已经达到最大       
+            if (sequence == 0L) {
+                currTimeStamp = getNextMill();
+            }
+        } else {
+            //不同毫秒内，序列号置为0     
+            sequence = 0L;
+        }
+        lastTimeStamp = currTimeStamp;
+        return (currTimeStamp - START_TIMESTAMP) << TIMESTAMP_LEFT //时间戳部分                | dataCenterId << DATA_CENTER_LEFT       //数据中心部分                | machineId << MACHINE_LEFT             //机器标识部分                | sequence;                             //序列号部分  
+    }
+
+    public static void main(String[] args) {
+        SnowFlakeShortUrl snowFlake = new SnowFlakeShortUrl(2, 3);
+        for (int i = 0; i < (1 << 4); i++) {
+            //10进制        
+            System.out.println(snowFlake.nextId());
+        }
+    }
+}
+```
