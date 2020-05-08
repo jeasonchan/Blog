@@ -273,3 +273,76 @@ public class SnowFlakeShortUrl {
     }
 }
 ```
+
+## 3.7 百度（uid-generator）
+
+uid-generator是由百度技术部开发，项目GitHub地址 https://github.com/baidu/uid-generator
+
+uid-generator是基于Snowflake算法实现的，与原始的snowflake算法不同在于，uid-generator支持自定义时间戳、工作机器ID和 序列号 等各部分的位数，而且uid-generator中采用用户自定义workId的生成策略。
+
+uid-generator需要与数据库配合使用，workID使用了数据库的自增特，因此，需要新增一个WORKER_NODE表。当应用启动时会向数据库表中去插入一条数据，插入成功后返回的自增ID就是该机器的workId数据由host，port组成。
+
+对于uid-generator ID组成结构：
+
+workId，占用了22个bit位，时间占用了28个bit位，序列化占用了13个bit位，需要注意的是，和原始的snowflake不太一样，时间的单位是秒，而不是毫秒，workId也不一样，而且同一应用每次重启就会消费一个workId。
+
+## 3.8 美团 Leaf
+Leaf由美团开发，github地址：http://github.com/Meituan-Dia…
+
+Leaf同时支持号段模式和snowflake算法模式，可以切换使用。
+
+### 3.8.1 号段模式
+先新建一张表：
+
+```sql
+DROP TABLE IF EXISTS `leaf_alloc`;
+
+CREATE TABLE `leaf_alloc` (
+  `biz_tag` varchar(128)  NOT NULL DEFAULT '' COMMENT '业务key',
+  `max_id` bigint(20) NOT NULL DEFAULT '1' COMMENT '当前已经分配了的最大id',
+  `step` int(11) NOT NULL COMMENT '初始步长，也是动态调整的最小步长',
+  `description` varchar(256)  DEFAULT NULL COMMENT '业务key的描述',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '数据库维护的更新时间',
+  PRIMARY KEY (`biz_tag`)
+) ENGINE=InnoDB;
+```
+
+然后在项目中开启号段模式，配置对应的数据库信息，并关闭snowflake模式:
+
+```properties
+leaf.name=com.sankuai.leaf.opensource.test
+
+leaf.segment.enable=true
+
+leaf.jdbc.url=jdbc:mysql://localhost:3306/leaf_test?useUnicode=true&characterEncoding=utf8&characterSetResults=utf8
+
+leaf.jdbc.username=root
+
+leaf.jdbc.password=root
+
+leaf.snowflake.enable=false
+#leaf.snowflake.zk.address=
+#leaf.snowflake.port=
+```
+
+监控号段模式：http://localhost:8080/cache
+
+## 3.8.2 snowFlake模式
+Leaf的snowflake模式依赖于ZooKeeper，和百度的类似，不同于原始snowflake算法也主要是在workId的生成上，Leaf中workId是基于ZooKeeper的顺序Id来生成的，每个应用在使用Leaf-snowflake时，启动时都会都在Zookeeper中生成一个顺序Id，相当于一台机器对应一个顺序节点，也就是一个workId。
+
+```properties
+leaf.snowflake.enable=true
+
+leaf.snowflake.zk.address=127.0.0.1
+
+leaf.snowflake.port=2181
+```
+
+snowflake模式获取分布式自增ID的测试url：
+
+http://localhost:8080/api/snowflake/get/test
+
+# 3.9 滴滴TinyId
+Tinyid由滴滴开发，Github地址：http://github.com/didi/tinyid
+
+(此处略过)
