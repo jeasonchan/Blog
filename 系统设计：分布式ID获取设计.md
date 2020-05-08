@@ -346,3 +346,10 @@ http://localhost:8080/api/snowflake/get/test
 Tinyid由滴滴开发，Github地址：http://github.com/didi/tinyid
 
 (此处略过)
+
+# 4 个人小结
+
+本质上就是三种方式生成分布式ID：
+1、纯本地生成。包括UUID和原始的雪花
+2、借助第三方生有序ID，比如redis、MySQL、zookeeper
+3、纯本地生成 + workId借助第三方有序生成
