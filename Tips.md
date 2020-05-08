@@ -90,6 +90,16 @@ class Abc{
         }
 			//异常出现后要走的流程
 ```
-正常流程在try当中，发生异常，并且异常被捕捉到catch中，执行完catch会继续执行后面的，catch花括号后面的是异常流程！新收获！并且try块中有return语句时，仍然会首先执行finally块中的语句，然后方法再返回
+正常流程在try当中，发生异常，并且异常被捕捉到catch中，执行完catch会继续执行后面的，catch花括号后面的是异常流程！新收获！并且try块中有return语句时，仍然会首先执行finally块中的语句，然后方法再返回。连续多个catch是，只要有一个catch生效了，后面的catch全都“消失”。
 
 36. 使用File对象创建文件时，必须要要先创建其父文件夹路径，再创建对象。创建父文件夹路径时，还要先判断该路径存不存在，不存在时，再才要创建父文件夹路径。
+
+37. catch return finally执行顺序及返回值问题：
+
+结论：https://zhuanlan.zhihu.com/p/133667530
+
+* 在catch中有return的情况下,finally中的内容还是会执行，并且是先执行finally再return。
+* 需要注意的是，如果返**回的是一个基本数据类型**，则finally中的内容对返回的值没有影响。
+因为返回的是 finally执行之前生成的一个副本。
+* 当catch和finally都有return时，return的是finally的值。（毕竟finally先执行）
+
