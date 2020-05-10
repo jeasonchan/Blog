@@ -81,7 +81,9 @@ linux 使用systemd设置自启动   https://blog.csdn.net/weixin_40700617/artic
 ubuntu18.04 initd和systemd介绍    https://www.cnblogs.com/qingshangucheng/p/10183583.html
 
 
+在不配置自动启动sshd的情况下，docker run -it xxxx bash ，然后再手动启动service ssh start即可。
 
+# 4 （未完待续）
 
 
 
