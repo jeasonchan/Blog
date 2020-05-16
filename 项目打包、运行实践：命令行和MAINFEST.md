@@ -150,4 +150,8 @@ java -jar Hello.jar
 ## 2.3 日常自己可用的方式
 
 1. maven使用shade插件，不必做任何配置，利用其字节码合并打包的特性
-2. 命令行运行时，手动指定主类即可
+2. 命令行运行时，手动指定主类即可，比如：
+
+```bash
+java -classpath java_exercise_based_on_idea-1.0-SNAPSHOT.jar default_package.实验指定Main.Main  ../tempFile
+```
