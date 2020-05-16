@@ -17,7 +17,7 @@ JDK中的List有两种常用的实现，一种是Array实现的ArraList，第二
 
 B树和B+树简明扼要的对比  https://blog.csdn.net/z69183787/article/details/90723993
 
-
+树的前中后序遍历    https://www.jianshu.com/p/456af5480cee
 
 # 2 二叉树
 二叉树是**每个结点最多有两个子树的树结构**。通常子树被称作“左子树”（left subtree）和“右子树”（right subtree）。二叉树常被用于实现二叉查找树（二分查找）和二叉堆。
