@@ -105,13 +105,49 @@ default_package.实验指定Main.Main
 ## 2.2 推测Maven的编译、执行
 maven出现后，极大的方便管理依赖、编译和执行。以下开始对maven的编译、打包、执行进行推测，并不代表maven的真正的机理！！！！
 
-### 2.2.1 编译、打包
+编译、打包、运行。
+
+编译的话，就是把java文件编译为字节码文件。
+
+在不使用额外插件的情况下，也不作额外配置的情况下，对当前工程编译、打包时，只会把自己写的java源码打包进一个jar包（假设叫Hello.jar），mainfest会添加依赖的jar名到classpath，但mainfest不会有主类名。如果直接用：
+
+```bash
+java -jar Hello.jar
+# 因为mainfest中没有声明主类，一开始可能就会报找不到主类
+
+java -classpath Hello.jar com.jeasonchan.Main
+# 主类能找到了，因为通过命令行进行声明了；但是，必然会被xxxxxx类没有找到
+# 因为，mainfest声明了依赖的jar包的，
+# 但是，classpath里并不能找到依赖的jar包里的字节码文件
+
+java -classpath Hello.jar;/javalibs; com.jeasonchan.Main
+# 将依赖的jar包都放进  /javalibs，应该就能运行了
+```
+
+如果使用了maven的shade打包插件，编译、打包过程应该会发生变化。在仅仅引入了shade插件，但不做任何配置的情况下（就是，不在pom中指明mianClass）。编译打包的过程应该是：
+
+1. 将java源码编译为字节码，各个字节码文件产生在各自声明的package路径中
+2. maven将依赖的jar包中的文件都提取出来，和上面的字节码进行合并
+3. 将合并后的有层次的字节码文件合集，打包为一个jar包，mainfest不会声明classpath（因为依赖的jar包里的的字节码文件已经和自己字节码合并在一起了），也不会声明主函数（因为，自己根本没配置）
+
+如果通过以命令行运行：
+
+```bash
+java -classpath Hello.jar com.jeasonchan.Main
+# 应该能直接运行，入口类和依赖的jar包的字节码都已经有了；
+
+java -jar Hello.jar
+# 应该会报找不到主类
 
 
-
-
-### 2.2.2 执行
-
+# 如果，在shade的配置里，声明主类时 com.jeasonchan.Main
+# 主类信息会写进 mainfest 中
+java -jar Hello.jar
+# 完美运行，通过mainfest找到了主类，依赖的字节码文件也都有
+```
 
 
 ## 2.3 日常自己可用的方式
+
+1. maven使用shade插件，不必做任何配置，利用其字节码合并打包的特性
+2. 命令行运行时，手动指定主类即可
