@@ -100,3 +100,59 @@ defineClass方法表示跟根据类的字节码转换为类对象
 如果父类还没有被初始化，那么优先对父类初始化，但在clinit方法内部不会显式调用父类的clinit方法，**由JVM负责保证一个类的clinit方法执行之前，它的父类clinit方法已经被执行**。
 
 JVM必须确保一个类在初始化的过程中，如果是多线程需要同时初始化它，仅仅只能允许其中一个线程对其执行初始化操作，其余线程必须等待，只有在活动线程执行完对类的初始化操作之后，才会通知正在等待的其他线程。
+
+# 3 Class.forName()和ClassLoader.loadClass()  的区别
+Class.forName() 和 ClassLoader 都可以对类进行加载。
+
+ClassLoader 就是遵循双亲委派模型最终调用启动类加载器的类加载器，实现的功能是“通过一个类的全限定名来获取描述此类的二进制字节流”，获取到二进制流后放到 JVM 中。
+
+Class.forName() 方法实际上也是通过调用的 CLassLoader 来实现的。
+
+先来看forName的源码，以入参仅有一个String的为例:
+```java
+    public static Class<?> forName(String className)
+                throws ClassNotFoundException {
+        Class<?> caller = Reflection.getCallerClass();
+        return forName0(className, true, ClassLoader.getClassLoader(caller), caller);
+    }
+
+    /** Called after security check for system loader access checks have been made. */
+    private static native Class<?> forName0(String name, boolean initialize,
+                                            ClassLoader loader,
+                                            Class<?> caller)
+        throws ClassNotFoundException;
+```
+最后调用的方法是 forName0 这个方法，在这个 forName0 方法中的第二个参数被默认设置为了 true，这个参数代表是否对加载的类进行初始化，设置为 true 时会类进行初始化，代表会执行类中的静态代码块，以及对静态变量的赋值等操作。也就是类加载过程中的最后一步的“初始化”。
+
+其实，也可以调用 Class.forName(String name, boolean initialize,ClassLoader loader) 方法来手动选择在加载类的时候是否要对类进行初始化。Class.forName(String name, boolean initialize,ClassLoader loader) 的源码如下：
+```java
+    public static Class<?> forName(String name, boolean initialize,
+                                   ClassLoader loader)
+        throws ClassNotFoundException
+    {
+        Class<?> caller = null;
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            // Reflective call to get caller class is only needed if a security manager
+            // is present.  Avoid the overhead of making this call otherwise.
+            caller = Reflection.getCallerClass();
+            if (loader == null) {
+                ClassLoader ccl = ClassLoader.getClassLoader(caller);
+                if (ccl != null) {
+                    sm.checkPermission(
+                        SecurityConstants.GET_CLASSLOADER_PERMISSION);
+                }
+            }
+        }
+        return forName0(name, initialize, loader, caller);
+    }
+
+```
+
+结论就是：forName可以通过一个布尔参数设置是否进行static属性、代码块的执行；loadClass不可以。ClassLoader.loadClass就是不进行静态区域初始化的forName。
+
+## 3.1 举例区分
+
+
+
+## 3.2 应用场景
