@@ -155,3 +155,5 @@ java -jar Hello.jar
 ```bash
 java -classpath java_exercise_based_on_idea-1.0-SNAPSHOT.jar default_package.实验指定Main.Main  ../tempFile
 ```
+
+无论啥时候，在命令行中直接指定主类名，永远都不会错！！！

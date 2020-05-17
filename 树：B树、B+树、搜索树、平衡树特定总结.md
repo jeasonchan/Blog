@@ -19,6 +19,8 @@ B树和B+树简明扼要的对比  https://blog.csdn.net/z69183787/article/detai
 
 树的前中后序遍历    https://www.jianshu.com/p/456af5480cee
 
+知乎 深入理解平衡二叉树、B树、B+树、B*树及其增删改查  https://zhuanlan.zhihu.com/p/27700617
+
 # 2 二叉树
 二叉树是**每个结点最多有两个子树的树结构**。通常子树被称作“左子树”（left subtree）和“右子树”（right subtree）。二叉树常被用于实现二叉查找树（二分查找）和二叉堆。
 
