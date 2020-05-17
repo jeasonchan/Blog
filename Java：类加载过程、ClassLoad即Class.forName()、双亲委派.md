@@ -152,7 +152,92 @@ Class.forName() 方法实际上也是通过调用的 CLassLoader 来实现的。
 结论就是：forName可以通过一个布尔参数设置是否进行static属性、代码块的执行；loadClass不可以。ClassLoader.loadClass就是不进行静态区域初始化的forName。
 
 ## 3.1 举例区分
+先顶一个Person类：
 
+```java
+package default_package.forName和loadClass对比;
+
+public class Person {
+    public static String palnet = "NULL";
+
+
+    static {
+        System.out.println("line7 执行了。静态初始化区域代码执行。");
+    }
+
+
+    public static void chanePalnet() {
+        Person.palnet = "earth";
+    }
+
+
+}
+```
+
+再定义主类：
+
+```java
+package default_package.forName和loadClass对比;
+
+public class Main {
+    public static void main(String[] args) throws ClassNotFoundException {
+        System.out.println("Main方法第一行。");
+
+        if (args.length == 1) {
+            String flag = args[0];
+
+            switch (flag) {
+                case "0":
+                    //啥都不做
+                    break;
+                case "1":
+                    //使用forName进行类加载
+                    Class.forName("default_package.forName和loadClass对比.Person");
+
+                case "2":
+                    //使用classloader
+                    ClassLoader.getSystemClassLoader().loadClass("default_package.forName和loadClass对比.Person");
+//                    ClassLoader.getPlatformClassLoader().loadClass("default_package.forName和loadClass对比.Person");
+
+
+            }
+
+
+        }
+
+
+    }
+}
+
+```
+
+
+编译后执行，通过命令行执行:
+
+```bash
+chenr@E485 MINGW64 /c/CRroot/documents/codeproject/java_exercise_based_on_idea/java_exercise/target (master)
+$ java -classpath ./classes/ default_package.forName和loadClass对比.Main
+Main方法第一行。
+
+chenr@E485 MINGW64 /c/CRroot/documents/codeproject/java_exercise_based_on_idea/java_exercise/target (master)
+$ java -classpath ./classes/ default_package.forName和loadClass对比.Main 1
+Main方法第一行。
+line7 执行了。静态初始化区域代码执行。
+
+chenr@E485 MINGW64 /c/CRroot/documents/codeproject/java_exercise_based_on_idea/java_exercise/target (master)
+$ java -classpath ./classes/ default_package.forName和loadClass对比.Main 2
+Main方法第一行。
+```
+
+可见：
+
+1. Person没有被import的情况下，JVM不会将该类加载进内存中，以节省资源。
+2. Class.forName会进行静态区域初始化，ClassLoader.getSystemClassLoader().loadClass则不会
 
 
 ## 3.2 应用场景
+在我们熟悉的 Spring 框架中的 IOC 的实现就是使用的 ClassLoader（因此，要注意静态初始化代码块的执行问题！）。
+
+而在我们使用 JDBC 时通常是使用 Class.forName() 方法来加载数据库连接驱动。这是因为在 JDBC 规范中明确要求 Driver(数据库驱动)类必须向 DriverManager 注册自己。
+
+以 MySQL 的驱动为例，Driver 注册到 DriverManager 中的操作写在了静态代码块中，这就是为什么在写 JDBC 时使用 Class.forName() 的原因了。
