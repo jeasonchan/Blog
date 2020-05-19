@@ -1,11 +1,9 @@
 # 1 前言
 参考文章：
 
-文件描述符合socket连接    https://www.cnblogs.com/DengGao/p/file_symbol.html
+文件描述符和socket连接    https://www.cnblogs.com/DengGao/p/file_symbol.html
 
 Stream Socket 和 Datagram socket    https://www.xuebuyuan.com/1170964.html
-
-bind()与connect()——计网中socket的使用    https://www.cnblogs.com/Theo-sblogs/p/11130205.html
 
 TCP连接数和文件描述符用尽   https://blog.csdn.net/tsh123321/article/details/88990825
 
@@ -199,6 +197,18 @@ socket。
 TCP Socket连接一开始是通过三次握手来实现建链的，后续传输层有心跳机制检测连接状态。但这其中可能会存在问题，问题在于Socket连接检测并不是实时的。也就是说并不是像你拔掉网线后在右下角的连接提示就立刻会有个红叉叉出现。当一端出问题的时候，另一端可能短时间仍然会认为连接是存在的。
 
 
+# 4 文件描述符和Socket
+每个进程开启一个soeket连接（也就是，一个socket实例和系统的端口绑定），都会占用一个文件描述符。
 
-# 4 bind、connect、close底层动作分析
+## 4.1 概述
+在Linux系统中一切皆可以看成是文件，文件又可分为：普通文件、目录文件、链接文件和设备文件。
+
+文件描述符（file descriptor）是内核为了高效管理已被打开的文件所创建的索引，其是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作(包括网络socket操作)的系统调用都通过文件描述符。
+
+程序刚刚启动的时候，0是标准输入，1是标准输出，2是标准错误。如果此时去打开一个新的文件，它的文件描述符会是3。POSIX标准要求每次打开文件时（含socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话。标准文件描述符图如下：
+
+
+
+
+# 5 bind、connect、close底层动作分析
 
