@@ -73,7 +73,10 @@ public class Main {
     }
 ```
 
-对于普通的类，一般没有问题。因此，要来了解一下序列化和反序列化的具体流程，由于两个过程差不多，以HashSet及其readObejct过程进行分析。
+对于普通的类，一般没有问题。对于transient变量中含有 有用信息的时候，需要进行定制。因此，要来了解一下序列化和反序列化的具体流程，由于两个过程差不多，以HashSet及其readObejct过程进行分析。
+
+使用restfu风格的HTTP作为api调用方法时，用json作为信息载体，用好Jackson的jsonProperty即可。基于TCP的RPC，使用字节流（因为，TCP本身就是Stream Socket）作为信息传输载体，需要了解对象的序列化和反序列化。
+
 
 ## 2.3 HashSet源码
 先来看一下HashSet中和序列化相关的源码：
@@ -212,4 +215,76 @@ public class HashSet<E>
 
 一般情况下，可以直接使用default的即可。
 
-# 2.4 readObject和writeObject如何被调用
+## 2.4 readObject和writeObject如何被调用
+答案显而易见，以下两个时候：
+
+```java
+objectOutputStream.writeObject("字符串1");
+//和
+objectInputStream.readObject();
+```
+
+以objectInputStream.readObject()方法，深入了解一下调用过程：
+
+```java
+    public final Object readObject()
+        throws IOException, ClassNotFoundException
+    {
+        if (enableOverride) {
+            return readObjectOverride();
+        }
+
+        // if nested read, passHandle contains handle of enclosing object
+        int outerHandle = passHandle;
+        try {
+            Object obj = readObject0(false);
+            handles.markDependency(outerHandle, passHandle);
+            ClassNotFoundException ex = handles.lookupException(passHandle);
+            if (ex != null) {
+                throw ex;
+            }
+            if (depth == 0) {
+                vlist.doCallbacks();
+                freeze();
+            }
+            return obj;
+        } finally {
+            passHandle = outerHandle;
+            if (closed && depth == 0) {
+                clear();
+            }
+        }
+    }
+```
+
+其中enableOverride是由objectInputStream的构造方式决定的，使用"public ObjectInputStream(InputStream in)"时，自动赋值为false。因此，序列化和反序列化的对象的readObject方法被调用的地方是在"Object obj = readObject0(false);"中。
+
+后续流程较为复杂，使用流程图概括:
+
+![objectInputStream.readObject()调用流程图](./resourcesobjectInputStream.readObject()调用流程图.png)
+
+最终可以看到，**会通过反射的形式，调用private的readObject方法**。
+
+如果类本身没有定义readObject方法，同样会直接用default。源码如下：
+
+java/io/ObjectInputStream.java:2206
+
+```java
+if (slotDesc.hasReadObjectMethod()) {
+//xxxxxxx
+}else {
+    FieldValues vals = defaultReadFields(obj, slotDesc);
+    if (slotValues != null) {
+        slotValues[i] = vals;
+    } else if (obj != null) {
+        defaultCheckFieldValues(obj, slotDesc, vals);
+        defaultSetFieldValues(obj, slotDesc, vals);
+    }
+}
+```
+
+
+# 3 总结
+有些被transient修饰的变量不想被序列化，但是，里面又包含一些有用的信息时，可自行定制readObject和writeObject方法，来向对象字节流中补充写入/读取 一些信息。没有被transient修饰的变量时，使用default即可。
+
+private的readObject和writeObject方法会在序列化和反序列化的中过程中通过反射的方式被调用。
