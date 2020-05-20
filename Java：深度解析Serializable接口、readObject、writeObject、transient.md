@@ -9,7 +9,7 @@ Java Serializable：明明就一个空的接口嘛   https://blog.csdn.net/qing_
 
 # 2 实践与源码解析
 
-## 2.1 正常的序列化和反序列化
+## 2.1 正常的(反)序列化步骤
 以序列化和反序列化 String 类为例：
 
 ```java
@@ -60,4 +60,19 @@ public class Main {
 }
 ```
 
-## 2.2 
+## 2.2 writeObject和readObject
+当一个类实现了Serializable接口时，静态代码扫描工具认为我们应该为这个类定义writeObject和readObject方法，一般都是无脑加下面的代码：
+
+```java
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+    }
+```
+
+对于普通的类，一般没有问题。因此，要来了解一下序列化和反序列化的具体流程，由于两个过程差不多，以HashSet及其readObejct过程进行分析。
+
+## 2.3 
