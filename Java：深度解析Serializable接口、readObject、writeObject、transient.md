@@ -261,7 +261,7 @@ objectInputStream.readObject();
 
 后续流程较为复杂，使用流程图概括:
 
-![objectInputStream.readObject()调用流程图](./resourcesobjectInputStream.readObject()调用流程图.png)
+![objectInputStream.readObject()调用流程图](./resources/objectInputStream.readObject()调用流程图.png)
 
 最终可以看到，**会通过反射的形式，调用private的readObject方法**。
 
