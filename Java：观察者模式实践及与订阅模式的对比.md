@@ -194,3 +194,102 @@ public class ObserverController {
 
 Observer接口和Observable类从Java 9标记为废弃。
 
+## 4.1 废弃原因
+
+1. 不能序列化
+
+Observable没有实现Serializable接口，Observable的内部成员变量都是私有的，子类不能通过继承Observable来对Observable的成员变量处理,只能调用一些方法。
+
+同时子类为了实现通知功能，必定会调用setChanged和notifyObservers方法，而Observable类无法被序列化，子类注定也无非被序列化了，要是能序列化也只能得到json串，得不到方法。
+
+
+2. 不是线程安全
+
+在 java.util.Observable文**档里没有强制要求Observable是线程安全的**，它允许子类覆盖重写Observable的方法，也允许事件通知无序以及事件通知发生在不同的线程里，这些都是会潜在的影响线程安全的问题。
+
+如下：
+
+```java
+    public void notifyObservers(Object arg) {
+        /*
+         * a temporary array buffer, used as a snapshot of the state of
+         * current Observers.
+         */
+        Object[] arrLocal;
+
+        synchronized (this) {
+
+            if (!changed)
+                return;
+            arrLocal = obs.toArray();
+            clearChanged();
+        }
+
+        for (int i = arrLocal.length-1; i>=0; i--)
+            ((Observer)arrLocal[i]).update(this, arg);
+    }
+```
+
+可见，同步块只能保证change变量的改变是线程安全的，而arg作为对象的引用，真正开始通知时可能已经有变化了很多次了，除非是基础变量。
+
+
+3. 支持事件模型的功能简单
+
+支持事件模型的功能很简单，例如，只是支持事情发生变化的概念，但是不能提供更多哪些内容发生了改变。
+
+参考：deprecate Observer and Observable
+
+
+## 4.2 解决方案
+可以使用java.beans 里的PropertyChangeSupport、PropertyChangeEvent 和 PropertyChangeListener 来代替目前Observer和Observable的功能。
+
+PropertyChangeSupport相当于被观察者，PropertyChangeEvent是事件，PropertyChangeListener是观察者。代码实践如下：
+
+
+```java
+public class Demo {  
+  
+  private String name;  
+  private PropertyChangeSupport listeners = new PropertyChangeSupport(this);  
+    
+  public Demo() {  
+      this.name= "my name";  
+  }  
+
+  public String getName() {  
+      return this.name;  
+  }  
+      
+  public void setName(String name) {  
+      String oldValue = this.name;  
+      this.name= name;  
+      //发布监听事件  
+      firePropertyChange("name", oldValue, demoName);  
+  }  
+      
+  public void addPropertyChangeListener(PropertyChangeListener listener) {  
+      listeners.addPropertyChangeListener(listener);  
+  }  
+      
+  public void removePropertyChangeListener(PropertyChangeListener listener){  
+      listeners.removePropertyChangeListener(listener);  
+  }  
+      
+  protected void firePropertyChange(String prop, Object oldValue, Object newValue) {  
+      listeners.firePropertyChange(prop, oldValue, newValue);  
+  }  
+}
+
+public class Main {  
+  public static void main(String[] args) {  
+    Demo demo= new Demo();  
+     demo.addPropertyChangeListener(new PropertyChangeListener(){  
+      public void propertyChange(PropertyChangeEvent evt) {  
+         System.out.println("OldValue:"+evt.getOldValue());  
+        System.out.println("NewValue:"+evt.getNewValue());  
+        System.out.println("tPropertyName:"+evt.getPropertyName());  
+    }});  
+     demo.setName("new Name");  
+  }  
+}
+```
