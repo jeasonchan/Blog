@@ -76,4 +76,16 @@ public class JDBCTest {
 
 2. sql和Java代码耦合……同样不敢苟同，同样可以自定义一个XML，XML是个sql的语句合集，给每个语句起个名字，java里调用XML反序列化得到的实例即可。想sql和java代码分离，还是看个人，也是有办法的
 
-3. 使用JDBC存储过程时，填充占位的？时
+3. 使用JDBC存储过程时，填充占位的？时，确实需要类型判断，根据不同的类型调用不同的set方法，同时下表也要自己记住，JDBC存储过程的类型不同，还需要调用不同的executeXXXX()方法……这点确实比较麻烦
+
+4. 对于查询语句，对ResultSet的结果，按例的类型取值时，确实要看表结果，表结果一改，Java代码就要改了
+
+
+为了改进以上问题，考虑使用mybatis！
+
+# 3 MyBatis介绍
+MyBatis 是一款优秀的持久层框架，它支持自定义 SQL、存储过程以及高级映射。MyBatis 免除了几乎所有的 JDBC 代码以及设置参数和获取结果集的工作。MyBatis 可以通过简单的 XML 或注解来配置和映射原始类型、接口和 Java POJO（Plain Old Java Objects，普通老式 Java 对象）为数据库中的记录。
+
+官方文档    https://mybatis.org/mybatis-3/zh/index.html
+
+![mybatis框架结构.png](./resources/mybatis框架结构.png)
