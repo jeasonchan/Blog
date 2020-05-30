@@ -190,9 +190,9 @@ SQL语句的映射合集：
 
 注意：
 
-1. 配置文件里的路径都是相对路径，相对的根据经是classPath，即为jar包的根目录
+1. 配置文件里的路径都是相对路径，相对的根路径是classPath，即为jar包的根目录
 
-## 3.2 Java代码使用
+## 3.2 Java代码简单使用
 
 Main.java
 
@@ -271,3 +271,391 @@ public class Main {
 6. 调用session.close()关闭会话
 
 
+# 4 完整CRUD操作
+以向数据库中更新用户信息为例，展现完整CRUD流程。
+
+DAO：data access object
+
+## 4.0 User  Bean
+
+```java
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class User {
+    private String id;
+    private String userName;
+    private String password;
+    private String name;
+    private Integer age;
+    private Integer sex;
+    private Date birthday;
+    private String created;
+    private String updated;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public Integer getSex() {
+        return sex;
+    }
+
+    public void setSex(Integer sex) {
+        this.sex = sex;
+    }
+
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+
+    public String getCreated() {
+        return created;
+    }
+
+    public void setCreated(String created) {
+        this.created = created;
+    }
+
+    public String getUpdated() {
+        return updated;
+    }
+
+    public void setUpdated(String updated) {
+        this.updated = updated;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", userName='" + userName + '\'' +
+                ", password='" + password + '\'' +
+                ", name='" + name + '\'' +
+                ", age=" + age +
+                ", sex=" + sex +
+                ", birthday='" + new SimpleDateFormat("yyyy-MM-dd").format(birthday) + '\'' +
+                ", created='" + created + '\'' +
+                ", updated='" + updated + '\'' +
+                '}';
+    }
+}
+```
+
+
+
+## 4.1 创建UserDAO接口
+
+```java
+import com.zpc.mybatis.pojo.User;
+import java.util.List;
+
+public interface UserDao {
+
+    /**
+     * 根据id查询用户信息
+     *
+     * @param id
+     * @return
+     */
+    public User queryUserById(String id);
+
+    /**
+     * 查询所有用户信息
+     *
+     * @return
+     */
+    public List<User> queryUserAll();
+
+    /**
+     * 新增用户
+     *
+     * @param user
+     */
+    public void insertUser(User user);
+
+    /**
+     * 更新用户信息
+     *
+     * @param user
+     */
+    public void updateUser(User user);
+
+    /**
+     * 根据id删除用户信息
+     *
+     * @param id
+     */
+    public void deleteUser(String id);
+}
+```
+
+## 4.2 创建UserDaoImpl
+创建接口的实现类
+
+```java
+import com.zpc.mybatis.dao.UserDao;
+import com.zpc.mybatis.pojo.User;
+import org.apache.ibatis.session.SqlSession;
+import java.util.List;
+
+public class UserDaoImpl implements UserDao {
+    public SqlSession sqlSession;
+
+    public UserDaoImpl(SqlSession sqlSession) {
+        this.sqlSession = sqlSession;
+    }
+
+    @Override
+    public User queryUserById(String id) {
+        //selectOne  返回一个结果
+        return this.sqlSession.selectOne("UserDao.queryUserById", id);
+    }
+
+    @Override
+    public List<User> queryUserAll() {
+        //selectList  查询一个列表
+        return this.sqlSession.selectList("UserDao.queryUserAll");
+    }
+
+    @Override
+    public void insertUser(User user) {
+        //insert  插入一个对象
+        this.sqlSession.insert("UserDao.insertUser", user);
+    }
+
+    @Override
+    public void updateUser(User user) {
+        //update  更新一个对象
+        this.sqlSession.update("UserDao.updateUser", user);
+    }
+
+    @Override
+    public void deleteUser(String id) {
+        //delete  删除一个对象
+        this.sqlSession.delete("UserDao.deleteUser", id);
+    }
+
+}
+```
+## 4.3 编写对应的mapper
+
+mapper里定义的的命名空间和sql ID，要和UserDaoImpl里所使用的对应起来
+
+```XML
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- mapper:根标签，namespace：命名空间 -->
+<mapper namespace="UserDao">
+    <!-- statement，内容：sql语句。id：唯一标识，随便写，在同一个命名空间下保持唯一
+       resultType：sql语句查询结果集的封装类型,tb_user即为数据库中的表
+     -->
+    <!--<select id="queryUserById" resultType="com.zpc.mybatis.pojo.User">-->
+    <!--select * from tb_user where id = #{id}-->
+    <!--</select>-->
+
+    <!--使用别名，务必跟Bean里的属性名一摸一样！！！！！-->
+    <select id="queryUserById" resultType="com.zpc.mybatis.pojo.User">
+      select
+       tuser.id as id,
+       tuser.user_name as userName,
+       tuser.password as password,
+       tuser.name as name,
+       tuser.age as age,
+       tuser.birthday as birthday,
+       tuser.sex as sex,
+       tuser.created as created,
+       tuser.updated as updated
+       from
+       tb_user tuser
+       where tuser.id = #{id};
+   </select>
+
+    <select id="queryUserAll" resultType="com.zpc.mybatis.pojo.User">
+        select * from tb_user;
+    </select>
+
+    <!--插入数据，占位的属性务必和Bean里的属性名相同-->
+    <insert id="insertUser" parameterType="com.zpc.mybatis.pojo.User">
+        INSERT INTO tb_user (
+        user_name,
+        password,
+        name,
+        age,
+        sex,
+        birthday,
+        created,
+        updated
+        )
+        VALUES
+        (
+        #{userName},
+        #{password},
+        #{name},
+        #{age},
+        #{sex},
+        #{birthday},
+        now(),
+        now()
+        );
+    </insert>
+
+    <!-- 其实就是  update  tb_user set user_name = #{userName},xxxx
+    where id = #{id}；
+    
+    只不过再用了mybatis里的一些修时语法，if标签，预置 set sql关键字-->
+    <update id="updateUser" parameterType="com.zpc.mybatis.pojo.User">
+        UPDATE tb_user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="userName!=null">user_name = #{userName},</if>
+            <if test="password!=null">password = #{password},</if>
+            <if test="name!=null">name = #{name},</if>
+            <if test="age!=null">age = #{age},</if>
+            <if test="sex!=null">sex = #{sex},</if>
+            <if test="birthday!=null">birthday = #{birthday},</if>
+            updated = now(),
+        </trim>
+        WHERE
+        (id = #{id});
+    </update>
+
+    <delete id="deleteUser">
+        delete from tb_user where id=#{id}
+    </delete>
+</mapper>
+```
+
+
+mapper的xml定义完，还要将mapper放进全局配置文件中。
+
+```xml
+<mappers>
+    <mapper resource="mappers/MyMapper.xml"/>
+    <mapper resource="mappers/UserDaoMapper.xml"/>
+</mappers>
+```
+## 4.4 用Junit创建UT
+
+```java
+import com.zpc.mybatis.dao.UserDao;
+import com.zpc.mybatis.dao.impl.UserDaoImpl;
+import com.zpc.mybatis.pojo.User;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.junit.Before;
+import org.junit.Test;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.List;
+
+public class UserDaoTest {
+
+    public UserDao userDao;
+    public SqlSession sqlSession;
+
+    @Before
+    public void setUp() throws Exception {
+        // mybatis-config.xml
+        String resource = "mybatis-config.xml";
+        // 读取配置文件
+        InputStream is = Resources.getResourceAsStream(resource);
+        // 构建SqlSessionFactory
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(is);
+        // 获取sqlSession
+        sqlSession = sqlSessionFactory.openSession();
+        this.userDao = new UserDaoImpl(sqlSession);
+    }
+
+    @Test
+    public void queryUserById() throws Exception {
+        System.out.println(this.userDao.queryUserById("1"));
+    }
+
+    @Test
+    public void queryUserAll() throws Exception {
+        List<User> userList = this.userDao.queryUserAll();
+        for (User user : userList) {
+            System.out.println(user);
+        }
+    }
+
+    @Test
+    public void insertUser() throws Exception {
+        User user = new User();
+        user.setAge(16);
+        user.setBirthday(new Date("1990/09/02"));
+        user.setName("大鹏");
+        user.setPassword("123456");
+        user.setSex(1);
+        user.setUserName("evan");
+        this.userDao.insertUser(user);
+        this.sqlSession.commit();
+    }
+
+    @Test
+    public void updateUser() throws Exception {
+        User user = new User();
+        user.setBirthday(new Date());
+        user.setName("静鹏");
+        user.setPassword("654321");
+        user.setSex(1);
+        user.setUserName("evanjin");
+        user.setId("1");
+        this.userDao.updateUser(user);
+        this.sqlSession.commit();
+    }
+
+    @Test
+    public void deleteUser() throws Exception {
+        this.userDao.deleteUser("4");
+        this.sqlSession.commit();
+    }
+
+}
+
+```
