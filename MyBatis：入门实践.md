@@ -272,7 +272,40 @@ public class Main {
 
 
 # 4 完整CRUD操作
-以向数据库中更新用户信息为例，展现完整CRUD流程。
+先构建数据库，执行一些DDL  SQL操作，为之后的DML做一下准备：
+
+```sql
+drop table if exists test.tb_user;
+
+create table if not exists test.tb_user
+(
+    id        char(32) not null,
+    user_name varchar(32) default null,
+    password  varchar(32) default null,
+    name      varchar(32) default null,
+    age       int(10)     DEFAULT NULL,
+    sex       int(2)      DEFAULT NULL,
+    birthday  date        DEFAULT NULL,
+    created   datetime    DEFAULT NULL,
+    updated   datetime    DEFAULT NULL,
+    primary key (id)
+
+) engine = innodb
+  default charset = utf8;
+
+show tables from test;
+
+select *
+from test.tb_user;
+
+insert into test.tb_user (id, user_name, password, name, age, sex, birthday, created, updated)
+values ('zpc', 'zpc', '123456', '鹏程', '22', '1', '1990-09-02', sysdate(), sysdate());
+
+insert into test.tb_user (id, user_name, password, name, age, sex, birthday, created, updated)
+values ('hj', 'hj', '123456', '静静', '22', '1', '1993-09-05', sysdate(), sysdate());
+```
+
+接下来，以向数据库中更新用户信息为例，展现完整CRUD流程。
 
 DAO：data access object
 
@@ -497,7 +530,7 @@ mapper里定义的的命名空间和sql ID，要和UserDaoImpl里所使用的对
     <!--select * from tb_user where id = #{id}-->
     <!--</select>-->
 
-    <!--使用别名，务必跟Bean里的属性名一摸一样！！！！！-->
+    <!--使用别名，务必跟Bean里的属性名一摸一样！！！！！才能反序列化为一个User实例-->
     <select id="queryUserById" resultType="com.zpc.mybatis.pojo.User">
       select
        tuser.id as id,
