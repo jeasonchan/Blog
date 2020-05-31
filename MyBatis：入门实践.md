@@ -669,4 +669,6 @@ public class UserDaoTest {
 ```
 通过openSession得到SqlSession时，最后一个参数时false，即为 不自动提交，和JDBC里不同，JDBC里直接得到的connection是自动提交的。**在JDBC中**，要进行事务操作时，必须先设置connection的autoCommit 属性为false。
 
-## 4.5 
+## 4.5 注意事项、坑点
+
+### 4.5.1 数据库字段名和实体类属性名不一致
