@@ -3,7 +3,7 @@
  
 参考文章：
 
-java之Pattern类详解      https://blog.csdn.net/thlzjfefe/article/details/80769648
+java之Pattern、Matcher详细用法      https://blog.csdn.net/zhanngle/article/details/1750556
 
 
 Learn Regex    https://github.com/ziishaned/learn-regex/blob/master/translations/README-cn.md
@@ -14,8 +14,9 @@ Learn Regex    https://github.com/ziishaned/learn-regex/blob/master/translations
 
 正则表达式就是一段字符串的通向公式，所以，正则表达式就是为了去匹配字符串，在应用时主要有两种用法：
 
-1. 匹配字符串是否满足正则表达式，match
+1. 匹配字符串是否满足正则表达式，match，匹配整个字符串
 2. 用正则表达式去分割字符串，split
+3. 用正则字符串寻找，find
 
 下面以Java的Pattern和Matcher类为例，举例匹配和分割的使用。
 
@@ -75,6 +76,16 @@ public class Main {
         );
 
 
+        Pattern pattern_2 = Pattern.compile("<.*?>");
+        Matcher matcher2 = pattern_2.matcher(input);
+
+        if (matcher2.find()) {
+            System.out.println(matcher2.toMatchResult().start());
+            System.out.println(matcher2.toMatchResult().end());
+
+        }
+
+        System.out.println(Arrays.toString(pattern_2.split(input)));
 
 
     }
@@ -220,6 +231,45 @@ System.out.println(
         )
 );
 
+```
+
+\* 和 + 限定符都是贪婪的，因为它们会尽可能多的匹配文字，只有在它们的后面加上一个 ? 就可以实现非贪婪或最小匹配。
+
+```java
+Pattern pattern_1 = Pattern.compile("<.*>");
+
+String input = "<h1>jeason_chan</h1>";
+
+Matcher matcher = pattern_1.matcher(input);
+if (matcher.matches()) {
+    System.out.println(matcher.toMatchResult().start());
+    System.out.println(matcher.toMatchResult().end());
+
+}
+
+Pattern pattern_2 = Pattern.compile("<.*?>");
+Matcher matcher2 = pattern_2.matcher(input);
+
+if (matcher2.find()) {
+    System.out.println(matcher2.toMatchResult().start());
+    System.out.println(matcher2.toMatchResult().end());
+
+}
+
+System.out.println(Arrays.toString(pattern_2.split(input)));
+
+/*
+0
+20
+result:java.util.regex.Matcher$ImmutableMatchResult@100fc185
+0
+4
+[, jeason_chan]
+
+
+对于正则分割，开头的长度为0的字符串并不会被丢，只有末尾的才limit=0时才会背丢弃
+
+*/
 ```
 
 
