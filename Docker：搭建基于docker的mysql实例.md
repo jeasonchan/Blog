@@ -180,6 +180,7 @@ Warning: Unable to load '/usr/share/zoneinfo/zone1970.tab' as time zone. Skippin
 
 1. 设置容器的环境变量
 2. 直接编写容器内的配置文件
+3. 将本地的配置文件映射到容器中，容器内的mysql从路径读取配置文件时就会使用本地的配置文件
 
 接下来探索一下通过修改容器内的配置文件实现mysql配置。
 
@@ -605,6 +606,36 @@ docker.cnf  mysql.cnf
 
 接下来需要优化mysql配置，降低系统占用。
 
-### 3.1.1 
+### 3.1.1 mysql的最低占用配置
 
-MYSQL_ROOT_PASSWORD=123456
+```	
+key_buffer = 16K
+max_allowed_packet = 1M
+thread_stack = 64K
+table_cache = 4
+sort_buffer = 64K
+net_buffer_length = 2K
+```
+
+但是，自己本机开发时，默认配置的mysql的占用并不高，甚至都都没有空白页的chrome浏览器高，大概400m左右……
+
+
+## 3.2 本地配置文件映射到容器中
+
+将本地文件、文件夹映射到容器中，在容器内访问被映射的文件时就会直接访物理机里的文件路径，从而实现配置文件在物理机中，能被容器内的应用mysql直接读取。路径映射及需要映射的文件如下：
+
+```bash
+docker run --name my_mysql -p 3306:3306 -v ~/conf:/etc/mysql/conf.d -v ~/logs:/logs -v ~/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+
+```
+
+
+
+# 4 总结
+
+最后，建议使用在本地创建配置文件，并通过docker命令映射到容器中供容器内的程序使用，如：
+
+```bash
+docker run --name my_mysql -p 3306:3306 -v ~/conf:/etc/mysql/conf.d -v ~/logs:/logs -v ~/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -d mysql
+
+```
