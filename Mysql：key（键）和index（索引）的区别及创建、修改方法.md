@@ -40,13 +40,59 @@ foreign key  有两个作用，一是约束作用（constraint)，规范数据�
 
 ## 2.1 创建索引的方式
 
-创建索引的方式和键大同小异，如，create table t(id int, index inx_tx_id  (id)); 接下来系统介绍一下如何创建索引。
+创建索引的方式和键大同小异，如，create table t(id int, index inx_tx_id  (id)); 接下来系统介绍一下如何创建索引，有一下三种方式：
 
+* create table 时直接创建索引
+* 单独使用 create index 创建所以
+* 使用ALTER TABLE来为表增加索引
 
+**但是，每种方式能创建的索引类型是不同的**
 
+### 2.1.1 ALTER TABLE 创建索引
 
+ALTER TABLE用来创建普通索引、UNIQUE索引或PRIMARY KEY索引。
 
+```sql
+ALTER TABLE table_name ADD INDEX index_name (column_list)
 
+ALTER TABLE table_name ADD UNIQUE (column_list)
+
+ALTER TABLE table_name ADD PRIMARY KEY (column_list)
+
+-- FULLTEXT全文索引 
+ALTER TABLE `table_name` ADD FULLTEXT ( `column`) 
+
+-- INDEX多列索引
+ALTER TABLE `table_name` ADD INDEX index_name ( `column1`, `column2`, `column3` )
+```
+
+其中table_name是要增加索引的表名，column_list指出对哪些列进行索引，多列时各列之间用逗号分隔。**索引名index_name可选，缺省时，MySQL将根据第一个索引列赋一个名称**。另外，ALTER TABLE允许在单个语句中更改多个表，因此可以在同时创建多个索引。
+
+ 
+
+### 2.1.2 CREATE INDEX 创建索引
+
+CREATE INDEX可对表增加普通索引或UNIQUE索引，**该方式不能创建主键索引**。
+
+```sql
+CREATE INDEX index_name ON table_name (column_list)
+
+CREATE UNIQUE INDEX index_name ON table_name (column_list)
+```
+ 
+table_name、index_name和column_list具有与ALTER TABLE语句中相同的含义，不能用CREATE INDEX语句创建PRIMARY KEY索引。
+
+## 2.2 删除索引的方式
+
+可利用ALTER TABLE或DROP INDEX语句来删除索引。类似于CREATE INDEX语句，DROP INDEX可以在ALTER TABLE内部作为一条语句处理，语法如下。
+
+```sql
+DROP INDEX index_name ON talbe_name
+
+ALTER TABLE table_name DROP INDEX index_name
+
+ALTER TABLE table_name DROP PRIMARY KEY
+```
 
 ## 2.3 小结
 (1) 我们说索引分类，分为主键索引、唯一索引、普通索引(这才是纯粹的index)等，也是基于是不是把index看作了key。比如：
