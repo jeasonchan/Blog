@@ -26,11 +26,11 @@ foreign key  有两个作用，一是约束作用（constraint)，规范数据�
 
 创建key也有如下几种方式：
 
-（1）在字段级**以key方式**建立，在定义字段的同时申明为主键，如 create table t (id int not null primary key);
+（1）在创表时，在字段级**以key方式**建立，在定义字段的同时申明为主键，如 create table t (id int not null primary key);
 
-（2）在表级**以constraint方式**建立，显式使用CONSTRAINT这个关键字，并且能给这个约束起名字。如create table t(id int, CONSTRAINT pk_t_id PRIMARY key (id));
+（2）在创表时，在表级**以constraint方式**建立，显式使用CONSTRAINT这个关键字，并且能给这个约束起名字。如create table t(id int, CONSTRAINT pk_t_id PRIMARY key (id));
 
-（3）在表级**以key方式**建立，如create table t(id int, primary key (id));
+（3）在创表时，在表级**以key方式**建立，如create table t(id int, primary key (id));
 
 其它key创建类似，但不管那种方式，既建立了constraint，又建立了index，只不过index使用的就是这个constraint或key。
 
@@ -82,9 +82,23 @@ CREATE UNIQUE INDEX index_name ON table_name (column_list)
  
 table_name、index_name和column_list具有与ALTER TABLE语句中相同的含义，不能用CREATE INDEX语句创建PRIMARY KEY索引。
 
+
+### 2.1.3 创表时创建索引
+
+```sql
+CREATE TABLE test
+(
+    hahha   int,
+    heheheh int,
+    INDEX index_name_可省略 (hahha),
+    UNIQUE (heheheh)
+
+);
+```
+
 ## 2.2 删除索引的方式
 
-可利用ALTER TABLE或DROP INDEX语句来删除索引。类似于CREATE INDEX语句，DROP INDEX可以在ALTER TABLE内部作为一条语句处理，语法如下。
+可利用ALTER TABLE或DROP INDEX语句来删除索引。类似于CREATE INDEX语句，DROP INDEX可以在ALTER TABLE内部作为一条语句处理，语法如下。**可见，单独删除索引都是要知道索引的名称的。**
 
 ```sql
 DROP INDEX index_name ON talbe_name
