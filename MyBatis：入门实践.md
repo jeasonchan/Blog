@@ -703,6 +703,63 @@ public class UserDaoTest {
 ```
 通过openSession得到SqlSession时，最后一个参数时false，即为 不自动提交，和JDBC里不同，JDBC里直接得到的connection是自动提交的。**在JDBC中**，要进行事务操作时，必须先设置connection的autoCommit 属性为false。
 
-## 4.5 注意事项、坑点
+## 4.5 注意事项、坑点、总结
+其实就是输入、输出的坑点。
 
-### 4.5.1 数据库字段名和实体类属性名不一致
+输入的坑点是：
+
+实体作为mapper的入参，有可能是一个或者多个实体类，实体类如何与传入的参数一一对应？
+
+结果输出的坑点是：
+
+查出来的结果，一般是的是要映射成特殊的类 或者 Map，字段名和类的属性名如何对应起来？
+
+### 4.5.1 mapper多个参数
+一般情况下，直接定义DAO接口类，然后在mapper中绑定：
+
+```java
+// 只有一个入参的DAO
+int insert(AtMe record);
+```
+
+在mapper.xml绑定：
+
+```xml
+<insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.jeasonchan.AtMe" useGeneratedKeys="true">
+insert into at_me 
+
+(req_no, comment_id, from_by,from_name, to_by, to_name)
+
+values 
+
+( #{reqNo,jdbcType=VARCHAR}, #{commentId,jdbcType=VARCHAR}, #{fromBy,jdbcType=VARCHAR}, 
+    #{fromName,jdbcType=VARCHAR}, #{toBy,jdbcType=VARCHAR}, #{toName,jdbcType=VARCHAR} );
+</insert>
+```
+只有一个入参，通过#{xxxxx}直接读取Atme实例中的属性，应该是根据反射+属性名获取的
+
+
+
+### 4.5.2 查询结果映射为Map/实体
+
+
+
+### 4.5.3 mybatis的高度拼装、自由、灵活体现
+查询条件、结果集都可以拆分定义，sql本身都能根据传入的参数动态生成。
+
+
+
+### 4.5.4 整合/调用方式
+
+#### 4.5.4.1 DAO实现类通过sqlsession
+
+
+
+
+#### 4.5.4.2 mappper直接绑定DAO接口类，无需实现
+
+**这也是的官方推荐的方法。**
+
+
+
+
