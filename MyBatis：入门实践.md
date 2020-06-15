@@ -736,13 +736,48 @@ values
     #{fromName,jdbcType=VARCHAR}, #{toBy,jdbcType=VARCHAR}, #{toName,jdbcType=VARCHAR} );
 </insert>
 ```
-只有一个入参，通过#{xxxxx}直接读取Atme实例中的属性，应该是根据反射+属性名获取的
 
+只有一个入参，可以直接通过#{xxxxx}直接读取Atme实例中的属性，应该就是根据反射+属性名获取的，完全没有问题。
 
+DAO的接口有多个入参呢？
+
+```java
+List<RequirementByComment> queryCommentByCreateNo(
+    @Param("A") String createNo,
+    @Param("B") MyCommentQueryBody queryBody);
+```
+
+那就必须给每个入参起名字了，方便mapper里面进行#{xxxx}取值，比如：
+
+```xml
+<!-- 在mapper中通过 A B 这两个别名实现对各自属性值的访问 -->
+<select id="queryCommentByCreateNo" resultMap="RequirementByComment">
+    SELECT table1.id, group_concat(product_name) as 'product_name', name, status
+    <if test="A.reqType !=null">
+        AND req_type = #{queryBody.reqType}
+    </if>
+    <if test="B.startDate !=null">
+        AND ( create_date &gt;= #{queryBody.startDate } )
+    </if>
+    
+</select>
+```
 
 ### 4.5.2 查询结果映射为Map/实体
 
+```xml
+<!-- 将column向Bean的属性映射 -->
+<resultMap id="RequirementByComment" type="com.jeasonchan.RequirementByComment">
+    <result column="id" property="id" jdbcType="DECIMAL"/>
+    <result column="product_name" property="productName" jdbcType="VARCHAR"/>
+    <result column="status" property="status" jdbcType="VARCHAR"/>
+</resultMap>
 
+<select id="queryCommentByCreateNo" resultMap="RequirementByComment">
+    SELECT table1.id, group_concat(product_name) as 'product_name', status
+    from xxxxxxx
+</select>
+```
 
 ### 4.5.3 mybatis的高度拼装、自由、灵活体现
 查询条件、结果集都可以拆分定义，sql本身都能根据传入的参数动态生成。
@@ -752,13 +787,14 @@ values
 ### 4.5.4 整合/调用方式
 
 #### 4.5.4.1 DAO实现类通过sqlsession
-
-
+举例省略
 
 
 #### 4.5.4.2 mappper直接绑定DAO接口类，无需实现
 
 **这也是的官方推荐的方法。**
+
+举例省略
 
 
 
