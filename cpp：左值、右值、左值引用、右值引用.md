@@ -251,7 +251,7 @@ Copy Constructor is called! source: World
 再来定义转移赋值函数：
 
 ```cpp
-//函数的返回值是左值引用
+//函数的返回值是左值引用，返回值时带来的值拷贝
 MyString& operator=(MyString&& str) { 
   std::cout << "Move Assignment is called! source: " << str._data << std::endl; 
   if (this != &str) { //引用就像一个对象，用了取地址符
@@ -267,3 +267,37 @@ MyString& operator=(MyString&& str) {
 有了右值引用和转移语义，我们在设计和实现类时，对于需要动态申请大量资源的类，应该设计转移构造函数和转移赋值函数，以提高应用程序的效率。
 
 # 5 td::move()和std::forward
+
+上面的代码中有有一句：
+
+```cpp
+vec.push_back(MyString("World")); 
+```
+
+执行时调用了void  push_back(value_type&& __x)方法，然后调用了MyString的拷贝构造函数/转移构造函数。为什么调MyString的转移构造函数呢？看一下之后的代码。
+
+
+```cpp
+void
+push_back(value_type&& __x)
+{ emplace_back(std::move(__x)); }
+```
+
+又调了另外的两个函数：
+
+```cpp
+//入参是右值引用数组
+emplace_back(_Args&&... __args);
+
+/**
+  *  @brief  Convert a value to an rvalue.
+  *  @param  __t  A thing of arbitrary type.
+  *  @return The parameter cast to an rvalue-reference to allow moving it.
+*/
+template<typename _Tp>
+  constexpr typename std::remove_reference<_Tp>::type&&
+  move(_Tp&& __t) noexcept
+  { return static_cast<typename std::remove_reference<_Tp>::type&&>(__t); }
+```
+
+可见move方法的作用就是将入参转变为一个右值引用，最后调用了一个的static_cast()范型方法。但是，static_cast方法是个关键字已经无法继续查看。
