@@ -162,7 +162,7 @@ x 是一个右值引用，绑定到一个右值3，但是**由于x是有名字�
   } 
 
 
-//左值引用
+//左值引用  的 赋值  符号
   MyString& operator=(const MyString& str) { 
     if (this != &str) { 
       _len = str._len; //为了让两个对象脱离关系，这里的值拷贝是必不可少的，即不能共用内存块
@@ -180,8 +180,90 @@ x 是一个右值引用，绑定到一个右值3，但是**由于x是有名字�
 
  int main() { 
   MyString a; 
+  //在栈中声明变量a，并直接调用无参构造函数在栈中进行初始化，然后将a绑定到栈中刚刚初始化好的内存区域
+
   a = MyString("Hello"); 
-  std::vector<MyString> vec; 
+  //先调用有参构产生一个MyString类型的右值
+  //再通过该类的重载的赋值符号进行赋值操作，所以一定会打印：
+  //Copy Assignment is called! source: Hello
+  //注意了！！！！赋值符号重载只针对了左值引用进行重载，但是找不到右值引用时就直接用左值引用的
+
+  std::vector<MyString> vec; //声明并调用无参构造
+
   vec.push_back(MyString("World")); 
+  //先调用有参构产生一个MyString类型的右值
+  //然后调用vector的
+  //void  push_back(value_type&& __x)   方法，入参是右值引用
+  //这个方法内部会将真实的如参转换为右值，由于没有转移拷贝函数，只能直接使用针对左值的拷贝构造函数
  }
  ```
+
+运行一下：
+
+```bash
+jeasconchan@jeasconchan-ThinkPad-E485:~/projects/CppExercise/CppNewStarter/试验左值右值$ g++ main.cpp 
+jeasconchan@jeasconchan-ThinkPad-E485:~/projects/CppExercise/CppNewStarter/试验左值右值$ ls
+a.out  main.cpp
+jeasconchan@jeasconchan-ThinkPad-E485:~/projects/CppExercise/CppNewStarter/试验左值右值$ ./a.out 
+Copy Assignment is called! source: Hello
+Copy Constructor is called! source: World
+
+```
+
+先强调一下，cpp的类中，自带四个默认方法：无参构造、无参析构、拷贝沟在函数、拷贝赋值函数，默认的拷贝构造和拷贝赋值都是全量拷贝的，使用起来会有比较大的开销。尤其是，**对象如果是个右值，却没有定义转移构造和转移赋值函数时，会直接使用左值的拷贝构造和拷贝赋值。**
+
+为什么要有拷贝构造和拷贝赋值？
+
+因为，我们想把新对象 和 被拷贝的对象和被用来赋值的对象  **完全分离开来，不希望有任何公用的内存片段**。
+
+为什么要有转移构造和转移赋值？
+
+因为，**从函数中返回的对象是我们希望直接使用的**，并不希望中间多加拷贝构造和拷贝赋值来这些没用的步骤，而且按照道理，离开作用域之后，函数中产生的对象应该是被析构函数释放调的，所以，我们要对右值的引用重载  转移构造函数和转移赋值操作符。
+
+先定义转移构造函数：
+
+```cpp
+  MyString(MyString&& str) { 
+    std::cout << "Move Constructor is called! source: " << str._data << std::endl; 
+    _len = str._len; 
+    _data = str._data; //注意此处，没用左值引用的 memcpy ，而是直接用的指针指向原来的地址
+    
+    str._len = 0; 
+    
+    str._data = nullptr; 
+    //将原先的指针赋值为空很关键，观察析构函数：
+    //virtual ~MyString() { 
+    //if (_data) delete(_data); 
+    //} 
+    //指针不为空释放堆内存，如果不赋值为nullptr，内存会被释放，
+    //转移拷贝的里面指向的内存区域就没有意义了，或者很快重新写入其他数据
+
+
+ }
+ ```
+
+总结一下转移拷贝的要点，及右值引用可拷贝函数的要点：
+1. 务必明白右值引用拷贝函数的目的：代替原来的拷贝构造，提高效率
+2. 参数（右值）的符号必须是右值引用符号，即“&&”。传参的时候还是直接右值。
+3. 参数（右值）不可以是常量，因为我们需要修改右值。比如，某些属性赋值为nullptr
+4. 参数（右值）的资源链接和标记必须修改。否则，**右值的析构函数就会释放资源。转移到新对象的资源也就无效了**。
+
+再来定义转移赋值函数：
+
+```cpp
+//函数的返回值是左值引用
+MyString& operator=(MyString&& str) { 
+  std::cout << "Move Assignment is called! source: " << str._data << std::endl; 
+  if (this != &str) { //引用就像一个对象，用了取地址符
+    _len = str._len; 
+    _data = str._data; 
+    str._len = 0; 
+    str._data = NULL; 
+  } 
+  return *this; //返回的是一个对象，用了取内容符号
+}
+```
+
+有了右值引用和转移语义，我们在设计和实现类时，对于需要动态申请大量资源的类，应该设计转移构造函数和转移赋值函数，以提高应用程序的效率。
+
+# 5 td::move()和std::forward
