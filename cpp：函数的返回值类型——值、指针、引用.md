@@ -173,5 +173,40 @@ p=&b//正确：p可以多次赋值，p存储b的地址
 
 最重要的一句话：引用可以理解成变量的别名，以把引用看做是通过一个常量指针来实现的。
 
-# 4 总结
+# 4 引用和值作为入参
+
+```cpp
+void hahh(std::string string1){
+    std::cout<<"使用了hahh(std::string string1)"<<endl;
+};
+
+void hahh(std::string& string1){
+    std::cout<<"使用了hahh(std::string& string1)"<<endl;
+};
+
+void hahh(std::string&& string1){
+    std::cout<<"使用了hahh(std::string&& string1)"<<endl;
+};
+
+//调用
+std::string string2="233";
+std::string &string3=string2;
+hahh(string3);
+//同一个函数，入参类型仅有  引用传递  和  值传递  的差别，能构成重载，
+//但是调用时必然报错，因为调用函数时，无论函数入参 传值 还是 传左值引用 ，都不知道应该调用那个
+
+
+hahh("123");
+```
+
+入参是   左值引用、右值引用、值  时，能调用 void hahh(std::string string1);但是，根据函数的语义，该函数的入参是一个值，所以，编译器必然会调用拷贝函数（至于调用复制拷贝还是转移拷贝，看传入的对象有没有定义转移拷贝）生成一个临时对象，需要多申请内存放临时变量，有高消耗操作。
+
+入参是   左值引用、值  时，能调用 void hahh(std::string& string1)；根据函数的语义，函数的入参是一个引用，编译器会直接string& string1=入参，只是多申请了一片内存放引用，完全没有高消耗的操作
+
+入参是   右值引用  时，能调用 void hahh(std::string&& string1)；根据函数的语义，函数的入参是一个右值引用，
+
+所以，函数的入入参
+
+
+# 5 总结
 函数的入参和返回值，**都可以通过声明为引用类型从而避免语义上告诉编译器要进行值传递**，从而避免值传递的拷贝构造和拷贝赋值的性能问题。
