@@ -55,7 +55,7 @@ cygwin是linux中一系列命令行工具/可执行文件/公用库的合集，�
 
 终端————配置任务 经过选择，会自动生成task.json，vscode提供的模板有python、gcc、java、node、maven等等，我的g++的模板如下（也是自动生成的），作用是编译、链接当前的cpp文件，生成一个可执行文件：
 
-```json
+```
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
