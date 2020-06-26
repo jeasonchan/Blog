@@ -104,4 +104,16 @@ cpp和java一样，虽然都是面向对象的，本应该是一切皆对象（c
 
 cpp的基本数据类型，分为算术类型和空类型（void）。
 
-### 2.1.1 
+### 2.1.1 算数型
+算数型还分为：
+* 整型，包括 bool、char、wchar_t、char16_t char32_t、short、int、long long
+* 浮点型，包括 float、double、long double
+
+每种类型的占用的比特位数稍有不同。其中最坑的莫过于字符相关的整型：char、wchar_t、char16_t、char32_t,稍有不慎就会发生截断，造成字符显示异常。
+
+C++读写汉字，C++处理中文字符             https://blog.csdn.net/calmreason/article/details/7935258
+
+C++11新特性--Unicode 16位和32位支持           https://www.jianshu.com/p/8b87a05c23b1
+
+内置类型的机器实现：
+P31
