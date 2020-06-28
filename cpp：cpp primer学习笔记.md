@@ -138,3 +138,5 @@ C++11新特性--Unicode 16位和32位支持           https://www.jianshu.com/p/
 2. 一般使用int。int不够用时，建议直接使用long long，因为long一般和int有一样的位数
 3. 不要char或者bool进行算数计算，以为你char的有无符号取决于编译器实现，实在想用务必显式声明signed char或者 unsigned char
 4. 浮点数运算建议直接使用double。因为，因为float消耗并没有比double少多少，甚至有时候float还比double慢
+
+### 2.1.2 类型转换   P32
