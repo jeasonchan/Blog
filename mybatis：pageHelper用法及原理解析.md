@@ -39,9 +39,46 @@ Mybatis分页插件PageHelper     https://www.jianshu.com/p/50fcd7f127f0
 
 # 3 真分页查询
 
-
 ## 3.1 不使用插件
+在没有使用分页插件的时候需要先写一个查询count的select语句，然后再写一个真正分页查询的语句，MySQL中有对分页的支持，是通过limit子句。
 
+limit关键字的用法是:LIMIT [offset,] rows
 
+offset是相对于首行的偏移量(**首行是0**)，rows是返回条数，limit的语义也就是取符合条件的第offset条到offset+rows-1条。
+
+例如：
+
+```sql
+-- 每页5条记录，取第一页，返回的是0~（0+5-1）的记录，也就是返回的是前5条记录
+select * from tableA limit 0,5;
+
+-- 每页5条记录，取第二页，返回的是第6条记录，到第10条记录，（number-1）*size，size
+select * from tableA limit 5,5;
+```
+
+不过当偏移量逐渐增大的时候，查询速度可能就会变慢，性能会有所下降。因为offset要求必须的从头开始慢慢查。
 
 ## 3.2 使用插件
+PageHelper是一款好用的开源免费的Mybatis第三方物理分页插件，
+
+Github地址:https://github.com/pagehelper/Mybatis-PageHelper
+
+官方地址：https://pagehelper.github.io/
+
+官方的使用文档：https://github.com/pagehelper/Mybatis-PageHelper/blob/master/wikis/zh/HowToUse.md
+
+核心原理：
+
+1、利用ThreadLocal实现LOCAL_PAGE隔离
+
+2、对mybatis的动态sql进行拦截
+
+放一段利用PageHelper进行分页查询的日志：
+
+```
+Preparing: SELECT count(0) FROM req_info AS req WHERE req.req_no IN (?, ?) 
+
+Preparing: SELECT serial_id FROM req_info AS req WHERE req.req_no in ( ? , ? ) ORDER BY creation_date DESC limit ?,? 
+```
+
+可见，本质上还是利用limit进行分业查询。
