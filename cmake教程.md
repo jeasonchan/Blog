@@ -112,7 +112,63 @@ add_executable(
 )
 ```
 
+## 2.4 多目录多cmakelists.txt
 
+现在有很多很多正规cmake项目都是如下的目录结构：
+
+|    |    |
+| ---| ---|
+| bin |      |
+| build |      |
+| include      |      |
+|  ----------    |   testFunc1.h|
+|  ----------    |   testFunc.h|
+| src     |      |
+|  ----------    |   testFunc1.c|
+|  ----------    |   testFunc.c|
+
+在顶层目录下的新建一个cmake文件：
+
+```bash
+cmake_minimum_required (VERSION 2.8)
+
+project (demo)
+
+# 向当前工程添加存放源文件的子目录，
+add_subdirectory (src)
+```
+
+这里指定src目录下存放了源文件，当执行cmake时，就会进入src目录下去找src目录下的CMakeLists.txt，所以在src目录下也应该建立一个CMakeLists.txt，内容如下：
+
+```bash
+aux_source_directory (. SRC_LIST)
+
+include_directories (../include)
+
+# 目标是输出可执行文件
+add_executable (main ${SRC_LIST})
+
+# 设置输出的可执行文件的位置
+# EXECUTABLE_OUTPUT_PATH  这个变量是cmake自带变量
+set (EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+```
+
+最终整个工程的目录结构如下的：
+
+|    |    |
+| ---| ---|
+|  cmakelist.txt |   |
+| bin |      |
+| build |      |
+| include      |      |
+|  ----------    |   testFunc1.h|
+|  ----------    |   testFunc.h|
+| src     |      |
+|  ----------    |   cmakelist.txt|
+|  ----------    |   testFunc1.c|
+|  ----------    |   testFunc.c|
+
+编译执行时，cd到build目录下，执行cmake .. && make  即可。
 
 
 
