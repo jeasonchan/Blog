@@ -271,6 +271,9 @@ target_link_libraries(demo ${OpenCV_LIBS})
 # 设置包含目录
 target_include_directories(demo ${OpenCV_INCLUDE_DIR} PRIVATE)
 ```
+
+以target开头cmake函数是另一套api，在新的文章中讲述。
+
 ## 3.3 find_package综合：同时构建QT5和OpenCV
 
 ```bash
