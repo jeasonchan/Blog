@@ -22,4 +22,4 @@ win下的g++都是gcc在win下的实现，我之前通过cygwin安装了g++、gi
 
 完美解决。
 
-TDM-GCC就是dev c++内置的工具链。
+TDM-GCC就是dev c++内置的工具链，包含的内容也很简洁，没有多余的ls、git等。
