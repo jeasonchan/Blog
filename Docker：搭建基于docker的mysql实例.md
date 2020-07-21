@@ -12,6 +12,7 @@
 sudo apt install dokcer.io
 ```
 
+
 到现在还有很多教程在放屁，让安装docker ce……真的副了，人云亦云……很久之前，docker.io 由ubuntu团队维护，暂停维护了一段时间后，目前已经恢复正常维护了，且docker的版本和官方的docker ce版本基本一致，所以，现在建议直接在ubuntu中使用docker.io。
 
 ## 2.2  配置面免密使用docker命令
