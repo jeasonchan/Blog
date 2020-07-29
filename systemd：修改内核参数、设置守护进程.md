@@ -58,8 +58,9 @@ touch 99-redis.conf;
 <!-- 向文件中写入内核参数配置 -->
 echo "vm.overcommit_memory = 1;net.core.somaxconn=1280" > 99-redis.conf;
 
-<!-- 从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载 -->
-sysctl -p ;
+<!-- 从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载 
+所以，很多人根本没改/etc/sysctl.conf，却最后也执行-p，毫无卵用-->
+# sysctl -p ;
 
 <!-- 重启systemd-sysctl守护进程，确保内核参数都生效 -->
 systemctl restart systemd-sysctl.service
