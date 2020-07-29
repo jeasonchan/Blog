@@ -115,3 +115,14 @@ class Abc{
 
 
 39. 设计系统时，即时性不是十分强的业务，可以将任务放进队列中，让消费者去处理，比如：关注。好处是一定程度缓解某些接口的并发压力，因为都是队列的消费者的数量、消费速度是可控的。
+
+40. mysql配置文件位置确认
+```
+# 先确认mysql服务端可执行文件的位置
+[root@searchcode-02 system]# which mysqld
+/usr/sbin/mysqld
+[root@searchcode-02 system]# mysqld --verbose --help|grep -A 1  'Default options'
+Default options are read from the following files in the given order:
+/etc/my.cnf /etc/mysql/my.cnf /usr/etc/my.cnf ~/.my.cnf
+```
+
