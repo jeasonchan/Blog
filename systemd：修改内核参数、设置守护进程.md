@@ -74,7 +74,7 @@ echo never > /sys/kernel/mm/transparent_hugepage/enabled
 ```
 但是，系统重启后，参数又会变为默认的always参数，为了实现永久修改，就设置一个开机启动守护进程，系统启动就进行修改。
 
-守护进程也是通过xxxx.service文件描述的，位置位于/etc/systemd/system/中，
+守护进程也是通过xxxx.service文件描述的，位置位于/etc/systemd/system/中，**开机时，Systemd只执行/etc/systemd/system/目录里面的service文件。但是，systemctl好像能识别到/usr/lib/systemd/system/里的service文件，要想开机执行，只需要将/usr/lib/systemd/system/里的软连接到/etc/systemd/system/中**。
 
 ```
 cd /etc/systemd/system/;
