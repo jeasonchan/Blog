@@ -2,6 +2,13 @@
 
 参考文档：
 
+自身特点及使用场景：   
+
+https://blog.csdn.net/tanqian351/article/details/81744970   
+
+https://blog.csdn.net/justlpf/article/details/80392944
+
+
 通过yum安装和配置    https://www.jianshu.com/p/d3b31b7aa182
 
 更新MongoDB用户密码、用户权限    https://jingyan.baidu.com/article/d169e18609d989436611d82e.html
