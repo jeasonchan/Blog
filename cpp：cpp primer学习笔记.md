@@ -603,4 +603,204 @@ cout << *rpValue << endl; //1025
 3. \*（rpValue）表明是一个指针的引用，即为，一个指针的别名
 
 ## 2.4 const限定符
-P53
+有时候我们希望变量的值在运行时不能改变，因为，这个值在运行时改变可能会产生BUG，比如：传输协议中某N个字节代表的含义，因为是协议，所以这个N绝对不能改变。
+
+为了避免在运行时某变量被修改，可以用**关键字const对变量的类型加以限定**，是对变量类型限定，不是对变量加以限定。const类型的变量一旦创建后就无法就修改，所以，**const类型的定义时就必须进行初始化，初始值可以是任意复杂的表达式**。
+
+```cpp
+const int buffrtSize=512;
+//任何试图修改的行为都将引发错误，并且编译检查都过不了
+```
+
+const修饰基本数据类型，基本数据类的值肯定是不能修改的了，毋庸置疑。**用const修改对象类型时，该对象就只能访问被 const 修饰的成员了（包括 const 成员变量和 const 成员函数）**，因为非 const 成员可能会修改对象的数据（编译器也会这样假设），C++禁止这样做。
+
+**初始化和const**
+
+对象的类型决定了该对象的所支持的操作，const修饰了类型，可以说，const typeName 组成了在一种新的类型，那这种新类型（const typeName）和原始的typeName所支持的操作有什么区别？
+
+对于基本数据类型，读操作完全没有区别（可以读出来进行各种运算、用来初始化等等），不支持写操作。
+
+**const对象默认只在当前文件内有效**
+想在文件中直接定义（而不是作为class的成员变量）一个变量，并被其他文件使用，需要这样：
+
+1. 方法一
+
+file1.h
+```cpp
+// 必须用namespace包一下，要不然，包含了file1.h文件的文件中，
+// 就不能定义变量a,对别人造成变量名污染。
+// 如果使用了a，就会报重复定义a的编译错误
+namespace jeason{
+    int a=123;
+} 
+```
+
+别的文件使用：
+```cpp
+inlclude "file1.h"
+
+// 仅能声明，cpp可多次声明，单次定义
+extern int jeason::a;
+
+```
+
+
+2. 方法二
+
+file1.h
+```cpp
+namespace jeason{
+    extern int a;
+}
+```
+
+file1.cpp
+```cpp
+inlclude "file1.h"
+
+// 正式定义
+int jeason::a=123;
+```
+
+别的文件使用：
+```cpp
+inlclude "file1.h"
+
+extern int jeason::a;
+```
+
+对const类型的变量，好像也能按照上面的方法定义，并被使用，但是！！！！！const被设定仅在当前文件中有效，因此，相比于普通变量，定义时需要再额外加一个extern，即为：
+
+1. 方法一
+
+file1.h
+```cpp
+namespace jeason{
+    const int a=123;
+} 
+```
+
+别的文件使用：
+```cpp
+inlclude "file1.h"
+
+extern const int jeason::a;
+
+```
+
+2. 方法二
+
+file1.h
+```cpp
+namespace jeason{
+    extern const int a;
+}
+```
+
+file1.cpp
+```cpp
+inlclude "file1.h"
+
+// 正式定义时额外加一个extern
+extern int jeason::a=123;
+```
+
+别的文件使用：
+```cpp
+inlclude "file1.h"
+
+extern const int jeason::a;
+```
+
+所以，**对于直接定义在文件中的变量，不管是不是const类型的变量，定义时是都加上extern就完事儿了。**对于作为类成员变量的const变量，按类的规则访问。
+
+### 2.4.1 const类型的引用
+
+对const类型变量的引用，简称为**常量引用**。
+
+
+#### 2.4.1.1 常量引用可使用类型转化进行初始化
+
+```cpp
+const int bufferSize = 512;
+
+// 这样定义的话，会编译报错：
+// 将 "int &" 类型的引用绑定到 "const int" 类型的初始值设定项时，限定符被丢弃
+int &rBufferSize = bufferSize;
+
+// 必须要用下面的方式定义  对常量的引用
+const int &rBufferSize2=bufferSize;
+```
+
+可见，**引用的类型必须与所引用的对象的类型保持一致**，但是，有两个例外，此处出现第一个例外：
+
+常量引用初始化时，可以使用非常量，并且能自动转化为相应类型，比如：
+
+```cpp
+int i = 42;
+double d = 3.14;
+const int ci = 66;
+
+const int &ri = i;
+const double &ri2 = d;//double自动截断为int
+const int &ri3 = 32;
+const int &ri4 = ri3 * d;
+
+//上面的全是合法的，仅这一句不合法，因为：
+// 只有对常量的引用进行初始化时，才可以类型不完全一致
+int &i4 = d;
+```
+
+为什么 const double &ri2 = d;//double自动截断为int  这句都可以，这个 int &i4 = d;不行呢？
+
+```cpp
+double d=3.14;
+
+const int &rI=d;
+// 上面这一句编译器自动进行了如下转换：
+
+const int temp=d;
+const int &rI=temp;//常量引用自动绑定到了一个临时量上
+```
+
+可见，常量引用其实是绑定到了一个临时量上，假设一个非常量引用也进行相似的转换，则是：
+
+```cpp
+double d=3.14;
+
+int &rI=d;//实际上是不合法的
+// 上面这一句编译器自动进行了如下转换：
+
+int temp=d;
+int &rI=temp;//非常量引用自动绑定到了一个临时量上
+```
+
+那么，经过类型转换后，rI绑定到了一个临时量，而不是绑定到了d上，而且 rI不仅仅可读，甚至可以写，**通过rI写一个临时量显然没有意义**，因此，对于非常量的引用直接不允许利用类型转初始化是最理想的。
+
+因此，**恰恰因为常量引用只读的特殊性，允许常量引用的初始值类型相对宽松：能类型转换即可**。
+
+
+#### 2.4.1.2 常量引用可能引用一个非const对象
+
+```cpp
+double value = 1.12;
+const int &crValue = value;//实际上引用的一个临时量，始终指向那个临时量
+
+cout << crValue << endl;//输出1
+value = value + 1;
+cout << crValue << endl;//输出1
+
+
+int iIvalue = 1;
+const int &criIvalue = iIvalue;//没有临时量，直接是原对象
+
+cout << criIvalue << endl;//输出1
+iIvalue = iIvalue + 1;//原对象变了，引用跟着一起变
+cout << criIvalue << endl;//输出2
+```
+
+仅能对常量引用进行读操作，如果常量引用绑定了一个非const对象，原对象可以读写，但是这个常量引用还是只能读。
+
+
+### 2.4.2 指针和const
+P56
