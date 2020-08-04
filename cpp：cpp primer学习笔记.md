@@ -803,4 +803,37 @@ cout << criIvalue << endl;//输出2
 
 
 ### 2.4.2 指针和const
-P56
+类似与常量引用，指向常量的指针，可以简称为**常量指针**。
+
+```cpp
+double value = 1.12;
+const int *cpValue = &value; //编译报错，类型不匹配，无法初始化
+
+int iIvalue = 1;
+const int *cpiIvalue = &iIvalue; //直接是原对象
+
+cout << *cpiIvalue << endl; //输出1
+iIvalue = iIvalue + 1;      //原对象变了，指针所指向的跟着一起变
+cout << *cpiIvalue << endl; //输出2
+```
+
+**和常量引用一样，常量指针也没有规定指向的变量必须是常量**，并且，常量指针不接受类型转换的值的地址。
+
+#### 2.4.2.1 const指针
+常指针：指针本质是变量，它也有值，**不允许修改指向的对象**的指针成为常指针。常指针和引用什么相似，只又一次机会绑定具体的对象。
+
+```cpp
+int value = 123;
+
+// 和普通常量、引用一样，声明就必须进行初始化
+int *const pvalue = &value;
+
+//指向常量（此处并不是真的常量）的常指针
+const int *const cpValue = &value;
+const int *const cpValue2 = cpValue;
+```
+
+### 2.4.3 顶层const
+P57
+
+
