@@ -833,7 +833,83 @@ const int *const cpValue = &value;
 const int *const cpValue2 = cpValue;
 ```
 
-### 2.4.3 顶层const
-P57
+### 2.4.3 顶层const和底层const
+正如前面描述，由于指针的特殊性，指针指向一个const类型的对象和指针本身是不是const是两个独立的问题，为了简化描述这两个问题的描述，使用**顶层const**和**底层const**进行区分。
+
+顶层const：指针本身就是const，也就是 int *const pInteger=&i；更一般的，某个变量本身是const（比如，const int i=1），那就是顶层const。
+
+底层const：指针指向一个的const值，也就是 const int *pInteger=&i；
+
+对指针进行拷贝操作时，必须满足以下**其中一个**条件：
+
+1. 源和目标具有相同的底层const
+2. 源到目标 的数据类型可以自动完成转换，比如，非常量可以转换为常量（此处的非常量转换为常量，只是无法通过常量指针修改值，但是修改原值会影响常量指针就解引用得到的值，比如：int a=1；const int *p=&a；这种情况），反之不行。
 
 
+### 2.4.4 constexpr类型和常量表达式
+常量表达式（const express），是指**值不会改变**，并且在**编译时就能得到结果**的表达式，比如预编译时进行值替换的NULL。
+
+一个对象/表达式是不是常量表达式，由它的数据类型和初始值共同决定：
+
+```cpp
+const int max_files=20; //不会改变+编译期确定
+
+const int limit=max_files+1;//不会改变+编译期确定
+
+int buffSize=123;
+//编译期确定，但是，其类型是普通的int，不是const int，能被改变
+
+
+const int sz=get_size();//假设get_size只有运行时才能有值，sz则无法在编译期确定值，不是常量表达式
+```
+
+**int和const int算不同的类型！！！！！**
+
+在复杂的系统中，有时候表达式十分复杂，为了让编译器检查某个变量是不是常量表达式，可以类型声明为constexpr 类型：
+
+```cpp
+constexpr int mf=20;
+
+constexpr int limit = mf+1;
+
+constexpr int size=size();//根据size能否在编译期就进行计算，由编译器检查size是不是真的常量表达式
+```
+所以，constexpr在定义（定义=声明+初始化）变量的行为中相当于做了两件事：
+
+1. 类型声明为const
+2. 检查初始化用的表达式能否在编译器得到一个确定的值
+
+所以，**如果程序员认为某个变量是常量表达式就把它声明为constexpr类型**。
+
+#### 2.4.4.1 字面值类型
+
+常量表达式需要在编译时就得出确定的值，因此，在编译期就能参与到常量表达式的变量类型其实非常有限（因为这个时期都还没有类、结构体），这种能在编译期就能参与常量表达式计算的类型，叫**字面值类型**。目前为止，介绍过得字面值类型只有 算数类型、引用和指针。
+
+#### 2.4.4.2 指针和constexpr
+
+constexpr修饰指针时，只能起到顶层const的作用：
+
+```cpp
+const int *p=nullptr;//常量指针，指向常量的指针，此处是底层const
+
+constexpr int *q=nullptr;//指针常量，q永远指向nullptr的地址，constexpr只有顶层const作用
+
+constexpr const int *m=nullptr;//constexpr是顶层const，const是底层const
+
+//i定义在函数体之外的情况下，比如直接定义在文件中
+constexpr const int *pValue=&i;
+```
+
+
+## 2.5 处理类型
+随着程序越来越复杂，且cpp目前为止还没有正式的package的概念，只能用namespace来模拟package，从而避免变量名的重名、相互污染。
+
+而且勤于写namespace的人比较少，所以类名现在一般都很长 或者 有写沙雕用一些莫名其妙的缩写，所以，目前的cpp，变量名使用起来困难重重。
+
+基于以上原因，我们需要对类型进行一些处理。
+
+### 2.5.1 类型别名
+P60
+
+
+## 2.6 自定义数据结构
