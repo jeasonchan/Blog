@@ -904,12 +904,117 @@ constexpr const int *pValue=&i;
 ## 2.5 处理类型
 随着程序越来越复杂，且cpp目前为止还没有正式的package的概念，只能用namespace来模拟package，从而避免变量名的重名、相互污染。
 
-而且勤于写namespace的人比较少，所以类名现在一般都很长 或者 有写沙雕用一些莫名其妙的缩写，所以，目前的cpp，变量名使用起来困难重重。
+而且勤于写namespace的人比较少，所以类名现在一般都很长 或者 有些沙雕用一些莫名其妙的缩写，所以，目前的cpp，变量名使用起来困难重重。
 
 基于以上原因，我们需要对类型进行一些处理。
 
 ### 2.5.1 类型别名
-P60
+类型别名（type alias）是一个名字，它是某种类型的同义词。但是，要是原始的名字过于底层实现，倒是可以起个别名有助于业务理解。
 
+有两种方法定义别名：
+
+1. 传统的typedef关键字，比如，typedef double sb;
+2. 使用新标准中的**别名声明**，比如，using sb=double;
+
+```cpp
+{
+    const char *title = "start tyedef and using";
+    cout << title << endl;
+
+    typedef double SJD; //双精度
+    SJD sjd = 123;
+    double d = sjd;
+
+    using SJD_2 = double;
+    SJD_2 sjd_2 = 666;
+
+    cout << sjd + sjd_2 << endl;
+}
+```
+
+#### 2.5.1.1 指针、常量、类型别名
+如果某个类型的指代的是复合类型或者常量，那这个别名类型用到声明/定义中常常让人懵逼，甚至自己也懵逼。比如：
+
+```
+typedef char *pChar;
+//pChar是一个char指针类型
+//一开始我写的是 typedef char* pChar;
+//经过自动格式化。*被和pChar放在一起……
+
+char a = '1';
+
+pChar pa = &a; //a是指向a的指针
+
+cout << pa << endl;
+
+const pChar cstr = 0;//cstr是指向char型的常量指针，是顶层const
+
+const pChar *ps;//ps是一个指针，它指向  （指向char型常量指针）
+
+```
+
+现在解析一下的 const pChar到底是啥复合类型：按照从右往左看的原则，第一个类型符是pChar，这表明被定义的是一个表明是个指向char的指针，然后，再用const修饰修饰这个指针，限定这个指针不能变，因此，const pChar实际上是表示顶层const。**一定要从右向左看类型。**很多人会尝试文本替换来理解：
+
+```cpp
+typedef char *pChar;
+const pChar cstr = 0;//cstr是指向char型常量指针
+
+//经过文本替换：
+const char *cstr=0;
+//经过错误的文本替换方式理解，cstr被错误的理解为 指向一个 char型常量的  指针
+//因为const char是个复合类型
+//上面的定义实际上是：
+(const char) *cstr=0;
+
+//很明显了，被误解为一个指向char型常量的指针
+
+```
+
+### 2.5.2 auto类型说明符
+C++11引入该说明符，让编译器自动推断类型。比如：
+
+```cpp
+auto i=0,*p=&i;//正确，i首先被推断为int，p再推断为int指针
+auto sz=0,pi=3.14;//错误！！sz首先被推断为的int，但是，再用这个类型取定义pi时类型不符合，有点类似于初始化列表也不允许精度丢失
+int j = 1, k = 1.23;//自己明确类型时就允许由浮点数截断为int
+```
+
+#### 2.5.2.1 复合类型、常量和auto
+编译器推断出来的auto类型有时候和初始值的类型并不完全一样，编译器会适当地改变结果类型使其更符合初始化规则。适当改变类型的情况有如下几种：
+
+1. 忽略引用类型，使用引用绑定的对象的类型作为推断类型：
+
+```cpp
+auto i=123, &r=i;
+auto a=r;//a被推断为int，而不是int &
+```
+
+2. auto一般会忽略顶层const，保留底层const，比如：
+
+```cpp
+int i=1;
+const int ci=1,&cr=ci;
+
+auto b=ci;//b是int，顶层const 被忽略
+auto c=cr;//c是int，顶层const 被忽略
+
+auto d=&i;//推断为int*
+auto e=&ci;//推断为 const int *e=&ci，保留了底层const
+```
+
+**注意，声明/定义时，符号&和*只属于某个声明符/变量名，而非基本数据类型的一部分。**
+
+#### 2.5.3 decltype类型指示符
+有些情况下，想根据表达式的返回值类型，申请一个同类型的变量，但是又不想直接用表达式的值作为初始值，就使用decltype关键字。这是C++11中新增的关键字……我擦，这么傻逼提案都能过……不增加Module特性，加这种傻逼的关键字……
+
+```cpp
+int a=2333;
+decltype(a)  value;
+
+int &b=a;
+decltype(b) c;//报错，c被声明为int &，但是又未初始化……好傻逼的关键字……
+```
+
+**注意点，引用的类型会直接被检测为引用类型，和auto不太一样，auto根据所绑定的原始对象类型进行推断。**
 
 ## 2.6 自定义数据结构
