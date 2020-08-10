@@ -1018,3 +1018,83 @@ decltype(b) c;//报错，c被声明为int &，但是又未初始化……好傻�
 **注意点，引用的类型会直接被检测为引用类型，和auto不太一样，auto根据所绑定的原始对象类型进行推断。**
 
 ## 2.6 自定义数据结构
+
+### 2.6.1 定义SaleData类
+
+```cpp
+#ifndef SaleData_h
+#define SaleData_h
+namespace bean
+{
+    namespace jeason
+    {
+        struct SaleData
+        {
+            std::string bookNo;
+            unsigned soldCount = 0;
+            double price = 0.0;
+        }; //此处必须以分号结尾，因为之后可以继续定义其东西
+    } // namespace jeason
+} // namespace bean
+
+#endif
+```
+
+### 2.6.2 使用SaleData类
+略
+
+### 2.6.3 编写自己的头文件
+尽管可以在函数中定义一个类，但是这样定义的类仅能在当前函数中可见，所以类一般都是直接声明在头文件中，并在相关的文件中对声明进行实现（也就是定义，cpp支持多次声明+单次定义）。
+
+#### 2.6.3.1 预处理器概述
+确保头文件被多次仍能安全工作的常用技术就是**预处理器**，cpp额该项技术继承自c。
+
+预处理器是在编译之前执行的一段程序，可以部分的改变我们所写的程序，比如：#include<iostream>，预处理器看到该命令后就会用iostream头文件的内容代替#include<iosteram>。
+
+CPP为了避免头文件的循环、重复包含，用到了一项功能就是**头文件保护符**，本质上就是通过判断某变量有没有被定义，被定义就说明该头文件已经包含过了，判断所依据的某变量是**预处理变量**。
+
+预处理变量有两种状态：已定义和未定义。
+
+#define，将一个名字设为预处理变量
+
+#ifdef，当且仅当变量名已经被定义时，结果为真
+
+#ifndef，当且仅当变量名未定义时，结果为真
+
+#endif，#ifdef和#ifndef为真时就会执行后续的操作，直到遇到#endif为止
+
+比如：
+
+```cpp
+#ifndef SaleData_h
+#define SaleData_h
+
+#include <string>
+
+namespace bean
+{
+    namespace jeason
+    {
+        struct SaleData
+        {
+            std::string bookNo;
+            unsigned soldCount = 0;
+            double price = 0.0;
+        }; //此处必须以分号结尾，因为之后可以继续定义其东西
+
+        void printSaleDate(SaleData &saleData);
+        void printSaleDate(SaleData &&saleData);
+
+        SaleData create();
+
+    } // namespace jeason
+} // namespace bean
+
+#endif
+```
+
+预处理器通过检查预处理变量是否被定义，来判断当前头文件是不是已经被包含了一次，从而避免同一头文件的多次包含。
+
+**头文件保护符一定要习惯性加上。**
+
+# 3 字符串、向量和数组
