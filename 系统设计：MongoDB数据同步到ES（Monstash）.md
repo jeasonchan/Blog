@@ -213,7 +213,9 @@ Setting the mongo-config-url is not necessary if you are using **change-stream-n
 
 ### 2.2.2 高级设置/功能
 
-**多worker模式：**
+#### 2.2.2.1 多worker模式
+Workers   https://rwynn.github.io/monstache-site/advanced/#workers
+
 配置项：
 ```
 workers = ["Tom", "Dick", "Harry"]
@@ -221,6 +223,67 @@ worker="Tom"
 ```
 在单机上启动多个monstache进程，每个进程都是一个worker节点，每个worker节点只负责同步mongo中特定ID的文档/记录，多个worker配合工作才能同步所有的文档。
 
+#### 2.2.2.2 Routing
+Routing功能介绍   https://rwynn.github.io/monstache-site/advanced/#routing
+
+monstache默认情况下会使用 db_name.collection_name 作为 ES 中的索引名，并且，这个是可以自定义映射的。
+
+MongoDB有分片集群的部署模式，分片的单位是collection，一个collection中的文档对象会根据对象的某个 key/属性 按照某种规则放到某个shard（分片）中，没有开启分片的collection会全都放到主分片中。
+
+默认情况下，ES本身会使用插入的文档对象的文档id作为ES自身分片路由的key，但是，由于文档id本身是无规律的，文档会无规律的分到各个shard里面，不带路由key查询时会在所有分片广播搜索，效率低。
+
+可见，MongoDB分片使用的key和ES路由所用的key有种天然的对应关系。
+
+monstache支持在配置文件中手动指定某个集合向ES中映射使用的key，指定blog.comments集合向ES插入时，使用文档对象的post_id作为路由的属性：
+
+```
+[[script]]
+namespace = "blog.comments"
+routing = true
+script = """
+module.exports = function(doc) {
+    doc._meta_monstache = { routing: doc.post_id };
+    return doc;
+}
+"""
+```
+
+假设集合blog.comments中，所有文档都有属性post_id，并且是离散值：1~10，向ES中插入数据时，就会将monstache会根据配置文件中的配置，将文档对象的post_id取出来，插入时会用到该值：
+
+```
+<!-- ES会根据routing=1将该文档放到相应的shard中 -->
+PUT blog.comments/_doc/c?routing=1&refresh   {"post_id":1,xxxx:xxxxxx}
+
+<!-- ES会根据routing=3将该文档放到相应的shard中 -->
+PUT blog.comments/_doc/c?routing=3&refresh   {"post_id":3,xxxx:xxxxxx}
+
+```
+
+之后，在ES中向搜索blog.comments索引中的特定路由(比如，routing=3)，可以着这样：
+
+```
+$ curl -H "Content-Type:application/json" -XGET 'http://localhost:9200/blog.comments/_search?routing=3' -d '
+{
+   "query":{
+      "match_all":{}
+   }
+}'
+```
+
+monstache能否自动发现集合所使用的shard key，并且，在向ES插入数据时自动使用该key？因为，之后可能会动态增加集合，肯定不能每次都暂停monstache手动增加routing映射的。
+
+经过实践，无法自动发现MongoDB的shard key，为了能使新增的集合也能根据shard key在ES中根据路由放进shard，需要使用上面的脚本添加_meta_monstache属性，同时，所有document都应该设置一个一致的shard key属性，比如就叫：shard_key，脚本里面就可以统一方便写成：
+
+```
+module.exports = function(doc) {
+    doc._meta_monstache = { routing: doc.shard_key };
+    return doc;
+}
+```
+
+#### 2.2.2.3 ES数据插入机制
+
+MongoDB数据PUT到ES中时，不会每次都refresh，而是首次搜索时才会refresh
 
 
 ### 2.2.3 验证单机数据同步、类型转换
@@ -518,4 +581,264 @@ INFO 2020/07/31 17:08:36 Pausing work for cluster cluster-name
 结论：出版判断monstache具备高可用性
 
 ### 2.2.5 验证Monstash双机集群+MongoDB分片
+插入数据后，数据同步到ES延迟较为严重：
 
+1. 插入数据后，change stream产生较慢，原因：https://docs.mongodb.com/manual/administration/change-streams-production-recommendations/#sharded-clusters
+
+初步怀疑是分片集群模式下，change stream本身产生较慢，果然也有相应的解释的：https://docs.mongodb.com/manual/administration/change-streams-production-recommendations/#sharded-clusters
+
+于是写代码验证一下，对change stream的延迟进行量化，分别用java写一个change stream监控服务器和一个的MongoDB的文档插入服务器：
+
+#### 2.2.5.1 change stream的监控服务器
+MongoDB驱动：
+```
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver</artifactId>
+    <version>3.8.2</version>
+</dependency>
+```
+
+```java
+package default_package.mongo_test;
+
+import com.mongodb.client.*;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import org.bson.Document;
+
+import java.net.HttpURLConnection;
+import java.util.Date;
+
+public class WatchChangeStream {
+    public static void main(String[] args) {
+        MongoClient mongoClient = null;
+        HttpURLConnection connection = null;
+        try {
+
+
+            mongoClient = MongoClients.create("mongodb://xx.xx.xx.xx:31000");
+            MongoDatabase myDB = mongoClient.getDatabase("sharding_db_test");
+            MongoCollection<Document> myCollection = myDB.getCollection("jeason_test3");
+            String indexName = "sharding_db_test.jeason_test3";
+
+
+            MongoCursor<ChangeStreamDocument<Document>> cursor = myCollection.watch().iterator();
+
+            while (true) {
+
+                while (cursor.hasNext()) {
+                    System.out.println(new Date() + "：");
+                    System.out.println(cursor.next());
+                }
+
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+#### 2.2.5.2 MongoDB数据插入
+同样依赖上文的MongoDB驱动。
+
+```java
+package default_package.mongo_test;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
+
+import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+
+public class InsertAndQueryES {
+    private static String IP = "";
+
+
+    public static Integer get(String indexName) {
+        String url = "http://xx.xx.xx.xx:9200/_cat/count/" + indexName;
+        Object res = RestTemplateUtil.getUrl(url, null);
+        return Integer.parseInt(String.valueOf(res).split(" ")[2].trim());
+    }
+
+
+    public static void main(String[] args) {
+        MongoClient mongoClient = null;
+        try {
+
+
+            mongoClient = MongoClients.create("mongodb://xx.xx.xx.xx:31000");
+            MongoDatabase myDB = mongoClient.getDatabase("sharding_db_test");
+            MongoCollection<Document> myCollection = myDB.getCollection("jeason_test3");
+            String indexName = "sharding_db_test.jeason_test3";
+
+            int cycle = 10;
+            int threadNumber = 4;
+            int numberForEachThread = 100;
+
+            if (cycle * threadNumber * numberForEachThread > 10000) {
+                throw new Exception("数据量太大，总文档数无法索引");
+            }
+
+            while (cycle > 0) {
+                int beforeNum = get(indexName);
+                System.out.println("插入前，" + indexName + "有文档：" + beforeNum);
+
+
+                int expectedNum = beforeNum + threadNumber * numberForEachThread;
+                int max_loss = 100;
+
+
+                CountDownLatch countDownLatch = new CountDownLatch(threadNumber);
+
+                ExecutorService executorService = Executors.newFixedThreadPool(threadNumber);
+
+                System.out.println("开始时间：" + new Date());
+
+
+                for (int i = 0; i < threadNumber; ++i) {
+                    executorService.submit(
+                            new MongoInsert(countDownLatch, numberForEachThread, "thread_" + i, myCollection)
+                    );
+                }
+
+
+                countDownLatch.await();
+                Date endInsertDate = null;
+                System.out.println("结束时间：" + (endInsertDate = new Date()));
+
+                int currentNum = 0;
+                while ((currentNum = get(indexName)) < expectedNum) {
+                    System.out.println(new Date() + "  currentNum:" + currentNum);
+                    try {
+                        TimeUnit.SECONDS.sleep(1);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                Date endSyncDate = null;
+                System.out.println((endSyncDate = new Date()) + "  currentNum:" + currentNum);
+
+                System.out.println("从插入结束到同步完毕耗时(ms)：" + (endSyncDate.getTime() - endInsertDate.getTime()));
+
+                --cycle;
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (null != mongoClient) {
+                mongoClient.close();
+            }
+
+        }
+
+
+    }
+
+
+    static class MongoInsert implements Runnable {
+        private final CountDownLatch countDownLatch;
+        private final int numbers;
+        private final String threadName;
+        private final MongoCollection<Document> collection;
+
+        public MongoInsert(CountDownLatch countDownLatch, int numbers, String threadName, MongoCollection<Document> collection) {
+            this.countDownLatch = countDownLatch;
+            this.numbers = numbers;
+            this.threadName = threadName;
+            this.collection = collection;
+        }
+
+        @Override
+        public void run() {
+
+            try {
+                for (int i = 0; i < this.numbers; ++i) {
+                    Document document = new Document();
+                    document.append("threadName", this.threadName);
+                    document.append("order", i);
+                    this.collection.insertOne(document);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                this.countDownLatch.countDown();
+            }
+
+
+        }
+    }
+}
+
+```
+
+#### 2.2.5.3 优化monstache部署方式及参数
+使用上面的方式对比插入完毕的时间和change stream收到的时间，分片集群部署的MongoDB的change stream的延迟达到7~9秒，再结合前面提到的官方文档，考虑不从分片集群的router server读取change stream，而是直接从各个分片直接读取，省略了router的聚合排序步骤。
+
+最终，每个分片对应的monstache配置如下：
+
+```
+#mongo-url = "mongodb://xx.xx.xx.xx:31000"
+
+#这是每个分片的连接串
+mongo-url = "mongodb://cloud100:30001,cloud101:30001,cloud102:30001"
+
+#mongo-url = "mongodb://cloud100:30002,cloud101:30002,cloud102:30002"
+#mongo-url = "mongodb://cloud100:30003,cloud101:30003,cloud102:30003"
+
+mongo-config-url="mongodb://xx.xx.xx.xx:32000,xx.xx.xx.xx:32000,xx.xx.xx.xx:32000"
+
+#需要多worker模式才需要填写
+#workers = ["1", "2", "3"]
+
+elasticsearch-urls = ["http://xx.xx.xx.xx:9200"]
+
+#以下参数字很关键，关系到的数据同步延迟：
+#被注释掉的表示使用默认的参数比较不错
+#elasticsearch-max-seconds表示：monstache与ES的每个连接，最多等待1秒钟，就必须要要与ES进行数据同步了，不管积攒的待同步的文档数量（#elasticsearch-max-docs）还是文档的总大小（#elasticsearch-max-bytes）有没有达到上限
+
+elasticsearch-max-seconds = 1
+#elasticsearch-max-conns = 1
+#elasticsearch-max-bytes = 1
+#elasticsearch-max-docs = 1
+
+change-stream-namespaces = ["sharding_db_test.jeason_test3"]
+
+#关闭堆栈跟踪（设为false），可提高monstache性能
+verbose = true
+
+direct-read-namespaces = ["harding_db_test.jeason_test3"]
+
+#gzip = true
+
+exit-after-direct-reads = false
+
+cluster-name = "cluster-name"
+
+resume = true
+
+resume-name = "resume-name"
+
+[[script]]
+namespace = "sharding_db_test.jeason_test"
+routing = true
+script = """
+module.exports = function(doc) {
+    doc._meta_monstache = { routing: doc.work_space_id };
+    return doc;
+}
+"""
+```
