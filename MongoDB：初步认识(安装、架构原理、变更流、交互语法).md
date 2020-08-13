@@ -13,8 +13,6 @@ https://blog.csdn.net/justlpf/article/details/80392944
 
 更新MongoDB用户密码、用户权限    https://jingyan.baidu.com/article/d169e18609d989436611d82e.html
 
-MongoDB Sharded cluster架构原理  https://developer.aliyun.com/article/32434
-
 MongoDB Change Stream：简介、尝试与应用（体验详细）   https://www.cnblogs.com/xybaby/p/9464328.html
 
 MongoDB Change Stream初体验（体验简略）    https://mongoing.com/change-stream
@@ -415,3 +413,16 @@ db.auth("admin","admin")
 
 比如：
 mongodb://admin:admin@127.0.0.1:27000,127.0.0.1:27001
+
+# 4 分片副本集部署
+简要步骤
+1. 先搭建n个副本集，当做n个分片使用
+2. 配置一下配置文件，router、config、n个副本集都正常运行起来
+3. 在router使用mongo连接上，执行 sh.addShard("副本集名称/副本集的MongoDB连接串") 
+4. 必须先对某个db开启使用分片，sh.enableSharding("db_name")
+5. 再对允许分片的db中的某个集合开启分片，sh.shardCollection("db_name.db_collection", {column_name: 1})，其中column_name必须是某索引的第一列，空集合会自动先根据分片列创建索引，非空集合则需要我们手动为column_name先创建一个索引
+
+
+关于设置账号密码，两种思路：
+1. 一开始都不要设置设置账号密码+无鉴权启动，一切都完毕之后，在mongo router中设置账号密码，再所有的机器带鉴权全部重启一遍
+2. 一开始手贱非要先设置账号密码，那就各个分片的副本集、router、config的账号密码保持一致即可
