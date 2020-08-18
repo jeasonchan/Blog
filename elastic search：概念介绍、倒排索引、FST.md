@@ -161,6 +161,36 @@ opendistro_sql
 
 **插件安装完必须重启才能生效**
 
+### 3.6.1 安装jieba
+jieba的java版地址：https://github.com/sing1ee/elasticsearch-jieba-plugin
+
+该项目中有jieba-analysis文件夹，是该作者的另一个项目，此处**只是一个软连接**，普通的git clone当前项目只会拷贝一个空目录，需要使用 git clone https://github.com/xxxxxx.git --recursive，但是！！！！！公司一般都有安全策略，都是封堵443端口的，因此直接git clone是行不通的。
+
+1. README中有一个版本对应的表格，点击最新的release link，下载最新的zip包，并解压备用。
+
+2. 解压后，根据自己的ES版本，修改编译参数。假设，我用的是最近的ES 7.8.0版本，进入第一步解压的项目中的根目录中：
+```
+根目录下的：build.gradle
+
+    主要修改 version和dependencies中的ES的版本，为7.8.0
+
+src/main/resources目录下的：plugin-descriptor.properties
+
+    主要修改 version 和 elasticsearch.version 分别表示插件的版本和支持ES的版本，同样，如果是支持7.8.0的插件，都改为7.8.0
+```
+
+3. 同样在根目录下，直接执行gradle pz，让gradle执行pz任务，或者 用idea打开这个项目，会自动识别出gradle构建，双击pz执行编译任务即可
+
+4. 将pz任务构建得到的zip包，build/distributions/elasticsearch-jieba-plugin-7.8.0.zip  ftp到目标服务器中
+
+5. 然后在目标服务器中使用ES的插件安装器安装zip包：
+```
+/usr/share/elasticsearch/bin/elasticsearch-plugin install file:///path/to/your/elasticsearch-jieba-plugin-7.8.0.zip
+```
+
+6. 重启ES使插件生效
+
+
 ## 3.7 监控API
 
 ```
