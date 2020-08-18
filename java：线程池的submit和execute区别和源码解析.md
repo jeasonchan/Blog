@@ -10,7 +10,7 @@
 # 2代码实践
 最原始的submit和execute代码实践，submit执行callable接口类，execute执行runnable接口类
 ```java
-package com.zte.线程池实践;
+package com.xxx.线程池实践;
 
 import java.util.concurrent.*;
 
