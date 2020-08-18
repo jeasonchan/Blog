@@ -51,7 +51,7 @@ public class ThreadTest {
 # 3 先wait再notifyAll
 直接看源码：
 ```java
-package com.zte.exercise_notify_wait;
+package com.xxx.exercise_notify_wait;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -149,7 +149,7 @@ consumer thread : consumer will remove: 1564536449813tlvlf
 经过调试，发现，生产者和消费者线程全都处于wait状态，被阻塞了，经过分析，原来是**wait()是阻塞方法，根本执行不到object.notifyAll()**，被自己蠢哭了……
 # 4 先notifyAll在wait
 ```java
-package com.zte.exercise_notify_wait;
+package com.xxx.exercise_notify_wait;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
