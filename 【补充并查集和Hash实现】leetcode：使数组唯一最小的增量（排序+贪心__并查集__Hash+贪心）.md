@@ -1,6 +1,6 @@
 # 1 排序+贪心
 ```java
-package com.zte.使数组唯一最小的增量;
+package com.xxx.使数组唯一最小的增量;
 
 import java.util.Arrays;
 
