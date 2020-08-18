@@ -4,7 +4,7 @@
 
 # 2 代码
 ```java
-package com.zte.三维物体的表面积;
+package com.xxx.三维物体的表面积;
 
 
 /*
