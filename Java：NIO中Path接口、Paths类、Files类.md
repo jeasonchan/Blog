@@ -18,7 +18,7 @@ public class Main {
         // nio中提供的新的文件读写核心：
         // Path接口，Paths类，Files类
 
-        Path textPath = Paths.get("D:\\Users\\10256028\\projects\\personal_exercise\\exerciese_in_zte\\test.txt");
+        Path textPath = Paths.get("D:\\Users\\10256028\\projects\\personal_exercise\\exerciese_in_xxx\\test.txt");
 
         boolean isExist;
 
