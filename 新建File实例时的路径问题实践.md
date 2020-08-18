@@ -119,11 +119,11 @@ public class Main {
         System.out.println(file.getAbsoluteFile());
         System.out.println(file.getPath());   //抽象路径，就是new File是直接填进去的路径，因此，抽象路径肯定包含在绝对路径中
         /*
-        D:\projects\jeason_chan_github\zte_gitlab\test_project\exerciese_in_zte\test.txt
+        D:\projects\jeason_chan_github\xx_gitlab\test_project\exerciese_in_xx\test.txt
         test.txt
         null
         null
-        D:\projects\jeason_chan_github\zte_gitlab\test_project\exerciese_in_zte\test.txt
+        D:\projects\jeason_chan_github\xx_gitlab\test_project\exerciese_in_xx\test.txt
         test.txt
          */
     }
