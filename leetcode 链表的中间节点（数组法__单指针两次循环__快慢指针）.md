@@ -1,5 +1,5 @@
 ```java
-package com.zte.链表的中间节点;
+package com.xxx.链表的中间节点;
 
 
 import java.util.ArrayList;
