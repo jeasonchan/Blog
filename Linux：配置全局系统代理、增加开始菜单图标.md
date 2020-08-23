@@ -57,7 +57,7 @@ cd /path/to/your/idea解压后的文件夹/bin
 
 使用sudo是因为，/usr/share/applications 文件夹是root用户属组的，权限是755，也就是，其他组的用户只有读和执行的权限，即，**只有root用户可以增加启动图标，其他所有用户都可以双击图标启动程序**。
 
-2. 编辑上面新增的图标文件 vi /usr/share/applications/idea.desktop
+2. 编辑上面新增的图标文件 sudo vi /usr/share/applications/idea.desktop
 
 插入以内容，对图标属性进行描述;
 ```
@@ -68,7 +68,9 @@ Type=Application
 Icon=/path/to/your/idea-IU-202.6397.94/bin/idea.png
 Terminal=false
 ```
-3. 注销并重新登录，就可以看到开始菜单中出现了idea图标
+3. 刷权限，和其他图标权限一致 sudo chmod 755 /usr/share/applications/idea.desktop
+
+3. 注销并重新登录，就可以看到开始菜单中出现了idea图标（有时候不需要注销就能直接看到新增的图标）
 
 # 4 补充
 打开一个文件浏览器，然后使用 ps -ef|grep file ，可以发现该发行版文件浏览器的可执行文件名字叫  ABC-filexxx，再用ps -ef|grep ABC查看一下，发现该发行版的桌面就叫ABC，使用man ABC-filexxx查看一下，能发现ABC所有的系统组件的名字，命名都比较统一。
