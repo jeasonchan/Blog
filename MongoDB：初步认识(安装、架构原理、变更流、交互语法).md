@@ -313,7 +313,24 @@ show collections
 * readWriteAnyDatabase：只在admin数据库中可用，赋予用户所有数据库的读写权限
 * userAdminAnyDatabase：只在admin数据库中可用，赋予用户所有数据库的userAdmin权限
 * dbAdminAnyDatabase：只在admin数据库中可用，赋予用户所有数据库的dbAdmin权限。
-* root：只在admin数据库中可用。超级账号，超级权限
+* root：只在admin数据库中可用(可以帐号信息存在非admin中，但是角色要绑定在admin中，比如 下面的示例)。超级账号，超级权限
+
+```json
+# use ABC_test
+
+"roles" : [
+                {
+                        "role" : "dbOwner",
+                        "db" : "ABC_test"
+                },
+                {
+                        "role" : "root",
+                        "db" : "admin"
+                }
+        ],
+
+# 这个角色是ABC_test的dbOwner据色，同时是admin中root角色，帐号密码只保存在ABC_test库中，要auth，必须要先use ABC_test
+```
 
 
 从描述看，数据库案例和角色管理是分开的：
@@ -326,7 +343,7 @@ show collections
 ```
 use admin
 
-<复制集名称>:PRIMARY> db.grantRolesToUser("admin",[role:{"dbAdminAnyDatabase", db:"admin"}])
+<复制集名称>:PRIMARY> db.grantRolesToUser("admin",[{role:"dbAdminAnyDatabase", db:"admin"}])
 
 <复制集名称>:PRIMARY> show users
 {
@@ -445,7 +462,3 @@ router、shard的副本集、config server三者之间并不是通过账号、�
 4. 将第二步中注释掉的配置参数还原，再次重启，使副本集重新接入分片集群
 
 以后就能以第三步中添加的账号密码单独查看副本集的数据了。
-
-
-
-
