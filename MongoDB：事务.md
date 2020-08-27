@@ -163,15 +163,49 @@ return EXIT_SUCCESS;
 
 ## 3.2 事务级别写关注
 
+
+### 3.2.1 非事务的写关注
+
+
+
+### 3.2.2 事务的写关注
 https://docs.mongodb.com/master/core/transactions/#transactions-write-concern
 
+在事务中的 写相关 的操作的，会使用事务级别的 写相关 等级进行数据提交。
 
+在事务中，绝对不能为某一个单独的写操作设置 写相关 等级，而是应该使用开启事务时声明的那个 写相关  事务等级。
+
+在开启事务时，设置事务的  写相关  等级：
+
+*  事务的 写相关 等级没设置，就默认使用会话的 写相关 等级
+
+* 如果事务和会话的 写相关  等级都没有设置，就是用客户端级别的 写相关 等级，客户端的  写相关  等级是 w:1 级别
+
+
+#### 3.2.2.1 事务写相关等级w：1
+
+* Write concern w: 1 returns acknowledgement after the commit has been applied to the primary. BUT When you commit with w: 1, your transaction can be rolled back if there is a failover.
+
+* When you commit with w: 1 write concern, transaction-level "majority" read concern provides no guarantees that read operations in the transaction read majority-committed data.
+
+* When you commit with w: 1 write concern, transaction-level "snapshot" read concern provides no guarantee that read operations in the transaction used a snapshot of majority-committed data.
+
+注意点！！！！！只要事务中写相关的级别是w：1，就算读相关级别是majority或者snapshot，都无法保证读得是该级别应该读到的数据……所以，如果对读取数据的有效性有要求，事务级别的 写相关  等级 基本就不能 w：1 等级了。
+
+
+#### 3.2.2.2 事务写相关等级w：majority
+
+* 对数据库返回的消息的影响：Write concern w: "majority" returns acknowledgement after the commit has been applied to a majority (M) of voting members; i.e. the commit has been applied to the primary and (M-1) voting secondaries.
+
+* 对majority读级别的影响：When you commit with w: "majority" write concern, transaction-level "majority" read concern guarantees that operations have read majority-committed data. For transactions on sharded clusters, this view of the majority-committed data is not synchronized across shards.
+
+* 对snapshot读级别的影响：When you commit with w: "majority" write concern, transaction-level "snapshot" read concern guarantees that operations have from a synchronized snapshot of majority-committed data.
 
 ## 3.3 事务级别读关注
 
 先看非事务中的读关注，再看事务中的读关注。
 
-### 3.3.1 读关注
+### 3.3.1 非事务的读关注
 https://docs.mongodb.com/master/reference/read-concern/
 
 read Concern，就是从mongodb读取数据时使用的隔离级别，通过指定读关注的隔离级别来控制并发性和可用性，比如，读关注的级别是能读到就行的级别，那并发性就非常高，可用性也会很高；如果要求读关注级别必须是所有的配置过的节点都读一遍，那么响应时间变长（并发性降低），并且有一个节点发生了故障，那么读取就会失败（因为，有一个就节点数据没读到），也就是降低了mongodn集群的高可用性。
@@ -241,9 +275,41 @@ https://docs.mongodb.com/master/core/transactions/#transactions-read-concern
 
 * 如果没显式设置事务级别的读关注级别，就默认使会话级别的读关注级别
 
-* 如果事务和会话级别的读关注级别都没设置
+* 如果事务和会话级别的读关注级别都没设置，就会默认使用客户端级别的读关注级别（也就是"local" for reads against the primary.）
 
 
+前文说到，事务中能够使用的读关注级别的比正常的要少，一共只有三个：local、majority、snapshot
+
+#### 3.3.2.1 事务级别的local
+
+* Read concern "local" returns the most recent data available from the node but can be rolled back.
+
+* For transactions on sharded cluster, "local" read concern cannot guarantee that the data is from the same snapshot view across the shards. If snapshot isolation is required, use "snapshot" read concern.
+
+* Starting in MongoDB 4.4, with feature compatibility version (fcv) "4.4" or greater, you can create collections and indexes inside a transaction. If explicitly creating a collection or an index, the transaction must use read concern "local". Implicit creation of a collection can use any of the read concerns available for transactions.
+
+
+#### 3.3.2.2 事务级别的majority
+
+* Read concern "majority" returns data that has been acknowledged by a majority of the replica set members (i.e. data cannot be rolled back) if the transaction commits with write concern “majority”.
+
+* If the transaction does not use write concern “majority” for the commit, the "majority" read concern provides no guarantees that read operations read majority-committed data.
+
+* For transactions on sharded cluster, "majority" read concern cannot guarantee that the data is from the same snapshot view across the shards. If snapshot isolation is required, use "snapshot" read concern.
+
+事务中使用majority级别读到的数据的可靠性，和数据写入时所使用的事物写关注等级强**相关**。
+
+对于分片集群，majority和local根本无法保证各分片数据的一致性。
+
+#### 3.3.2.3 事务级别的snapshot
+
+* Read concern "snapshot" returns data from a snapshot of majority committed data if the transaction commits with write concern “majority”.
+
+* If the transaction does not use write concern “majority” for the commit, the "snapshot" read concern provides no guarantee that read operations used a snapshot of majority-committed data.
+
+* For transactions on sharded clusters, the "snapshot" view of the data is synchronized across shards.
+
+比majority相比没，就多了能保证 the "snapshot" view of the data is synchronized across shards
 
 
 ## 3.4 事务级别读首选项
@@ -261,6 +327,6 @@ https://docs.mongodb.com/master/core/transactions/#transactions-read-preference
 ## 3.6 事务和操作
 
 
-##### 99999 分片副本集
+##### 99999 分片副本集中的事务
 
 Production Considerations (Sharded Clusters)    https://docs.mongodb.com/manual/core/transactions-sharded-clusters/#arbiters
