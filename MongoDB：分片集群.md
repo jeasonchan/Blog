@@ -66,3 +66,6 @@ sh.shardCollection("sharding_db_test.jeason_test",{"user_id":1})
 ```
 
 对于本身有已经有数据，且缺少以分片列开始的索引，则会报错：please create an index that starts with the shard key before sharding 
+
+2. 帐号权限问题
+只有root权限的帐号才能开启某个db的分片，从而有权限开启某个集合的分片并设置分片使用的key
