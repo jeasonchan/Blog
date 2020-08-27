@@ -12,6 +12,16 @@ Learn Regex    https://github.com/ziishaned/learn-regex/blob/master/translations
 正则表达式语法  https://www.runoob.com/regexp/regexp-syntax.html
 
 
+4种先行断言和后行断言   https://blog.csdn.net/hudie1234567/article/details/6642181
+
+
+正则表达式之捕获组和非捕获组    https://www.jianshu.com/p/2547f0e3e809
+
+
+实践：不以某字符串开头    https://segmentfault.com/a/1190000019266662
+
+---
+
 正则表达式就是一段字符串的通向公式，所以，正则表达式就是为了去匹配字符串，在应用时主要有两种用法：
 
 1. 匹配字符串是否满足正则表达式，match，匹配整个字符串
