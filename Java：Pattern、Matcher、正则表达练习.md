@@ -335,3 +335,36 @@ ter\b
 
 
 ### 3.2.4 反向引用
+
+
+## 3.x 
+
+```
+^ABc.*\.(?!(meta|system|System|trash)).*
+
+
+ABc_test.meta_aaa
+ABc_aaaa.system_aaa
+ABc_aaaa.System_aaa
+ABc_aaaa.trash_aaa
+
+(只能匹配以下两个)
+ABc_aaaa.root_aaa
+ABc_aaaa.usertable_aaa
+
+=========================================
+
+(^(?!wic).*)|(^wic.*(meta|system|System|trash)).*
+
+
+aaa,aaaa
+ABc_test.meta_aaa
+ABc_aaaa.system_aaa
+ABc_aaaa.System_aaa
+ABc_aaaa.trash_aaa
+
+（仅下面两个无法匹配）
+ABc_aaaa.root_aaa
+ABc_aaaa.usertable_aaa
+
+```
