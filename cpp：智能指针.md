@@ -5,9 +5,6 @@
 各包装类的接口简单实践    http://www.neohope.org/2018/08/15/%E6%B5%85%E8%B0%88cpp%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/
 
 
-浅显介绍     https://www.cnblogs.com/heimazaifei/p/12133715.html
-
-
 # 2 接口简单实践
 
 ```cpp
@@ -193,4 +190,43 @@ int main() {
 }
 ```
 
-通过以上实践发现，CPP的智能指针，与JVM内存中的四种引用方式，强引用、软引用、弱引用，虚引用，有很多相似的地方
+通过以上实践发现，CPP的智能指针，与JVM内存中的四种引用方式，强引用、软引用、弱引用，虚引用，有很多相似的地方。
+
+通过以上对过时的auto_ptr和正在使用时的share、unique、weak指针的简单操作和简单的源码阅读，知道了个皮毛，下面开始稍微深入介绍。
+
+# 3 智能指针
+
+C++中的三种智能指针分析（RAII思想）     https://blog.csdn.net/GangStudyIT/article/details/80645399
+
+【C++】动态内存管理和智能指针    https://blog.csdn.net/bit_clearoff/article/details/53861627?utm_source=blogxgwz6
+
+
+首先我们在理解智能指针之前我们先了解一下什么是RAII思想。RAII（Resource Acquisition Is Initialization）机制是Bjarne Stroustrup首先提出的，是一种利用对象生命周期来控制程序资源（如内存、文件句柄、网络连接、互斥量等等）的简单技术。
+
+对于RAII概念清楚后，我们就可以理解为智能指针就是RAII的一种体现，智能指针呢，它是利用了类的构造和析构，用一个类来管理资源的申请和释放，也就是说，**存储对象的堆内存就是我们要通过RAII理念进行管理的资源**。
+
+
+## 3.1 为什么要有智能指针
+```cpp
+void Fun()
+{
+    int *p = new int[1000];
+    throw int(); //异常的抛出
+    delete[] p;
+}
+
+int main()
+{
+    try
+    {
+        Fun();
+    }
+    catch (exception e)
+    {
+        printf("异常\n"); // 捕捉
+    }
+    return 0;
+}
+```
+
+
