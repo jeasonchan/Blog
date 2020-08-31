@@ -229,4 +229,125 @@ int main()
 }
 ```
 
+呵呵，原博主上面的举例代码，异常处理根本无法捕捉到的抛出的int……**真的傻逼**……
 
+如果在运行中我们开出了1000个int字节的空间，但是在我们遇见throw后，因为异常而导致Fun函数没有执行到delete[]，所以就会造成内存泄漏问题，这样的话对于一个服务器程序来说是不能允许的。
+
+这个只是一个简单的例子，其实还有很多，比如我们在写代码的时候往往会打开一个文件来进行读写操作，然后又是因为异常，导致我们打开的文件没有及时的关闭，从而造成文件描述符泄漏也可以说是内存泄漏。
+
+为了防止这种场景的发生，采用智能指针，通**过对象的构造函数和析构函数来控制对象的持有的堆内存的开辟和销毁**。
+
+## 3.2 智能指针分类
+
+cpp中自带的指针的不断发展，就像上面的提到的那几种，接下来通过代码复原各智能指针的实现，并解析则这种实现带来的问题。
+
+### 3.2.1 auto_ptr实现及问题
+```cpp
+
+#ifndef CPP_AUTOPTR_H
+#define CPP_AUTOPTR_H
+
+namespace jeason {
+
+
+    template<typename T>
+    class AutoPtr {
+    public:
+        AutoPtr(T *ptr) : _ptr(ptr) {
+        }
+
+        AutoPtr(AutoPtr<T> &autoPtr) : _ptr(autoPtr._ptr) {
+            //由于这一步，被拷贝autoptr对象持有的指针已失效
+            //因此，该类型的智能指针不是用于原对象和新对象都要用指针的场景，
+            //其实有点的独占这个指针的意思
+            autoPtr._ptr = nullptr;
+        }
+
+        //赋值符号，无非就分为是否改变原值两种情况，
+        // 不改变=的入参，就显式声明入参是const
+        // 改变=的入参，就显式声明入参是右值，用了右值就要做好右值内部的资源要被转移走的准备
+        //从autoptr的设计意图看，资源其实从autoptr转移到了this中
+        AutoPtr<T> &operator=(AutoPtr<T> &autoPtr) {
+
+            //提高性能，只在非本身时进行的下面的操作
+            if (this != &autoPtr) {
+                //下面的操作符合赋值的语义：新值覆盖旧值
+                //也就是分两步：
+                // 1、清除旧的不用的资源，
+                // 2、指向新资源，同时，由于autoptr隐藏的指针独占性
+                delete this->_ptr;
+                this->_ptr = autoPtr._ptr;
+                autoPtr._ptr = nullptr;
+            }
+
+
+            return *this;
+        }
+
+        ~AutoPtr() {
+            delete this->_ptr;
+        }
+
+        T &operator*() {
+            return *this->_ptr;
+        }
+
+        T *operator->() {
+            return this->_ptr;
+        }
+
+    private:
+        T *_ptr;
+
+    };
+
+}
+#endif //CPP_AUTOPTR_H
+```
+
+这个智能指针的问题正如代码注释中指出的那样，原来的持有的指针就被置为nullptr，太死板。
+
+于是就出现了boost中scoped_ptr和cpp11中的unique_ptr。
+
+### 3.2.2 scoped_ptr实现及问题
+出现这种智能指针，和上面很相似，但是这个处理上面问题的方式很是暴力，直接把赋值与拷贝写成私有声明。就跟本不能用。这个一定程度上减少代码的出错率，但是同时也产生了一定的局限性。
+
+```cpp
+
+#ifndef CPP_SCOPEDPTR_H
+#define CPP_SCOPEDPTR_H
+
+namespace jeason {
+    template<typename T>
+    class ScopedPtr {
+    public:
+        ScopedPtr(T *ptr) : _ptr(ptr) // 构造
+        {}
+
+        ~ScopedPtr() //析构
+        {
+            if (_ptr != nullptr) {
+                delete _ptr;
+            }
+        }
+
+        T &operator*() {
+            return *_ptr;
+        }
+
+        T *operator->() {
+            return _ptr;
+        }
+
+        ScopedPtr(const ScopedPtr<T> &s) = delete; // 防止拷贝
+        ScopedPtr<T> &operator=(const ScopedPtr<T> &s) = delete; // 赋值
+
+    private:
+        T *_ptr;
+    };
+
+}
+
+
+#endif //CPP_SCOPEDPTR_H
+```
