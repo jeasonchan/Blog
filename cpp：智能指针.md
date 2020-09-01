@@ -351,3 +351,80 @@ namespace jeason {
 
 #endif //CPP_SCOPEDPTR_H
 ```
+
+### 3.2.3 share_ptr实现及其问题
+上面的几种智能指针，几乎都是，一个资源指针只能被一个智能指针对象持有，不利于资源的共享，因此，出现了share_ptr，模仿其使用的引用计数法写一个，STL里的实现才是对的，我写的还是有不少问题的。
+
+```cpp
+//
+// Created by chenr on 2020-09-01.
+//
+
+#ifndef CPPNEWSTARTER_SHAREPTR_HPP
+#define CPPNEWSTARTER_SHAREPTR_HPP
+
+template<typename T>
+class SharePtr {
+private:
+    T *_ptr;
+    int *_pCount;
+
+    void release() {
+        if (1 == *_pCount) {
+            delete _ptr;
+            delete _pCount;
+        } else {
+            --*_pCount;
+        }
+    }
+
+public:
+    //clang规范规定，单入参的构造函数都必须用explicit以避免隐式转换
+    explicit SharePtr(T *ptr) : _ptr(ptr) {
+    }
+
+    //拷贝构造函数，语义上就有不改变input
+    SharePtr(const SharePtr<T> &input) :
+            _ptr(input._ptr), _pCount(input._pCount) {
+        ++*_pCount;
+    }
+
+    ~SharePtr() {
+        release();
+    }
+
+
+    //赋值符号，从语义看，就是不改变input的
+    //并且用新值代替旧只，也就是，先对处理旧的，再接纳新的，
+    //也就是，减少旧对象的引用计数，增加新对象的引用计数
+    SharePtr<T> &operator=(const SharePtr<T> &input) {
+        if (this != &input && this->_ptr != input._ptr) {
+            //减少旧对象的引用计数
+            --*_pCount;
+            if (0 == *_pCount) {
+                delete _ptr;
+                delete _pCount;
+            }
+            _ptr = input._ptr;
+            _pCount = input._pCount;
+            ++*_pCount;
+        }
+
+        return *this;
+    }
+
+    T &operator*() {
+        return *_ptr;
+    }
+
+    T *operator->() {
+        return _ptr;
+    }
+};
+
+
+#endif //CPPNEWSTARTER_SHAREPTR_HPP
+
+```
+
+采用了引用计数的方式，和java中一开始垃圾回收使用的相同，但是引用计数无法解决循环依赖问题，并且我的代码实现，pCount这个变量有是多个对象共享的，且有写入操作，存在明显的多线程问题。
