@@ -433,3 +433,69 @@ public:
 
 就是在构造出一个对象指针后，也构造了一个*pcount这样的计数器，初始值就是1。当我们需要拷贝或者赋值的时候，我们就将 *pcount加1，且让对象的指针指向同一块空间，每个指针都能通过指针对象来访问指向的空间。其中某一个对象要是声明周期完了，自动掉用析构函数，这时候，我们的析构函数中就会判断引用计数是否为1，如果不是1说明这段空间还有别的对象在用，那么将会对 *pcount的计数器中的值减1，当 *pcount值为1的时候，并且该对象要析构，这时候才会正真的释放这段空间。
 
+和java中存在的引用计数问题一样，引用计数无法解决循环依赖问题，为了解决循环依赖问题，需要一种智能指针，用该种智能指针时，只使用但是不能增加引用计数（当然也不能释放自己持有的指针），因此，出现了weak_ptr这种智能指针。
+
+### 3.2.4 weak_ptr实现及问题
+
+看模拟实现的代码
+
+```cpp
+template<class T>
+class Weak_ptr
+{
+public:
+    Weak_ptr(const Share_ptr<T>& s) :_ptr(s._ptr) //构造
+    {}
+
+    T& operator*()
+    {
+        return *ptr;
+    }
+
+    T* operator->()
+    {
+        return ptr;
+    }
+
+private:
+    T* _ptr;
+};
+```
+
+同时，share_ptr将weak_ptr声明为自己的友元，允许weak_ptr访问私有变量_ptr。其实就是把原生指针进行了一层封装，甚至都不用自己实现析构，用默认就可以。
+
+关于share_ptr与weak_ptr怎么解决像上面一样的场景，我们来看一下：
+
+```cpp
+// 循环引用,会造成内存泄漏weak_ptr
+struct ListNode //链表结构体
+{
+    Weak_ptr<ListNode> next; //这里为weak_ptr<ListNode>类型
+    Weak_ptr<ListNode> prev;
+    int data;
+
+    ListNode() :next(NULL), prev(NULL) //构造
+    {}
+};
+
+// 在用share_ptr的时候要注意，share_ptr<ListNode> next; 
+// 这里的share_ptr<ListNode>本身就是一个指针。
+
+void TestListNode()
+{
+    Share_ptr<ListNode> node1 = new ListNode; //为share_ptr
+    Share_ptr<ListNode> node2 = new ListNode;
+
+    // 这里要解释一下，node1为share_ptr类型重载->,
+    // 而next是weak_ptr类型，后面node2是一个share_ptr类型
+    // 这里就有一个隐式类型转换
+    node1->next = node2;
+    node2->next = node1;
+}
+```
+
+总结一下，比希望该智能指针影响引用计数时，就使用weak_ptr
+
+### 3.2.5 利用仿函数进行数组空间释放
+前面的智能指针所管理的对象都是一个单独的单独的对象，使用delete就直接直接释放内存，如果，管理的对象是一个指针数组，智能指针析构函数里的delete _ptr释放操作机会有问题了，因此，为是使释放操作能够更加通用，需要使用放函数指定释放方式。
+
