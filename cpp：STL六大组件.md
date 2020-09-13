@@ -96,8 +96,100 @@ C++ 11 标准中不同容器指定使用的迭代器类型如下，正是因为�
 | queue	| 不支持迭代器 |
 
 ### 1.2.2 迭代器的定义方式
+尽管不同容器对应着不同类别的迭代器，但这些迭代器有着较为统一的定义方式，使用\*迭代器名 表示迭代器指向的元素,因为：
+
+```cpp
+  template<typename _Tp, std::size_t _Nm>
+    struct array
+    {
+      typedef _Tp 	    			      value_type;
+      typedef value_type*          		      iterator;
+
+      //......略
+    };
+```
+
+可见iterato只是声明在array内部的一种类型，类型是指向_Tp的指针，因此，使用\*迭代器名 表示迭代器指向的元素
+
+* 正向迭代器：	容器类名::iterator  迭代器名;
+* 常量正向迭代器：	容器类名::const_iterator  迭代器名;
+* 反向迭代器：	容器类名::reverse_iterator  迭代器名;
+* 常量反向迭代器：	容器类名::const_reverse_iterator  迭代器名;
+
+常量迭代器和非常量迭代器的分别在于，通过非常量迭代器还能修改其指向的元素。另外，反向迭代器和正向迭代器的区别在于：
+
+* 对正向迭代器进行 ++ 操作时，迭代器会指向容器中的后一个元素；
+* 而对反向迭代器进行 ++ 操作时，迭代器会指向容器中的前一个元素。
+
+注意，以上 4 种定义迭代器的方式，并不是每个容器都适用。有一部分容器同时支持以上 4 种方式，比如 array、deque、vector；而有些容器只支持其中部分的定义方式，例如 forward_list 容器只支持定义正向迭代器，不支持定义反向迭代器。
+
+```cpp
+//
+// Created by jeasconchan on 2020/9/13.
+//
+
+#include <array>
+#include <iostream>
+#include <vector>
+
+int main() {
+    {
+        std::array<int, 10> intArray{};
+
+        std::array<int, 10>::iterator iterator = intArray.begin();
+        //auto iterator = intArray.begin();
+
+        std::cout << iterator << std::endl;
+    }
+
+    {
+        //遍历vector容器
+
+        std::vector<int> intVector{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+        std::cout << "第一种遍历方法：通过index" << std::endl;
+        int size = intVector.size();
+
+        for (int i = 0; i < size; ++i) {
+            //像普通数组一样，通过重载的元算符[]进行访问
+            std::cout << intVector[i] << " ";
+        }
+        std::cout << std::endl;
 
 
+        std::cout << "第二种遍历方法：通过迭代器和迭代器不等于的比较" << std::endl;
+        std::vector<int>::iterator normalIterator;
+
+        //其实，不应该在上面定义，因为下面的=会发生新值覆盖旧值的赋值过程
+        //不过iterator本质上就是指针，这种性能损耗忽略不计，而且是不可避免的
+        //此处使用!=来进行迭代器比较
+        //和java一样，end()是指向最后元素的下一个位置，一个为止类型的地址
+        for (normalIterator = intVector.begin(); normalIterator != intVector.end(); ++normalIterator) {
+            std::cout << *normalIterator << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "第三种遍历方法：通过迭代器和迭代器小于号的比较" << std::endl;
+        for (normalIterator = intVector.begin(); normalIterator < intVector.end(); ++normalIterator) {
+            std::cout << *normalIterator << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "第四种遍历方法：通过while循环间隔输出" << std::endl;
+        normalIterator = intVector.begin();
+        while (normalIterator < intVector.end()) {
+            std::cout << *normalIterator << " ";
+            normalIterator += 5;
+
+            //跃界后，指向了不属于vector的地址，虽然可以读出int的值，但是其实是无意义的值
+            std::cout << "地址是：" << &(*normalIterator) << " 值是：" << *normalIterator << std::endl;
+        }
+
+
+    }
+    return 0;
+}
+```
 
 # 2 STL序列式容器
 
