@@ -189,9 +189,93 @@ int main() {
     }
     return 0;
 }
+
+```
+
+list简单操作：
+
+```cpp
+ {
+        //list的迭代器是双向迭代器
+        list<int> intList{1, 2, 3, 4, 5};
+        list<int>::iterator it;
+        list<int>::iterator constIt;
+
+        for (it = intList.begin(); it != intList.end(); ++it) {
+            cout << *it << " ";
+        }
+
+        //直接编译不通过
+        //因为list::iterator这个类型没有重载<运算符
+        //for (it = intList.begin(); it < intList.end(); ++it) {
+        //    cout << *it << " ";
+        //}
+
+        //同理，以下也编译不通过
+        //for (int i = 0; i < intList.size(); ++i) {
+        //    cout << intList[i];
+        //}
+
+}
 ```
 
 # 2 STL序列式容器
+所谓序列容器，即以线性排列来存储某一指定类型（例如 int、double 等）的数据，该类容器并不会自动对存储的元素按照值的大小进行排序。后面章节的STL关联式容器，会默认按照从小到的顺序排列，再后面还有无序关联式容器，是基于哈希值的所以是无序的。
+
+* array<T,N>（数组容器）：表示可以存储 N 个 T 类型的元素，是 C++ 本身提供的一种容器。此类容器一旦建立，其长度就是固定不变的，这意味着不能增加或删除元素，只能改变某个元素的值；
+
+* vector<T>（向量容器）：用来存放 T 类型的元素，是一个长度可变的序列容器，即在存储空间不足时，会自动申请更多的内存。使用此容器，在尾部增加或删除元素的效率最高（时间复杂度为 O(1) 常数阶），在其它位置插入或删除元素效率较差（时间复杂度为 O(n) 线性阶，其中 n 为容器中元素的个数）；
+
+* deque<T>（双端队列容器）：和 vector 非常相似，区别在于使用该容器不仅尾部插入和删除元素高效，在头部插入或删除元素也同样高效，时间复杂度都是 O(1) 常数阶，但是在容器中某一位置处插入或删除元素，时间复杂度为 O(n) 线性阶；
+
+* list<T>（链表容器）：是一个长度可变的、由 T 类型元素组成的序列，它以双向链表的形式组织元素，在这个序列的任何地方都可以高效地增加或删除元素（时间复杂度都为常数阶 O(1)），但访问容器中任意元素的速度要比前三种容器慢，这是因为 list<T> 必须从第一个元素或最后一个元素开始访问，需要沿着链表移动，直到到达想要的元素。
+
+* forward_list<T>（正向链表容器）：和 list 容器非常类似，只不过它以单链表的形式组织元素，它内部的元素只能从第一个元素开始访问，是一类比链表容器快、更节省内存的容器。
+
+**在逻辑组织存储形式和常见的成员函数见http://c.biancheng.net/view/409.html**
+
+
+## 2.1 array用法详解
+array 容器是 C++ 11 标准中新增的序列容器，简单地理解，它就是在 C++ 普通数组的基础上，添加了一些成员函数和全局函数。在使用上，它比普通数组更安全（比如，通过index访问有越界检查），且效率并没有因此变差。
+
+```cpp
+{
+    constexpr int num = 10;
+
+    //疑问，第二个模板参数如何限制为常量的？？？
+    array<int, num> intArray{0, 1, 2, 3};
+
+    //对于array，以下两个成员函数等效
+    cout << intArray.size() << endl;
+    cout << intArray.max_size() << endl;
+
+    try {
+        cout << intArray.at(100) << endl;
+    } catch (exception &e) {
+        cerr << e.what();
+    }
+    cout << intArray.at(3) << endl;
+
+    //front()返回值是预案是元素的引用
+    cout << intArray.front() << endl;
+
+    //以下三个函数的返回值都是都是指针
+    cout << intArray.begin() << endl;
+    cout << intArray.data() << endl;
+    cout << *intArray.data() << endl;
+
+    //标准库提供的全局函数begin，对于array,其实就是会调用容器的begin成员函数
+    //对于普通数组，返回第一个元素的指针
+    std::begin(intArray);
+
+    //重载全局的get方法，适配入参是array的情况
+    std::get<3>(intArray);
+
+}
+```
+
+## 2.2 array随机访问迭代器详解
+
 
 # 3 STL关联式容器（有序的）
 
@@ -201,8 +285,68 @@ int main() {
 
 # 4 STL容器适配器
 
+```cpp
+{
+    //CPP适配器，利用木板技术服用已存在的函数的设计模式
+    //比如，stack，底层会默认复用双端队列，也就是有个成员函数就是双端队列
+    stack<int> intStack{};
+    intStack.push(1);
+}
 
-# 5 STL迭代其适配器
+```
+
+# 5 STL迭代器适配器
 
 
-# 6 CPP常用算法
+
+# 6 STL分配器
+allocator（分配器）是CPP标准库的重要组成部分。对于大小可以动态变化的容器，对其内存空间的管理十分重要，也就是动态分配内存的要求很高，于是出现了分配器，用于管理对内存的分配和释放。默认情况下，CPP标准库使用自带的通用分配器，同时，程序员也可以根据需求自定义分配器。
+
+
+STL在引入CPP标准时，分配器的可定制程度非常高，给STL带来了很高的抽象能力，但是，高抽象也会带来一部分损耗，因此CPP标准委员会对分配器进行了限制，以减少性能损耗。所以，目前的分配器比一开始的hp版分配器有较大的定制性削弱。
+
+
+分配器一般用处：
+
+1. 封装对不同类型的内存空间的访问方式
+
+2. 实现内存池（和线程池类似的原理），提高内存分配的性能
+
+假设class A在自身的生命周期内需要对T进行内存管理，则需要在A的域内提供对T相关类型的定义：
+
+```cpp
+namespace jeason {
+    template<typename T>
+    class A {
+    public:
+        using value_type = T;
+
+        using pointer = T *;
+        using const_pointer = const T *;
+
+        using reference = T &;
+        using const_reference = const T &;
+
+        //所用内存大小的类型，表示A所定义的分配模型中的单个对象最大尺寸的无符号整型
+        //STL中都是直接用的std::size_t
+        using size_type = std::size_t;
+
+        //指针差值的类型，为有符号整形，用于表示分配模型内的两个指针的差值
+        //STL中都是直接用的std::ptrdiff_t
+        using difference_type = std::ptrdiff_t;
+
+
+
+
+    };
+
+
+}
+```
+
+
+
+
+
+
+# 7 CPP常用算法
