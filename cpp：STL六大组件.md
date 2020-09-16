@@ -344,7 +344,45 @@ namespace jeason {
 }
 ```
 
+比如，在CPP的c++/8/bits/allocator.h头文件中的一个分配器源码：
 
+```cpp
+  /// allocator<void> specialization.
+  template<>
+    class allocator<void>
+    {
+    public:
+      typedef size_t      size_type;
+      typedef ptrdiff_t   difference_type;
+      typedef void*       pointer;
+      typedef const void* const_pointer;
+      typedef void        value_type;
+
+      template<typename _Tp1>
+	struct rebind
+	{ typedef allocator<_Tp1> other; };
+
+#if __cplusplus >= 201103L
+      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+      // 2103. std::allocator propagate_on_container_move_assignment
+      typedef true_type propagate_on_container_move_assignment;
+
+      typedef true_type is_always_equal;
+
+      template<typename _Up, typename... _Args>
+	void
+	construct(_Up* __p, _Args&&... __args)
+	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+
+      template<typename _Up>
+	void
+	destroy(_Up* __p) { __p->~_Up(); }
+#endif
+    };
+```
+疑问：
+
+construct和destroy里面是什么语法？？？？
 
 
 
