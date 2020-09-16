@@ -384,6 +384,9 @@ namespace jeason {
 
 construct和destroy里面是什么语法？？？？
 
+consturct方法中使用了放置new操作符，和原始的new操作符（先根据类的大小在堆上申请空间，再在申请到的空间中初始化对象）相比，直接在已经预先申请好的地址上初始化对象性能稍高。
+
+destroy方法中，直接通过对象指针调用public的析构函数。
 
 
 
