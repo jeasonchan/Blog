@@ -161,4 +161,5 @@ java -classpath java_exercise_based_on_idea-1.0-SNAPSHOT.jar default_package.实
 
 注：
 
+
 1. 用命令行启动时，尽管指定了正确的主类，且主类能在classpath中找到。但是，有时候主类中直接import了大量的依赖，但是不巧这写依赖没有放进classpath里，根据双亲委派模型，要先去加载父类，父类NOT FOUND的话，会直接笼统的上报 主类没有找到  ，让我们误以为我们主类没写正确。
