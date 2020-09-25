@@ -1,4 +1,4 @@
-﻿@[TOC]
+﻿
 # 1背景
 自己写小练习时，写回退到xxxx commit ID，然后自然的使用了get revert xxxx的操作，最后提示路径问题，让我解决冲突……很奇怪，为毛有路径问题，难道revert功能用错了？？于是就百度了一下，git的撤销功能大全：checkout、revert、reset。
 先小结一下：
