@@ -1098,4 +1098,169 @@ namespace bean
 **头文件保护符一定要习惯性加上。**
 
 # 3 字符串、向量和数组
-第三章开始介绍string和vector，可以说是说是两种最重要的标准库数据类型
+第三章开始介绍string和vector，可以说是说是两种最重要的标准库数据类型，这两个数据类型与内置的数组类型（此处值C风格的数组，而不是std::array数组）相比，更加安全和灵活。
+
+在介绍标准库之前先学习访问标注库的方法，命名空间。
+
+## 3.1 命名空间的using声明
+通过作用域操作符（::)访问域中声明/定义的类、变量、函数、结构体等。
+
+头文件中不应该包含using声明，因为在预编译阶段，头文件会被原封不动的拷贝到include出，如果别的头文件也恰好使用了相同的using声明，那在预编译阶段完成后，就会存在很多重复的using声明，using声明本身重复，没啥问题，但是！！！如果头文件引入的命名空间声明里恰好也有string,而引用头文件的人的也偷懒使用了using namespace std;，然后就直接使用string，那么编译器就无法知道string究竟是std还是头文件中引入的命名空间定义的，编译阶段就会报错。
+
+**综上，头文件中不应该使用using namespace的声明，以避免对调用者变量名的污染。**
+
+## 3.2 标准库类型string
+标注库类型string表示可变长的字符序列。和golang一样，CPP的标准库对实现也有较高的要求。
+
+### 3.2.1 定义和初始化string对象
+
+```cpp
+
+string s1;
+
+//以下三种定义初始化完全等价
+string s2 = s1;//并不是调用赋值符号，而是实际上使用下一行的拷贝构造函数
+string s3{s1};
+string s4(s1);
+
+string s5("123");
+string s6{"123"};
+string s7(10, 'a');
+string s8{10, 'a'};
+
+```
+
+注意直接初始化和拷贝初始化的区别！！
+
+
+### 3.2.2 string对象上的操作
+一个类除了规定初始化对象的方式之外，还要定义对象上所能执行的操作。其中，能执行的操作包括函数名和操作符（典型的<<、>>、=、+），在java中不能重载操作符。
+
+
+#### 3.2.2.1 读写string对象
+
+```cpp
+string s9;
+cin >> s9;//调用了string的>>操作符
+cout << s9;//调用了string的<<操作符
+```
+
+其中，string 的>>操作符定义中，其会忽略开头的空格/换行，直到遇到第一个空格结束，比如，输入"    helloWorld    "时，只会输出"helloWorld"。
+
+
+#### 3.2.2.2 读取未知数量string对象
+
+```cpp
+string s10;
+//当输入流无效时，不进入循环内
+//输入结束或者非法输入时，>>的返回值会无效
+while (cin >> s10) {
+    cout << s10 << endl;
+}
+```
+#### 3.2.2.3 使用getLIne读取一整行
+
+之前从cin读取内容到string，>>都会忽略开头的空白，但是有时候我们有读取所有内容不丢失空格的需求，这时候就该使用getLine()函数了，**这个函数和其他操作符一样，直接定义在头文件中，而不是作为类的方法，其实算是std域内的静态方法了，因此调用的时候不依赖类实例名和类指针名**。但是，为什么我映像里记得有的类重载操作符时，用到了this指针，运算符被定义成public的成员函数？？？？？？？？？？？？
+
+
+```cpp
+string s11;
+//每次读取一整行，遇到换行符时停止读取，并将读到的存入string，
+//存进string的部分不包含最后读到的换行
+while (getline(cin, s11)) {
+    cout << s11;
+}
+```
+一定要主要getline得到的字符串并不包含换行符！！！比如，当这一行只有一个换行符，那得到的string其实是长度为零的字符串，即为空字符串。
+
+#### 3.2.2.4 empty和size操作
+```cpp
+string s12;
+while (getline(cin, s12)) {
+    if (!s12.empty()) {
+        cout << s12.size();
+    } else {
+        cout << s12.size();
+    }
+}
+```
+
+string::sizte()的源码如下：
+
+```cpp
+typedef typename _Alloc_traits::size_type		size_type;
+///  Returns the number of characters in the string, not including any
+///  null-termination.
+size_type
+size() const _GLIBCXX_NOEXCEPT
+{ return _M_string_length; }
+```
+
+返回值是string::size_type类型，不是size_t。string类和其他大多数标准库类型基本都会定义一些和自己功能搭配的类，这些配套类型目的基本都是：实现平台无关性、方便理解。
+
+从size()的语义上可以推测，string::size_type肯定是无符号整型的且数值足够大。并且，当有符号和无符号一起运算时，有符号会被自动转为无符号，因此，**string::size_type绝对不要和int混合在一起运算！！！**，比如：
+
+```cpp
+string s13 = "12345";
+int i = -1;
+//输出真，因为-1会被转为一个很大的无符号整型
+cout << (s13.size() < i) << endl;
+
+```
+
+还是再强调一下，string::size_type绝对不要和int混合在一起运算！！！
+
+#### 3.2.2.4 两个string对象相加
+
+会返回一个全新的对象！源码如下：
+
+```cpp
+template<typename _CharT, typename _Traits, typename _Alloc>
+basic_string<_CharT, _Traits, _Alloc>
+operator+(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+        const basic_string<_CharT, _Traits, _Alloc>& __rhs)
+{
+    basic_string<_CharT, _Traits, _Alloc> __str(__lhs);
+    __str.append(__rhs);
+    return __str;
+}
+```
+
+可见，构造了一个全新的对象，并进行了append操作。
+
+当字符串字面值和string对象相加时，STL针对 字面值+string和 string+字面值  两种情况进行了重载：
+
+```cpp
+# const char * + string对象
+  template<typename _CharT, typename _Traits, typename _Alloc>
+    inline basic_string<_CharT, _Traits, _Alloc>
+    operator+(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
+	      const _CharT* __rhs)
+    {
+      basic_string<_CharT, _Traits, _Alloc> __str(__lhs);
+      __str.append(__rhs);
+      return __str;
+    }
+
+# string对象+const char *
+  template<typename _CharT, typename _Traits, typename _Alloc>
+    basic_string<_CharT, _Traits, _Alloc>
+    operator+(const _CharT* __lhs,
+	      const basic_string<_CharT, _Traits, _Alloc>& __rhs)
+    {
+      __glibcxx_requires_string(__lhs);
+      typedef basic_string<_CharT, _Traits, _Alloc> __string_type;
+      typedef typename __string_type::size_type	  __size_type;
+      const __size_type __len = _Traits::length(__lhs);
+      __string_type __str;
+      __str.reserve(__len + __rhs.size());
+      __str.append(__lhs, __len);
+      __str.append(__rhs);
+      return __str;
+    }
+
+```
+
+string并没有对 字面值+字面值 的形式进重载+运算符，因此，要想使用string的+运算符，则必须保证+的一侧有一个string类型。并且，cpp标准库中并没有针对 字面值 相加的运算符重载。
+
+### 3.2.3 处理string对象中的字符
