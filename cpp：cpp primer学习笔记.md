@@ -1264,3 +1264,52 @@ operator+(const basic_string<_CharT, _Traits, _Alloc>& __lhs,
 string并没有对 字面值+字面值 的形式进重载+运算符，因此，要想使用string的+运算符，则必须保证+的一侧有一个string类型。并且，cpp标准库中并没有针对 字面值 相加的运算符重载。
 
 ### 3.2.3 处理string对象中的字符
+cpp将c语言ctype.h头文件中的一系列函数整理为cpp头文件的形式，并且声明在std命名空间，cpp相应的头文件为cctype。
+
+#### 3.2.3.1 使用范围for处理字符串的每个字符
+
+cpp11中引入范围for语句，跟java中的范围for一毛一样，如：
+
+```cpp
+#include <iostream>
+#include <cctype>
+
+
+int main() {
+    {
+        std::string s1 = "123";
+        std::isalpha(s1[0]);
+
+        for (auto each:s1) {
+            //string对象中，每个子序列是char型
+            //每次迭代，如果有下一个char，则下一个char被拷贝给each变量
+            each;
+            std::cout << each << std::endl;
+        }
+
+
+        std::string s2 = "adhakdhkada!!!!k aoeoqeaw aeuoajdlad";
+        //统计标点符号的个数
+        decltype(s2.size()) punctNum = 0;
+        for (auto each:s2) {
+            //使用cctype中的方法
+            if (ispunct(each)) {
+                ++punctNum;
+            }
+        }
+
+
+        //从上面的代码和注释中看出，每次循环迭代，each的值始终是值拷贝，
+        // 那如何通过范围for直接改变string中的字符？？？
+        for (auto &eachRef:s2) {
+            //通过的C库中的方法将char转为大写
+            eachRef = std::toupper(eachRef);
+        }
+    }
+
+}
+
+```
+
+#### 3.2.3.2 通过下标针对处理部分字符
+P84
