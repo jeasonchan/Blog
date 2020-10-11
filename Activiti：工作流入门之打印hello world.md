@@ -4,7 +4,6 @@
 参考文档2：<https://blog.csdn.net/chenweifu365/article/details/79032758>，比较详细，涉及了自定义该工作流数据库、使用xml文件配置工作流引擎等
 
 # 2代码实践
-
 ## 2.1工作流创建、启动基本流程
 此处代码实践主要参考，参考文档1<https://blog.csdn.net/qq_39295740/article/details/84930254>，比较浅显。
 ```java
