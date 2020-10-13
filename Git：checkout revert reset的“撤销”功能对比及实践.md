@@ -1,5 +1,4 @@
-﻿
-# 1背景
+﻿# 1背景
 自己写小练习时，写回退到xxxx commit ID，然后自然的使用了get revert xxxx的操作，最后提示路径问题，让我解决冲突……很奇怪，为毛有路径问题，难道revert功能用错了？？于是就百度了一下，git的撤销功能大全：checkout、revert、reset。
 先小结一下：
 revert，撤销，可撤销某单次的commit、某单次commit中的某个文件修改，当然，后面基于该commit的修改，自己要去解决冲突……
