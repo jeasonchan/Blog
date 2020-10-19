@@ -11,7 +11,6 @@
 
 [bash -c 注意事项](https://www.jianshu.com/p/198d819d24d1)
 
-
 # 2 安装
 Windows上使用docker体验不好，完全没有Linux上的便利感……建议不如直接安装VMware然后安装Ubuntu server使用，安装命令很简单：
 ```sh
@@ -82,7 +81,6 @@ jeason@ubuntu:~#
 
 * **容器后台运行程序**
 
-
 ```sh
 jeason@ubuntu:~$ docker run -d ubuntu:15.10 /bin/sh -c "while true; do echo hello world; sleep 1; done"
 2b1b7a428627c51ab8810d541d759f072b4fc75487eed05812646b8534a2fe63
@@ -125,3 +123,4 @@ exec：和run唯一区别是，run是从一个镜像启动容器实例，exec是
 
 ---
 * **剩下的用法较为简单，可直接使用docker --help进行查看**
+
