@@ -119,3 +119,41 @@ tail -100 /var/log/redis/redis.log
 Systemd 入门教程：命令篇      http://www.ruanyifeng.com/blog/2016/03/systemd-tutorial-commands.html
 
 
+systemd的中文文档   http://www.jinbuguo.com/systemd/systemd.service.html
+
+
+# 3.1 守护进程自动重启
+
+**Restart**
+
+当服务进程 正常退出、异常退出、被杀死、超时的时候， 是否重新启动该服务。 所谓"服务进程" 是指 ExecStartPre=, ExecStartPost=, ExecStop=, ExecStopPost=, ExecReload= 中设置的进程。 **当进程是由于 systemd 的正常操作(例如 systemctl stop|restart)而被停止时， 该服务不会被重新启动。** 所谓"超时"可以是看门狗的"keep-alive ping"超时， 也可以是 systemctl start|reload|stop 操作超时。
+
+
+**WatchdogSec=**
+
+设置该服务的看门狗(watchdog)的超时时长。 看门狗将在服务成功启动之后被启动。 该服务在运行过程中必须周期性的以 "WATCHDOG=1" ("keep-alive ping")调用 sd_notify(3) 函数。 如果在两次调用之间的时间间隔大于这里设定的值， 那么该服务将被视为失败(failed)状态， 并会被强制使用 WatchdogSignal= 信号(默认为 SIGABRT)关闭。 **通过将 Restart= 设为 on-failure, on-watchdog, on-abnormal, always 之一， 可以实现在失败状态下的自动重启该服务。** 这里设置的值将会通过 WATCHDOG_USEC= 环境变量传递给守护进程， 这样就允许那些支持看门狗的服务自动启用"keep-alive ping"。 如果设置了此选项， 那么 NotifyAccess= 将只能设为非 none 值。 如果 NotifyAccess= 未设置，或者已经被明确设为 none ， 那么将会被自动强制修改为 main 。 如果未指定时间单位，那么将视为以秒为单位。 例如设为"20"等价于设为"20s"。 默认值"0"表示禁用看门狗功能。
+
+
+**RestartSec=**
+
+置在重启服务(Restart=)前暂停多长时间。 默认值是100毫秒(100ms)。 如果未指定时间单位，那么将视为以秒为单位。 例如设为"20"等价于设为"20s"
+
+
+可见，watchdog算是一种监控守护进程是否挂掉的功能，restart是直接执行重启的，restartSec是执行重启前的延迟时间，因此，为了实现守护进程的自动重启，可以在[service]中添加以下描述：
+
+```service
+WatchdogSec=180s
+
+Restart=always
+
+```
+
+或者
+
+```service
+Restart=on-failure
+
+RestartSec=1
+```
+
+
