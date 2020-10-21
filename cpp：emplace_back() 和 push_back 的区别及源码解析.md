@@ -123,3 +123,91 @@ new (ptr)Student(10);
 # 3 多入参的"隐式转换"实现原理
 重点：分配器、可变长模板参数
 
+再来看一下操作系统的里面emplace_back的源码：
+
+```cpp
+public:
+template<class... _Valty>
+decltype(auto) emplace_back(_Valty&&... _Val)
+{   // insert by perfectly forwarding into element at end, provide strong guarantee
+if (_Has_unused_capacity())
+    {
+    _Emplace_back_with_unused_capacity(_STD forward<_Valty>(_Val)...);
+    }
+else
+    {   // reallocate
+    const size_type _Oldsize = size();
+
+    if (_Oldsize == max_size())
+	{
+	_Xlength();
+	}
+
+    const size_type _Newsize = _Oldsize + 1;
+    const size_type _Newcapacity = _Calculate_growth(_Newsize);
+    bool _Emplaced = false;
+    const pointer _Newvec = this->_Getal().allocate(_Newcapacity);
+    _Alty& _Al = this->_Getal();
+
+    _TRY_BEGIN
+    _Alty_traits::construct(_Al, _Unfancy(_Newvec + _Oldsize), _STD forward<_Valty>(_Val)...);
+    _Emplaced = true;
+    _Umove_if_noexcept(this->_Myfirst(), this->_Mylast(), _Newvec);
+    _CATCH_ALL
+    if (_Emplaced)
+	{
+	_Alty_traits::destroy(_Al, _Unfancy(_Newvec + _Oldsize));
+	}
+
+    _Al.deallocate(_Newvec, _Newcapacity);
+    _RERAISE;
+    _CATCH_END
+
+    _Change_array(_Newvec, _Newsize, _Newcapacity);
+    }
+
+#if _HAS_CXX17
+        return (this->_Mylast()[-1]);
+#endif /* _HAS_CXX17 */
+}
+```
+
+该版本的源码和第二章节的源码在大体上是一致的，只不过第二章中抽了一个方法。接下看一下代码中的细节。
+
+看了整段代码，将对象放入队列是分两种情况秒，一种是size<capacity，一种是size==capacity，相等时就要扩容了，扩容之后，就要往队列里放新对象了，构造新对象必然用到入入参的_Val，然后用到这个的只有这一行：
+```cpp
+ _Alty_traits::construct(_Al, _Unfancy(_Newvec + _Oldsize), _STD forward<_Valty>(_Val)...);
+```
+便通过 _Alty_traits::construct来创建对象,并最终利用强制类似装换的指针来指向容器类之中对应类的构造函数, 并且利用可变长模板 将构造函数所需要的内容传递过去构造新的对象。而该函数的实现如下：
+
+```cpp
+template<class _Objty,
+class... _Types>
+static void construct(_Alloc&, _Objty * const _Ptr, _Types&&... _Args)
+{   // construct _Objty(_Types...) at _Ptr
+::new (const_cast<void *>(static_cast<const volatile void *>(_Ptr)))
+    _Objty(_STD forward<_Types>(_Args)...);
+}
+```
+这里最为巧妙的部分就是利用可变长模板实现了，任意传参的对象构造。可变长模板是C++11新引进的特性，接下来我们来详细看看可变长模板是如何来使用，来实现任意长度的参数呢?
+
+## 3.1 可变长模板函数的定义及实现
+
+```cpp
+template <class... T>
+    void f(T... args);
+```
+通过template来声明参数包args，这个参数包中可以包含0到任意个参数，并且作为函数参数调用。之后我们便可以在函数之中将参数包展开成一个一个独立的参数。
+
+通过不断递归的方式，提取可变长模板参数之中的首个元素，并且设置递归的终止点的方式来依次处理各个元素。这种处理函数的方式本质上就是在通过递归的方式处理列表，这种编程思路在函数式编程语言之中十分常见,在C++之中看到这样的用法，也让笔者作为C++的入门选手感到很新奇。笔者曾经接触过Scala与Erlang语言之中大量利用了这种写法，但是多层递归导致的必然是栈调用的开销变大，利用尾递归的方式来优化这样的写法，才能减少非必要的函数调用开销。
+
+比如下面实现的求一组输入数据的最大值：
+```cpp
+template<typename t1,typename ...t2> t1 max_num(t1 num, t2 ...args) {
+    auto n = max_num(args...);
+    return n > num ? n : num;
+}
+template<typename t1> t1 max_num(t1 num) {
+    return num;
+}
+```
