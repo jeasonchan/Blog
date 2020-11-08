@@ -1,6 +1,5 @@
 # 1背景
 
-
 参考文档1：<https://blog.csdn.net/qq_39295740/article/details/84930254>，比较基础，比较局限，仅仅适用于文章中自己创建出的工作流
 
 参考文档2：<https://blog.csdn.net/chenweifu365/article/details/79032758>，比较详细，涉及了自定义该工作流数据库、使用xml文件配置工作流引擎等
