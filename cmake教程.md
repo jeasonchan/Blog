@@ -1,5 +1,7 @@
 # 1 前言
 
+（20201119更新，文章已过时，建议直接看  https://github.com/jeasonchan/Blog/blob/master/cmake%EF%BC%9Atarget%E9%A3%8E%E6%A0%BC%E7%9A%84%E6%9E%84%E5%BB%BA%E8%A7%84%E5%88%99.md  ）
+
 参考文章：
 
 简明教程简洁易懂，从简单到复杂    https://blog.csdn.net/whahu1989/article/details/82078563
