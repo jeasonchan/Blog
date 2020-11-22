@@ -18,6 +18,10 @@ std::functional简单应用  https://www.jianshu.com/p/3d6a6578d7d4
 
 微软文档（Lambda 表达式的示例）    https://docs.microsoft.com/zh-cn/cpp/cpp/examples-of-lambda-expressions?view=vs-2019
 
+
+再开一个讨论区，C++11的std::function和template function的比较？ - 二律背反的回答 - 知乎
+https://www.zhihu.com/question/41684177/answer/91952216
+
 # 2 lambda表达式定义语法
 先来看一下cpp中lambda表达式的样子：
 
@@ -291,4 +295,80 @@ Process finished with exit code 0
 并没有按顺序输出0~19，原因：
 
 1. auto a地址恰好都是同一个，且auto wrapper = [&]定义时，使用了引用捕获，导致在最终调用a时（在t.join()时发生调用），都是直接调用的最新的a对象
-2. **有个问题，退出for循环后，i=19时产生的auto a这个对象，为啥还能被访问到啊？已经超出作用域了，也是在栈中的，竟然没被回收？？？？？？**
+2. **有个问题，退出for循环后，i=19时产生的auto a这个对象，为啥还能被访问到啊？已经超出作用域了，也是在栈中的，竟然没被回收？？？？？？**超出作用域后，操作系统并不是直接将对象占用的栈空间完全抹除为低位，而是标记为可用，在那段栈空间恰好没有被覆写的情况下，是能通过原先的指针访问到的。
+
+
+# 4 lambda表达式的本质
+一个匿名类的、函数对象（Function<>对象）实例，这个函数对象实例是具名的，也就是lambda表达式的名字，这个对象重载了operator ()。
+
+std::function，说白了，就是把函数对象化了。即，你可以把函数视作一个class的object只不过这个object有点特殊：它是一个可调用的对象（重载了operator() ）。为了实现函数对象化，**标准里加入了std::function，std::bind，还有lambda，还有mem_fn等**。
+
+## 4.1 适用的场景
+
+在C++11下，我们期望看到更多的泛型算法，而不希望看到以前的那种用函数去操作数据的代码了。由于我们现在甚至可以把函数都当作对象去处理了，所以这种期望成为了可能。比如，我们希望通过std::function等新语法，引导程序员写出这样的代码：
+
+```cpp
+array<string, 3> stringArr3 = {"ab", "def", "hello"};
+auto func = [](const string & str1, const string & str2){ return str1.size() < str2.size(); };
+sort(stringArr3.cbegin(), stringArr3.cend(), func);
+```
+
+而不希望看到你写个什么for循环然后再去排序。函数对象化的威力是强大的，你甚至可以把成员函数作为可调用的对象，**也就是Java里的方法引用，原理就是基于输入、输出的推断和生成的函数对象实例**。比如:
+
+```cpp
+find_if(stringArr3.cbegin(), stringArr3.cend(), mem_fn(&string::empty));
+```
+
+请注意：empty只是string类的非static成员函数。
+
+std::function的执行时间代价很大，这很好理解，因为要根据函数生成一个可调用的class然后再实例化出一个对象然后再调用它。所以说，**到处都用std::function是一件很糟糕的事情**。
+
+
+只有在使用泛型算法或者一些比较特殊的情况下才应该使用std::function，其它情况，比如即使要写callback（函数的参数是callback函数），那么除非你要保证这个函数可以接受任何形式的函数（包括可调用对象、lambda等），否则依然建议使用函数指针、模板这些传统的方法。
+
+
+具体的一些用到的泛型算法和特场景举例（但是，很显然，能用lambda的场景，多打字也能用函数指针做到）：
+
+* 标准库STL中使用，如std::find_if, std::remove_if, std::count_if等
+* 自定义比较函数的算法，如std::sort, std::nth_element, std::lower_bound等
+* 能够为std::unique_ptr/std::shared_ptr快速创建自定义析构器
+* 临时创建回调函数、接口适配函数供一次性调用
+
+
+## 4.2 
+
+
+
+## 4.3 lambda、Function对象、函数指针的相互转换
+
+```cpp
+int age = 1;
+
+int &(*echo)(int &input);
+echo = just_return;
+
+using FUN_TYPE_PTR = int (*)(int);
+
+auto fun = [&](int a) -> int {
+    return a + age;
+};
+
+decltype(fun);
+
+//没有捕获的lambda能赋值给  相应的函数指针  对象
+FUN_TYPE_PTR aaaaaaa = fun;
+std::function<int(int)> fun_b(fun);
+
+//函数指针也能直接初始化函数对象
+std::function<int(int)> fun_c(aaaaaaa);
+
+//对象类型果然是不能随意转为C风格的东西
+FUN_TYPE_PTR bbbbbb = fun_c;
+
+
+std::cout << fun_b(5) << std::endl;
+
+```
+
+
+## 4.5 捕获的注意点
