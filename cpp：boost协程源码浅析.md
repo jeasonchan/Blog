@@ -169,7 +169,7 @@ callcc( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) {
 ```
 所以，continuation.resume()这个方法其实是分两个时间段执行的：
 1. 第一段时间，jumpContext调用造成切换函数栈帧，假设跳去target栈帧
-2. 第二段时间，从target回到当前函数栈帧后，resume的返回值是target最新的栈帧数据
+2. 第二段时间，从target栈帧  或者  别的栈帧  回到当前函数栈帧后，resume的返回值是target最新的栈帧数据
 
 # 4 boost::coroutine2
 
