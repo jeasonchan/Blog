@@ -167,9 +167,20 @@ callcc( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) {
                         std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) }.resume();
 }
 ```
-所以，continuation.resume()这个方法其实是分两个时间段执行的：
-1. 第一段时间，jumpContext调用造成切换函数栈帧，假设跳去target栈帧
-2. 第二段时间，从target栈帧  或者  别的栈帧  回到当前函数栈帧后，resume的返回值是target最新的栈帧数据
+所以，总结一下两个重要的方法：
+
+1. continuation.resume()
+
+continuation.resume()功能是，通过jumpContext来切换到continuation剩下的地方继续执行。其实，执行这个方法其实是分两个时间段执行的：
+
+(1)第一段时间，jumpContext调用造成切换函数栈帧，假设跳去target栈帧
+
+(2)第二段时间，从target栈帧  或者  别的栈帧  回到当前函数栈帧后，resume的返回值是target最新的栈帧数据
+
+2. boost::context::callcc(function)
+
+功能是，将当前函数栈的context作为function的**入参**并开始执行，当前线程转入function栈中运行，直到退出function函数栈帧（return或者resume其他的continuation），如果回到了当前函数栈帧，则继续执行当前函数栈帧的内容（剩下的语句啥的）
+
 
 # 4 boost::coroutine2
 
