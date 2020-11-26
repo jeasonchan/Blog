@@ -88,7 +88,88 @@ int main()
 
 # 3 boost::context::callcc
 
+实例：
+```cpp
+void fibonacci() {
+    int result = 0;
 
+    //定义一个函数对象，必须是    continuation&& (*)(continuation&&)  这样的输入输出
+    //continuation是只支持转移的，所以，同一个函数的某次执行的栈帧，一般只会有一个有效的continuation，会被不停地被转移来转移去
+    auto function = [&result](boost::context::continuation &&continuation_of_caller) {
+        int a = 1;
+        int b = 1;
+        result = a;
+
+        //从resume的源码看，可以看出是先进行jumpContext调用时，跳到了别的地方（移动指向的栈帧，再具体一点，就是指caller这个continuation代表的栈帧），
+        //调用jumpContext时，还没来得及执行源码源码里的  return   xxxxx.fctx
+        //等从别的地方在跳回来这里后（caller的背景数据可能已经变化)，继续执行剩下的  return  xxxx.fctx  操作
+        //之所以还要利用caller.resume()的返回值是因为，要获得最新的caller的背景数据
+        continuation_of_caller = continuation_of_caller.resume();
+
+        result = b;
+
+        continuation_of_caller = continuation_of_caller.resume();
+
+        while (continuation_of_caller) {
+            result = a + b;
+            a = b;
+            b = result;
+            continuation_of_caller = continuation_of_caller.resume();
+        }
+        return std::move(continuation_of_caller);
+    };
+
+    //看callcc的源码，最关键的一句：
+    //return continuation{detail::create_context1< Record >(std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) }.resume();
+    //先构造一个协程函数Fn的context/continuation，然后执行continuation.resume()，接立刻jumpContext到Fn里面去执行了，Fn执行完或者函数栈帧切出来回到这里
+    //会返回Fn最新的context/continuation 并 用来给  continuation_of_Fn  进行初始化
+    auto continuation_of_Fn = boost::context::callcc(function);
+
+    for (int i = 0; i < 10; ++i) {
+        std::cout << "result:" << result << std::endl;
+        continuation_of_Fn = continuation_of_Fn.resume();
+    }
+}
+```
+
+resume源码如下：
+```cpp
+continuation resume() && {
+  BOOST_ASSERT( nullptr != fctx_);
+  return { detail::jump_fcontext(
+    #if defined(BOOST_NO_CXX14_STD_EXCHANGE)
+                 detail::exchange( fctx_, nullptr),
+    #else
+                   std::exchange( fctx_, nullptr),
+    #endif
+                    nullptr).fctx };
+}
+```
+经过简化就是：
+```cpp
+continuation resume() && {
+    //检查当前continuation是不是最新的，因为，resume每执行一次，就将continuation的fctx设为nullptr
+    //如果是nullptr，可以认为
+    BOOST_ASSERT( nullptr != fctx_);
+    
+    return { detail::jump_fcontext(std::exchange( fctx_, nullptr),nullptr).fctx };
+}
+```
+
+callcc源码：
+```cpp
+template< typename StackAlloc, typename Fn >
+continuation
+callcc( std::allocator_arg_t, StackAlloc && salloc, Fn && fn) {
+    using Record = detail::record< continuation, StackAlloc, Fn >;
+    return continuation{
+                detail::create_context1< Record >(
+                        std::forward< StackAlloc >( salloc), std::forward< Fn >( fn) ) }.resume();
+}
+```
+所以，continuation.resume()这个方法其实是分两个时间段执行的：
+1. 第一段时间，jumpContext调用造成切换函数栈帧，假设跳去target栈帧
+2. 第二段时间，从target回到当前函数栈帧后，resume的返回值是target最新的栈帧数据
 
 # 4 boost::coroutine2
 
