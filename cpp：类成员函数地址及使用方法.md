@@ -56,8 +56,13 @@ int main(int argCount, char *args[]) {
 std::cout << (*fun_address)(&myFuntion) << std::endl;
 
 //但是，下面通过bind能转为一个可调用的函数对象，注意第一个入参是this
-Fun fun=std::bind(&Test::callback,this,_1,_2); 
+Fun fun=std::bind(&Test::callback,this,std::placeholders::_1,std::placeholders::_2); 
+
+auto new_fun_object = std::bind(&MyFuntion::echo, &myFuntion);
+//不知道为啥，Clang/Clion更推荐Lambda写法
+auto new_fun_object2 = [ObjectPtr = &myFuntion] { ObjectPtr->echo(); };
 ```
+
 《深入探索C++对象模型》中提到成员函数时，当成员函数不是静态的，也不是虚函数时，那么我们有以下结论： 
 
 （1）&类名::函数名 获取的是成员函数的实际地址；
