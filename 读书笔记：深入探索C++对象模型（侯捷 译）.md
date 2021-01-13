@@ -5,10 +5,15 @@
 
 xiezhw3/Inside-the-C-plus-plus-Object-Model-note   https://github.com/xiezhw3/Inside-the-C-plus-plus-Object-Model-note/tree/master/%E7%AC%94%E8%AE%B0
 
+
+这本书主要讲两个方面的问题：
+
+1. 一个真实的运行时的CPP对象在内存中的样子？
+2. 编译器为了维护CPP的面向对象的"生态"，对我们的源码做了什么？
+
 # 1 关于对象
 
 
-巴拉巴拉
 ## 1.1 C++对象的内存模型
 
 
