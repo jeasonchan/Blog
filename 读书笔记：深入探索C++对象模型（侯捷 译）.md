@@ -202,3 +202,43 @@ p->x=0.0;
 对于静态成员变量的存取，是C++语言中"通过一个指针和通过一个对象来存取  member，结论完全相同”的唯一一种情况。这是因为“经由  member  selection  operators（译注：也就是“.”运算符）对一个static  data  member进行存取操作”只是文法上的一种便宜行事而已。member其实并不在class  object之中，因此存取static  members并不需要通过class  object。
 
 取一个static  data  member的地址，会得到一个指向其数据类型的指针，而不是一个指向其class  member的指针，因为static  member并不内含在一个class  object之中。
+
+那多个类都有同样名字的静态成员怎么办呢？
+
+1. 一个算法，推导出独一无二的名称。 
+2. 万一编译系统（或环境工具）必须和使用者交谈，那些独一无二的名称可以轻易被推导回到原来的名称。
+
+### 3.3.2 非静态成员
+显然，非静态成员必定是属于一个对象实例的，要想读写必须显式或者隐式的通过对象实例进行。隐式是指，有时候我们的省略this指针，但是编译器生成的代码还是会偷偷的给我们补全this。
+
+欲对一个nonstatic  data  member进行存取操作，编译器需要把class  object的起始地址加上data  member的偏移位置（offset）。
+
+```cpp
+origin.y==0.0;
+
+
+&origin.y;
+//经过编译器在编译期的改造，会变成：
+//注意！！使用的是&Pointed3d::y，返回的是相对于整个对象开始地址的相对地址
+&origin+(&Pointed3d::y-1);
+```
+
+为什么这个offset要-1呢？？？？因为&Pointed3d::y 的语义是总是+1的，因此，这真正相当于this的地址应该-1。**注意，这都是直接通过实例对象进行访问的，而不是指针**
+
+每一个nonstatic  data  member的偏移位置（offset）在编译时期即可获知，甚至如果member属于一个base  class  subobject（派生自单一或多重继承串链）也是一样的。因此，存取一个nonstatic  data  member，其效率和存取一个C  struct  member或一个nonderived  class的member是一样的。
+
+
+对于本小节一开始提出的问题，以下两种有啥区别：
+
+```cpp
+Point3d origin, *p=&origin;
+
+origin.x=0.0;
+
+p->x=0.0;
+```
+**对于x不是虚继承父类的成员对象时，通过实例名和指针访问成员对象，效率没有啥区别，因为和还是可以在编译期就确定offset的大小。**
+
+当x是虚继承父类的成员对象时，我们不能够说pt必然指向哪一种class  type（因此，我们也就不知道编译时期这个member真正的offset位置；就跟虚函数表的处理方式类似，虚标指针在实例初始化时，会在构造函数的前部分中自动指向相应的虚函数表），所以这个存取操作必须延迟至执行期，经由一个额外的间接导引，才能够解决。但如果直接使用origin，就不会有这些问题，其类型无疑是Point3d  class，而即使它继承自virtual  base  class，members 的offset位置也在编译时期就固定了。**所以，该种情况下，用指针时会多一层虚基类指针的访问。**
+
+## 3.4 继承和成对象
