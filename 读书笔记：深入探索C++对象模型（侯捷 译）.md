@@ -164,3 +164,41 @@ PS：基础数据类型是非常nice的类型，不需要构造函数，直接�
 
 **编译器会一一操作initialization list，以成员变量声明的顺序在constructor之内安插初始化操作，并且在任何explicit user code之前。**
 
+
+
+# 3
+
+## 3.1
+
+
+## 3.2
+
+
+## 3.3 对象成员的存取
+
+```cpp
+Point3d origin, *p=&origin;
+
+origin.x=0.0;
+
+p->x=0.0;
+```
+
+通过实例名和通过指针读写对象成员x的成本分别是什么？有什么异同？
+
+其实要分多种情况来讨论：
+
+1. x是静态成员对象
+2. x是非静态成员duixiang
+3. 对象本身是一个完全独立的类
+4. 对象存在多重继承和虚继承的情况
+
+接下来就针对这些情况分别探讨对成员对象的读写成本
+
+
+### 3.3.1 静态成员
+每一个static  data  member只有一个实例，存放在程序的data  segment之中。每次程序参阅（取用）static  member时，就会被内部转化为对该唯一extern实例的直接参考操作。
+
+对于静态成员变量的存取，是C++语言中"通过一个指针和通过一个对象来存取  member，结论完全相同”的唯一一种情况。这是因为“经由  member  selection  operators（译注：也就是“.”运算符）对一个static  data  member进行存取操作”只是文法上的一种便宜行事而已。member其实并不在class  object之中，因此存取static  members并不需要通过class  object。
+
+取一个static  data  member的地址，会得到一个指向其数据类型的指针，而不是一个指向其class  member的指针，因为static  member并不内含在一个class  object之中。
