@@ -13,8 +13,27 @@ https://www.cnblogs.com/apocelipes/p/10899484.html
 
 https://www.jianshu.com/p/b49d32e05af6
 
+
+项目较大，甚至是小项目，每次网络传输的时间都不短，体验不好……
+
+
 # 3 visual studio code
 
 参考文档：
 
 https://www.cnblogs.com/NanoDragon/p/12899430.html
+
+**按照安装的前后顺序**，最主要的就是微软出的三个插件：
+1. remote-development
+2. cmake tools
+3. C++ intelliense
+
+下面分别介绍一下几个插件的用法，尤其是编译、运行、debug相关的cmake tools
+
+## 3.1 remote-development
+
+
+## 3.2 cmake tools
+
+
+## 3.3 C++ intelliense
