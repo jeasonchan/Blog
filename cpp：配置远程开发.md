@@ -108,10 +108,9 @@ cmake本质上是个跨平台的项目描述，可将cmake项目转换为vs、ma
     ]
 }
 ```
-稍微做一些修改，注意其中的 "program": "${workspaceFolder}/build/exe01"  ，这个要设置成可执行文件的位置，也就是build之后生成的文件的位置。点击右下角的“添加配置”按钮，"(gdb) 启动"这个任务名称就添加到vscode的状态栏上了。
+稍微做一些修改，注意其中的 "program": "${workspaceFolder}/build/exe01"  ，这个要设置成可执行文件的位置，也就是build之后生成的文件的位置。保存文件，并通过“运行”————“启动调试”调试一次，"(gdb) 启动"这个任务名称就添加到vscode的状态栏上了。
 
 本质上，配置的这个launch任务，其实就是描述了  gdb xxxxxxx  这样一句命令行，然后vscode根据这个任务的类型是debug类型的，会自动帮我们把内存中的变量、堆栈、断点列表在左侧显示出来，比cmake tool自带的一键调试稍微好用一点。
-
 
 
 ## 3.3 C++ intelliense
@@ -120,4 +119,9 @@ cmake本质上是个跨平台的项目描述，可将cmake项目转换为vs、ma
 
 ## 3.4 典型的工作流程示例
 
-（补充）
+
+典型的工作流程是：
+
+1. 在CmakeLists中增加一个target
+2. 修改build的target
+3. 通过一键调试/运行 生成的可执行文件，或者 通过launch.json添加到任务栏中的调试方式
