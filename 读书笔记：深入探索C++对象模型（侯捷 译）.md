@@ -371,11 +371,208 @@ protected:
 
 
 ```cpp
-Point3d obj;
+#include<iostream>
+#include<string>
+
+/*
+验证 指向成员对象和成员函数的指针
+
+直接根据
+
+*/
+
+namespace  jeasonchan{
+using namespace std;
+
+class Person
+{
+public:
+    Person():age(666),name("default") {}
+
+    int age;
+    string name;
+
+    void saySth_copy(){
+        cout<<"name:"<<name<<endl
+           <<"age:"<<age<<endl;
+    }
+
+    void saySth(){
+        cout<<"name:"<<name<<endl
+           <<"age:"<<age<<endl;
+    }
+
+};
+
+}
 
 
+int main(int argc,char* argv[]){
+    using namespace jeasonchan;
+    Person p;
 
+    std::cout<<&(p.age)<<std::endl;  //输出age这个int 在进程虚拟地址空间中的地址
+
+    int Person::*offset_of_Person_int=&Person::age;//age从类实例起点开始计算的偏移量，单位是字节数
+    std::cout<<offset_of_Person_int<<std::endl;//打印this开始的偏移量
+    std::cout<<p.*offset_of_Person_int<<std::endl;//根据偏移量，从类的起始点开始取值
+
+
+    void (Person::*offset_of_Person_saySth)()=&Person::saySth;
+     std::cout<<offset_of_Person_saySth<<std::endl;//成员函数不占用任何对象实例的内存呢，输出1
+    (p.*offset_of_Person_saySth)();
+
+    return 0;
+}
 
 
 ```
+指向成员对象和成员函数的指针   https://blog.csdn.net/alex1997222/article/details/81983073
+
+
+
+# 4 函数的语义
+本章讲编译器对函数本身和函数调用 偷偷做的事情，比如mangling、成员函数、非成员函数、静态函数等。
+
+
+## 4.3 函数调用的效能对比及分析
+对比范围：
+1. nonmember friend function
+2. member function 
+3. virtual member function 在单一、虚拟、多重继承三种情况
+
+根据编译器对各种函数的处理方式，nonmember、static member或nonstatic member函数都被转化为完全相同的形式，所以效率可以认为是完全一致的。即为：
+
+1. nonmember function和static member function的区别在于static function是归属于类的方法，是一个不依赖于对象实例的方法（也就是入参没有隐藏的this指针），而前者则不从属于任何一个类别。从运行效率上来说都可以从代码段中直接访问函数，过程相同，别无二致。
+
+2. non static member function是会被编译器自动插入this指针，做mangling签名修饰甚至是返回值优化，其最后就摇身一变成为了nonmember function因此其在性能上也是等同于上述两类函数的。
+
+
+inline函数不只能够节省一般函数调用所带来的额外负担，也提供了程序优化的额外机会，比如，编译器将“被视为不变的表达式（expressions）”提到了循环之外，只计算一次。
+
+
+另外有一个奇怪的现象：每多一层继承，virtual function的执行时间就有明显的增加。其实并不是虚函数调用的开销随着继承加深而增大，而是测试过程中，用的对象的构造函数，随着继承加深而变得更加复杂：
+
+1. 复杂性，体现在，实例对象必须先构造父类实例，父类实例里有vpr，所以，每多一层继承，就会多增加一个额外的vptr设定。
+
+2. if(this||this=new (sizeof(*this))){ //一些初始化代码 }  每个类的构造函数，编译器都会自动把我们的代码放入这个判断的执行体中，随着继承加深，构造对象时判断执行的次数变得很多
+
+## 4.4 指向成员函数的指针
+
+```cpp
+void (Person::*offset_of_Person_saySth)()=&Person::saySth;
+std::cout<<offset_of_Person_saySth<<std::endl;//成员函数不占用任何对象实例的内存呢，输出1
+(p.*offset_of_Person_saySth)();
+
+```
+指向成员函数的指针很容易，但是，对于指向成员的虚函数 的指针就比较复杂了。
+
+### 4.3.1 编译器对的成员虚函数指针的处理
+先说结论：通过指向成员虚函数的指针（其实是offset），再通过子类取调用，同样能实现多态。代码示例：
+
+```cpp
+class Base{
+public:
+    virtual void do(){cout<<"Base";}
+}
+
+
+class Child public Base{
+public:
+    void do(){cout<<"Child";}
+}
+
+
+#尝试使用指向成员函数的指针
+
+void(Base::*offset)()=&Base::do;
+Base *ptr=new Child;
+
+ptr->do();//打印 Child
+(ptr->*offset)();//还是打印 Child
+```
+
+可见，尽管offset一开始取得是&Base::do，但是，通过子类指针调用同样能实现多态。
+
+先个人**猜测**一把：一开始的&Base::do，记住了vptr在类实例中的相对地址（主流编译器都是放在第一个）和索引值，当Child重写虚函数时，子类实例中的vptr指向Child自己的虚表，再根据之前记住的索引值就可以找到被重写的函数了。
+
+果然！！！！！对于成员虚函数的取地址操作，就是直接取的索引值，然后真正调用时会这么用：
+```cpp
+
+//已经考虑到编译器自动添加了this指针这个入参
+(*ptr->vptr[(int)offset])(ptr);
+
+```
+
+### 4.3.2 多重继承下指向成员函数的指针
+
+（猜测，成员函数最终都会被编译器抓换成普通函数，再加上虚表指针这些，顶多和多重继承的成员对象存取一下，this+offset 得到 第二、第三、第N父类的起始地址）
+
+## 4.5 内联函数
+```cpp
+class Example{
+private:
+    int age;
+public:
+    inline void age(int & _age){this->age=_age;}
+    inline int age(){return this->age;}
+}
+
+```
+把这些存取函数声明为inline，我们就可以继续保持直接存取members的那种高效率——虽然我们亦兼顾了函数的封装性。
+
+inline只是对编译器的建议，某些编译器会根据这些指标打分，最终确定需不需要内联。cfront有一套复杂的测试法，通常是用来计算assignments、function calls、virtual functioncalls等操作的次数。每个表达式（expression）种类有一个权值，而inline函数的复杂度就以这些操作的总和来决定。
+
+编译器处理inline函数一般有两个阶段：
+1. 根据函数定义和掉哦那个分析是否可以内联。
+
+被判断不可成为inline，它会被转为一个static函数，并在“被编译模块”内产生对应的函数定义
+
+2. 真正的 inline函数扩展操作是在调用的那一点上。这会带来参数的求值操作（evaluation）以及临时性对象的管理
+
+大部分编译器厂商（UNIX和PC都有）似乎认为不值得在inline支持技术上做详细的讨论
+
+### 4.5.1 形式参数
+每一个形式参数都会被对应的实际参数取代，但是，替代的方式可能不同，尤其是当入参直接是常量时，举个例子：
+
+```cpp
+inline int min(int i,int j){
+    return i<j?i:j;
+}
+
+//下面尝试对这个内联函数进行调用
+int val_1=1;
+int val_2=2;
+int result;
+
+result=min（1，2）；
+//直接转化，在编译期间就能确定初始值
+result=1;
+
+
+result=min(val_1,val_2);
+//转化为
+result=val_1<val_2?val_1:val_2；
+
+
+result=min(fun(),fun2());
+//转化为
+int temp1=fun();
+int temp2=fun2()
+result=temp1<temp2?temp1:temp2
+
+```
+
+### 4.3.2 局部变量
+
+
+
+
+# 5 构造、析构、拷贝的语义
+
+
+# 6 运行期语义
+
+
+# 7 CPP对象模型总览
 
