@@ -1,3 +1,11 @@
+<!--
+ * @Author: your name
+ * @Date: 2021-02-09 22:07:45
+ * @LastEditTime: 2021-02-10 00:12:23
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \Blog\python：解析程序入参.md
+-->
 # 0 背景
 竟然要开始写python了，还是只需要使用api的程度，没啥成就感……而且，一开始就极其厌恶动态类型语言，项目要写个小工具，用来快速修改系统配置，配置的格式是json格式，shell脚本需要用sed或者依赖第三方库，不方便。
 
@@ -8,6 +16,7 @@
 参考文档：
 Python解析命令行读取参数 -- argparse模块   https://www.cnblogs.com/arkenstone/p/6250782.html
 
+argparse官方文档  https://docs.python.org/zh-cn/3/library/argparse.html
 
 # 1 代码实践
 文件名，tool.py
@@ -39,7 +48,7 @@ input argv is ['./main', '-add', '1,2,3', ',', '2']
 ## 1.2 使用argparse
 
 ```py
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 import argparse
@@ -47,7 +56,7 @@ import argparse
 print("input argv is {}".format(sys.argv))
 
 # description参数可以用于插入描述脚本用途的信息，可以为空
-parser = argparse.ArgumentParser(description="your script description")
+parser = argparse.ArgumentParser(description="Ha, this is description")
 
 # 添加--verbose标签，标签别名可以为-v，这里action的意思是当读取的参数中出现--verbose/-v的时候
 # 参数字典的verbose建对应的值为True，而help参数用于描述--verbose参数的用途或意义。
@@ -59,11 +68,19 @@ parser.add_argument('--remove', '-r', action='count', help='remove range or sing
 
 
 
-args = parser.parse_args()                                                        
-if args.verbose:
-    print ("Verbose mode on!")
+parseredArgs = parser.parse_args()        
+
+if parseredArgs.verbose:
+    print ("verbose inputs:".format(parseredArgs.verbose))
 else:
     print ("Verbose mode off!")
+
+if(parseredArgs.add):
+    print("add inputs:{}".format(parseredArgs.add))
+
+
+if(parseredArgs.remove):
+    print("remove inputs:{}".format(parseredArgs.remove))
 ```
 
 
@@ -74,3 +91,8 @@ Verbose mode off!
 ['1', '2', '3']
 3
 ```
+
+可见，action参数用法已经清晰了。只有是append类型时，才支持下1个参数作为当前flag的参数，其余均不接受附加参数。
+
+之前已经看了添加参数时的一般形式，但其实parser.add_argument(xxxxxxxxxx)的入参众多，再挑选几个重要参数讲一讲。
+
