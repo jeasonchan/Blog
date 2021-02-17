@@ -722,13 +722,44 @@ vec_new（）所传回的每一个内存区块配置一个额外的word，然后
 3. 编译器如何避免函数模板在多个.o文件中都被实例化
 
 
-C++支持template的原始意图可以想见是一个由使用者导引的自动实例化机制（use-directed automatic ins tantiation mechanism），既不需要使用者的介入，也不需要同一目标的模板函数有多次的实例化行为。
+C++支持template的原始意图是建立一个由使用者导引的自动实例化机制（use-directed automatic ins tantiation mechanism），既不需要使用者的介入，也不需要同一目标的模板函数有多次的实例化行为。（然而，很多时候我们并不需要的匹配任何模板或者指向匹配特定的模板进行实例化，就需要用到比如SFINE这样的小技巧。）。
 
+（鸽了，有点复杂……因为自己确实不经常使用模板……等稍微踩坑了再来补习）
 
 
 ## 7.2 异常处理
 
+为了实现异常处理，编译器必然需要对程序员写的try catch结构做出一些反应，包括：
+
+1. 找出catch子句，以处理被抛出来的 exception，追踪程序堆栈中的每一个函数的目前作用区域
+2. 编译器必须提供某种查询exception objects 的方法，以知道其实际类型（这直接导致某种形式的执行期类型识别，也就是 RTTI）
+3. 还需要某种机制用以管理被抛出的 object，包括它的产生、存储、可能的析构（如果有相关的destructor）、清理（clean up）以及一般存取。
+4. 可能有一个以上的objects同时起作用
+
+然而，和Java不同，CPP认为有些错误并不是异常，而是业务逻辑错误，比如 除以0 ，并不抛出任何异常，而是直接terminate()，这意思是要让程序员手动实现逻辑判断这种情况。
+
+当一个exception 被抛出去时，控制权会从函数调用中被释放出来，并寻找一个吻合的catch子句。如果都没有吻合者，那么默认的处理例程terminate（）会被调用。当控制权被放弃后，堆栈中的每一个函数调用也就被推离（popped up）。这个程序称为unwinding the stack。在每一个函数被推离堆栈之前，函数的local class objects的destructor会被调用。
+
+
+决定 throw是否发生在一个 try区段中，一个函数可以被想象为好几个区域，编译器必须标示出以上各区域，并使它们对执行期的exceptionhandling 系统有所作用。
+
+当throw操作发生时，目前的program counter值被拿来与对应的“范围表格”进行比对，以决定目前作用中的区域是否在一个try区段中。
+
+每一个被抛出来的 exception，编译器必须产生一个类型描述器，对exception的类型进行编码。类型描述器（type descriptor）是必要的，因为真正的exception是在执行期被处理的，其object必须有自己的类型信息。RTTI正是因为支持EH而获得的副产品。
+
+执行期的 exception handler会将“被抛出之object的类型描述器”和“每一个cause子句的**类型描述器**”进行比较，直到找到吻合的一个，或是直到堆栈已经被“unwound”而 terminate（）已被调用。
+
+每一个函数会产生出一个exception 表格(counter-range表格)，它描述与函数相关的各区域、任何必要的善后处理代码（cleanup code，被localclass object destructors调用）以及catch子句的位置（如果某个区域是在try区段之中的话）
+
+### 7.2.1 实际对象被抛出时发生什么
+throw的一个对象时，**这个对象首先被放进异常栈中**，之后再用异常栈中的对象去初始化匹配上的catch的形参，catch的形参时引用类型的，则会真正修改异常栈中的那个对象；如果，catch的形参时值类型的，那必然是触发拷贝构造了。
+
+那放进异常栈的那个exception object是拷贝得来的，还是就是原来对象的引用呢？对于全局变量，是拷贝一份放进异常栈；对于局部变量，好像是放引用。**有待代码实践确认！！！！！！！！！！！！！！**
+
 
 ## 7.3 RTTI（runtime type identification）
+（ing）
+
+
 
 ## 7.4 效率和便捷性
