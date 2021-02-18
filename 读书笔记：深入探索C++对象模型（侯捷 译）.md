@@ -816,3 +816,21 @@ type_info的类定义在type_info.h头文件中，虽然RTTI提供的type_info�
 对于非多态的场景，type_info object能在编译期就取得的，编译器就会在编译期直接进行运算，和constexpr差不多。
 
 ## 7.4 效率和便捷性
+传统的 C++对象模型提供有效率的执行期支持。这份效率，再加上与 C 之间的兼容性，造成了C++的广泛被接受度。然而，在某些领域方面，像是动态共享函数库（dynamicallyshared libraries）、共享内存（shared memory）以及分布式对象（distributed object）方面，这个对象模型的弹性还是不够。
+
+### 7.4.1 动态共享函数库（Dynamic SharedLibraries）
+在目前的C++对象模型中，如果新版library中的class object 布局有所变更，上述的“library无侵略性”说法便有待商榷了，却在二进制层面（binary level）阻碍了弹性。
+
+所以，直接看到阿里大佬推荐的"多态"写法，其实时为了保证二进制兼容性。
+
+
+### 7.4.2 共享内存（Shared Memory）
+当一个shared library 被加载时，它在内存中的位置由runtime linker 决定，一般而言与执行中的进程（process）无关。
+
+然而，在C++对象模型中，**当一个动态的shared library支持一个class object（也就是在DLL中共享了一个全局的对象？？？），其中含有virtual functions（被放在shared memory中）时，上述说法便不正确。**
+
+问题并不在于“将此object放置于shared memory中”的那个进程，而在于“想要经由这个shared object附着并调用一个virtual function”的第二个或更后继的进程。除非dynamic shared library被放置于完全相同的内存位置上，就像当初加载这个shared object的进程一样，否则virtual function会死得很难看，可能的错误包括segment fault 或bus error。
+
+病灶在于每一个virtual function在virtual table中的位置已经被写死了。
+
+目前的解决方法属于程序层面，程序员必须保证让跨越进程的shared libraries有相同的坐落地址（在SGI中，使用者可以根据所谓的so-location文件，指定每一个sharedlibrary的精确位置）。至于编译系统层面上的解决方法，势必得牺牲原本的virtual table实现模型所带来的高效率。
