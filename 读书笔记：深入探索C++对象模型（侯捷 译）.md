@@ -758,8 +758,61 @@ throw的一个对象时，**这个对象首先被放进异常栈中**，之后�
 
 
 ## 7.3 RTTI（runtime type identification）
-（ing）
+编译器可能有的自己的一套内部类型体系，cfront实现的类型体系看上去有点像Java里的以Object作为所有对象的父类型类似。
+
+对于函数的类型，有的gen和fct两种class，gen表示当前的函数是一个重载函数。
+
+Downcast有潜在性的危险，因为它遏制了类型系统的作用，不正确的使用可能会带来错误的解释（如果它是一个read 操作）或腐蚀掉程序内存（如果它是一个write操作）。
 
 
+如果一个指向gen object 的指针被不正确地转换为一个指向fct object 的指针pf。所有后续对pf的使用都是不正确的，这就是从RTTI的角度解释向下转型的危险性。
+
+### 7.3.1 类型安全的向下转型
+一个type-safe downcast必须在执行期对指针有所查询，看看它是否指向它所展现（表达）之object的真正类型。欲支持type-safe downcast，在object空间和执行时间上都需要一些额外负担：
+
+1. 和java一样，需要额外的空间存储类型信息，通常是一个指针，指向类型信息节点
+
+2. 需要额外的时间以决定执行期的类型（runtime type），因为，正如其名所示，这需要在执行期才能决定
+
+为了取得RTTI功能的和效率的平衡，C++的RTTI机制提供了一个安全的downcast设备，但只对那些展现“多态（也就是使用继承和动态绑定）”的类型有效。
+
+具体实现方法是：
+
+所有polymorphic classes的objects都维护了一个指针（vptr），指向virtual function table。只要我们把与该class相关的RTTI object 地址放进virtual table 中（**通常放在第一个slot**），那么额外负担就降低为：每一个class object只多花费一个指针。这一指针只需被设定一次，它是被编译器静态设定的，而非在执行期由 class constructor设定（vptr才是这么设定的）
+
+### 7.3.2 类型安全的动态类型转换
+dynamic_cast运算符可以在执行期决定真正的类型。如果downcast是安全的（也就是说，如果base type pointer指向一个derived class object），这个运算符会传回被适当转换过的指针。如果downcast不是安全的，这个运算符会传回0。
+
+所以，**dynamic_cast 转换为一定要先检查是否分为空**
+
+结合前面的，类型信息被放在虚指针指向的数字的第一个槽，dynamic_cast可能的实现的：
+
+```cpp
+//关键的一步，取得当前实例的类型信息
+((type_info*)(objetc->vptr[0]))->typr_descriptor;
+
+//之后再交给下下面的步骤进行比较，看能不能进行转换
+
+```
+
+type_info是C++Standard所定义的类型描述器的class名称，该class中放置着待索求的类型信息。virtual table 的第一个 slot 内含 type_info object 的地址；此type_info object与pt所指的class type有关）。真实的类型和目标类型都被交给一个runtime library函数，比较之后告诉我们是否吻合。很显然这比static cast 昂贵得多，但却安全得多。
+
+
+### 7.3.3 References并不是 Pointers
+dynamic_cast可以用来动态转换指针，通过判断返回的指针的值是否为nullptr，确认是否是真实的类型。
+
+用于转换引用时，由于引用的特殊性，不能的引用一个不存在的对象，转换成功时，没啥问题；如果转换失败，则会直接抛 bad_cast exception。
+
+### 7.3.4 typeid运算符
+
+typeid运算符传回一个**const reference**，类型为type_info。在先前测试中出现的equality（等号）运算符，其实是一个被overloaded的函数，如果两个type_info objects相等，这个equality运算符就传回true。
+
+可见，typeid同样也可以实现类型鉴别的功能。
+
+type_info的类定义在type_info.h头文件中，虽然RTTI提供的type_info对于exception handling的支持来说是必要的，但对于exception handling 的完整支持而言，还不够。如果再加上额外的一些type_info derived classes，就可以在exception发生时提供关于指针、函数、类等等的更详细信息。
+
+虽然书中前面说过RTTI只适用于多态类（polymorphicclasses），事实上type_info objects 也适用于内建类型，以及非多态的使用者自定类型。这对于 exception handling的支持是有必要的。
+
+对于非多态的场景，type_info object能在编译期就取得的，编译器就会在编译期直接进行运算，和constexpr差不多。
 
 ## 7.4 效率和便捷性
