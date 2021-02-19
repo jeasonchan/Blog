@@ -14,4 +14,8 @@ file  settings   搜索 method ，在Appearance下面，勾选"Show method separ
 
 3. tab多行显示
 
-file  settings   搜索 ta'b ，在Editor  General  Editor Tabs下面，取消"Show tabs in one row"，修改"Tab limit"到20
+file  settings   搜索 tab ，在Editor  General  Editor Tabs下面，取消"Show tabs in one row"，修改"Tab limit"到20
+
+4. 终端换成powershell
+
+file  settings 搜索 terminal，在Tools  terminal 中，"Shell path"换成powershell.exe，以便使用clear、ls等命令
