@@ -17,9 +17,11 @@ print(result)
 
 if __name__ == "__main__":
     print("hello world")
+
+
 0
 
-最后还带了一个0，表示主函数return 0这个返回值
+最后只返回了一个0，表示主函数return 0这个返回值
 
 """
 
@@ -43,9 +45,11 @@ print(result)
 
 if __name__ == "__main__":
     print("hello world")
+
+
 0
 
-最后还带了一个0，表示主函数return 0这个返回值
+最后只返回离开码，表示主函数return 0这个返回值
 
 """
 
