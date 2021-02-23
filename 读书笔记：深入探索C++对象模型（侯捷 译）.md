@@ -422,6 +422,10 @@ int main(int argc,char* argv[]){
      std::cout<<offset_of_Person_saySth<<std::endl;//成员函数不占用任何对象实例的内存呢，输出1
     (p.*offset_of_Person_saySth)();
 
+
+    //利用thread时，除了可以传递lambda外，还可以：
+    std::thread thread01(&Class::funName,arg...);
+
     return 0;
 }
 
