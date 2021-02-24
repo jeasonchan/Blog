@@ -2,7 +2,9 @@
 之前买的Jetbrains全家桶，登陆账号后，个性化配置能同步，十分便利，最近订阅到期了，公司比较看重知识产权问题， 不敢用个人订阅证书做公司项目了，遂放弃续订转用社区版，社区版没有配置同步功能，仅有配置导入导出功能，公司信息安全比较看重文件的外发，因此，干脆手动记录一下自己的个性化配置，每次安装根据配置列表手动改一遍即可。
 
 
-# 1 个性化列表
+还有其他的IDE，比如QT，也暂不提供配置同步导入导出功能
+
+# 1 Jetbrains个性化列表
 
 1. 关闭代码提示大小写敏感
 
@@ -19,3 +21,12 @@ file  settings   搜索 tab ，在Editor  General  Editor Tabs下面，取消"Sh
 4. 终端换成powershell
 
 file  settings 搜索 terminal，在Tools  terminal 中，"Shell path"换成powershell.exe，以便使用clear、ls等命令
+
+
+# 2 QT个性化列表
+
+1. 编辑器的界面采用黑暗风格
+
+工具  选项   文本编辑器    "color schema"  设置为  "QT Creator Dark"
+
+2. 
