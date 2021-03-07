@@ -188,7 +188,79 @@ class Obj{
 
 要想安全的删除对象，就是要做到在对象完全没人用的情况下，再将其删除，Java里分析对象没人用的方法，从引用技术，逐渐发展到可达性分析（比如，经典的三色标记算法）。
 
-### 01.06 share_ptr/weak_ptr
+## 01.06 share_ptr/weak_ptr
+scoped_ptr/shared_ptr/weak_ptr都是值语意，要么是栈上对象，或是其他对象的直接数据成员，或是标准库容器里的元素。几乎不会有下面这种用法：
+
+1. new一个智能指针对象
+2. 智能指针对象的引用
+
+因为，从上面两个方法得到的智能指针对象再去做一些操作，极有可能无法使引用计数增加，从而失去了智能指针原本的意义：使用引用计数来管理对象的生命周期
+
+注意，如果这几种智能指针是对象x的数据成员，而它的模板参数T是个incomplete类型，那么x的析构函数不能是默认的或内联的，必须在.cpp文件里边显式定义，否则会有编译错或运行错。**？？？？？？？？不明白，说是下文有解释**
+
+
+## 01.08 智能指针用于观察者模式
+代码实践：
+
+```cpp
+
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <vector>
+
+class Observer {
+public:
+  virtual void notify() = 0;
+};
+
+class Observable {
+private:
+  mutable std::mutex _mutex;
+
+  // 如果list使用share_ptr，别观察者使用持有观察者的智能指针
+  //被观察者就会直接影响观察者的生命周期，让观察者始终无法释放。
+  // 所以，不想延长对象的生命周期时，就用share_ptr接受指针
+  std::vector<std::weak_ptr<Observer>> observerList;
+
+  using Iterator = std::vector<std::weak_ptr<Observer>>::iterator;
+
+public:
+  void register_(std::weak_ptr<Observer> x) { 
+    std::lock_guard<std::mutex> methodLock(this->_mutex);
+    this->observerList.push_back(x);
+  }
+
+  void notifyAllObservers() {
+    //模板类型不能自动推导？？？？？lock_guard模板参数还要写全？？？？
+    std::lock_guard<std::mutex> methodLock(this->_mutex);
+    Iterator it = this->observerList.begin();
+
+    while (it != this->observerList.end()) {
+      std::shared_ptr<Observer> obj(it->lock());
+      if (obj) {
+        obj->notify();
+        ++it;
+      } else {
+        //对象已经销毁，直接从队列中删除对象
+        this->observerList.erase(it);
+      }
+    }
+  }
+};
+
+int main(int argc, char *argv[]) {
+  // do nothing
+  return 0;
+}
+```
+
+
+
+
+
+
+
 
 
 # 02 线程同步精要
